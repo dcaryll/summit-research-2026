@@ -25,9 +25,12 @@ interface TerminalScreenProps {
       autonomyStats: Record<string, number>
     }
   } | null
+  isLoading: boolean
+  isLoadingDashboard: boolean
+  onAdjustInput: () => void
 }
 
-function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, currentQuestion, answers, onAnswerChange, onNextQuestion, onPreviousQuestion, showDashboard, onStartOver, onExportCSV, dashboardData }: TerminalScreenProps) {
+function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, currentQuestion, answers, onAnswerChange, onNextQuestion, onPreviousQuestion, showDashboard, onStartOver, onExportCSV, dashboardData, isLoading, isLoadingDashboard, onAdjustInput }: TerminalScreenProps) {
   const [otherInputValue, setOtherInputValue] = useState('')
   const [otherInputValue2, setOtherInputValue2] = useState('')
   const [promptSetIndex, setPromptSetIndex] = useState(0)
@@ -150,95 +153,109 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
 
   return (
     <div className="terminal-screen">
-      {showDashboard ? (
+      {isLoadingDashboard ? (
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <p className="loading-text">Analyzing</p>
+        </div>
+      ) : showDashboard ? (
         <div className="dashboard-container">
           <div className="dashboard-headline-section">
             <h1 className="dashboard-headline">You aren't alone!</h1>
-            <p className="dashboard-subheadline">Your questions are unique, but others have asked similar ones. This will help us build new features and improve our websites.</p>
-            <div className="swag-notice">
-              <p className="swag-text">Don't forget to retrieve your swag from the front desk!</p>
-            </div>
+            <p className="dashboard-subheadline">Your questions are unique, but others have asked similar ones. <br />This will help us build new features and improve our websites.</p>
           </div>
           
-          <div className="dashboard-content">
-            {/* Word Cloud */}
-            <div className="word-cloud-section">
-              <h2 className="section-title">Top Terms</h2>
-              <div className="word-cloud">
-                {dashboardData && dashboardData.wordCloud.length > 0 ? (
-                  dashboardData.wordCloud.map((item, index) => {
-                    // Determine size based on count (larger count = larger word)
-                    let sizeClass = 'word-small'
-                    const maxCount = dashboardData.wordCloud[0].count
-                    const ratio = item.count / maxCount
-                    
-                    if (ratio > 0.7) {
-                      sizeClass = 'word-large'
-                    } else if (ratio > 0.4) {
-                      sizeClass = 'word-medium'
-                    }
-                    
-                    return (
-                      <span key={index} className={`word ${sizeClass}`} title={`${item.count} occurrence${item.count > 1 ? 's' : ''}`}>
-                        {item.word}
-                      </span>
-                    )
-                  })
+          <div className="dashboard-main-layout">
+            {/* Left Side - Main Content */}
+            <div className="dashboard-content">
+              {/* Word Cloud */}
+              <div className="word-cloud-section">
+                <h2 className="section-title">Common terms</h2>
+                <div className="word-cloud">
+                  {dashboardData && dashboardData.wordCloud.length > 0 ? (
+                    dashboardData.wordCloud.map((item, index) => {
+                      // Determine size based on count (larger count = larger word)
+                      let sizeClass = 'word-small'
+                      const maxCount = dashboardData.wordCloud[0].count
+                      const ratio = item.count / maxCount
+                      
+                      if (ratio > 0.7) {
+                        sizeClass = 'word-large'
+                      } else if (ratio > 0.4) {
+                        sizeClass = 'word-medium'
+                      }
+                      
+                      return (
+                        <span key={index} className={`word ${sizeClass}`} title={`${item.count} occurrence${item.count > 1 ? 's' : ''}`}>
+                          {item.word}
+                        </span>
+                      )
+                    })
+                  ) : (
+                    <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontStyle: 'italic' }}>
+                      No responses yet. Submit a response to see word cloud.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Peer Stats */}
+              <div className="peer-stats-section">
+                <h2 className="section-title">Common responses</h2>
+                {dashboardData && dashboardData.stats ? (
+                  <>
+                    <div className="peer-stats-grid">
+                      {dashboardData.stats.formatStats['The "ready-to-use" code (CLI/api snippet)'] && (
+                        <div className="stat-card">
+                          <div className="stat-value">{dashboardData.stats.formatStats['The "ready-to-use" code (CLI/api snippet)']}%</div>
+                          <div className="stat-label">of attendees also want CLI snippets</div>
+                        </div>
+                      )}
+                      {dashboardData.stats.locationStats['In the "war room" (fixing a critical issue)'] && (
+                        <div className="stat-card">
+                          <div className="stat-value">{dashboardData.stats.locationStats['In the "war room" (fixing a critical issue)']}%</div>
+                          <div className="stat-label">are in the "war room" fixing critical issues</div>
+                        </div>
+                      )}
+                      {dashboardData.stats.formatStats['The technical deep dive (whitepaper/docs)'] && (
+                        <div className="stat-card">
+                          <div className="stat-value">{dashboardData.stats.formatStats['The technical deep dive (whitepaper/docs)']}%</div>
+                          <div className="stat-label">prefer technical deep dives</div>
+                        </div>
+                      )}
+                    </div>
+                    {Object.keys(dashboardData.stats.formatStats).length === 0 && 
+                     Object.keys(dashboardData.stats.locationStats).length === 0 && (
+                      <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontStyle: 'italic', textAlign: 'center' }}>
+                        No peer data yet. More responses needed.
+                      </p>
+                    )}
+                  </>
                 ) : (
-                  <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontStyle: 'italic' }}>
-                    No responses yet. Submit a response to see word cloud.
+                  <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontStyle: 'italic', textAlign: 'center' }}>
+                    Loading peer statistics...
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Peer Stats */}
-            <div className="peer-stats-section">
-              <h2 className="section-title">Your Peers</h2>
-              {dashboardData && dashboardData.stats ? (
-                <>
-                  <div className="peer-stats-grid">
-                    {dashboardData.stats.formatStats['The "ready-to-use" code (CLI/api snippet)'] && (
-                      <div className="stat-card">
-                        <div className="stat-value">{dashboardData.stats.formatStats['The "ready-to-use" code (CLI/api snippet)']}%</div>
-                        <div className="stat-label">of attendees also want CLI snippets</div>
-                      </div>
-                    )}
-                    {dashboardData.stats.locationStats['In the "war room" (fixing a critical issue)'] && (
-                      <div className="stat-card">
-                        <div className="stat-value">{dashboardData.stats.locationStats['In the "war room" (fixing a critical issue)']}%</div>
-                        <div className="stat-label">are in the "war room" fixing critical issues</div>
-                      </div>
-                    )}
-                    {dashboardData.stats.formatStats['The technical deep dive (whitepaper/docs)'] && (
-                      <div className="stat-card">
-                        <div className="stat-value">{dashboardData.stats.formatStats['The technical deep dive (whitepaper/docs)']}%</div>
-                        <div className="stat-label">prefer technical deep dives</div>
-                      </div>
-                    )}
-                  </div>
-                  {Object.keys(dashboardData.stats.formatStats).length === 0 && 
-                   Object.keys(dashboardData.stats.locationStats).length === 0 && (
-                    <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontStyle: 'italic', textAlign: 'center' }}>
-                      No peer data yet. More responses needed.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontStyle: 'italic', textAlign: 'center' }}>
-                  Loading peer statistics...
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="qr-code-section">
-            <div className="qr-code-text">
-              <h3 className="qr-code-title">Join our research community</h3>
-              <p className="qr-code-description">Scan the QR code to sign up</p>
-            </div>
-            <div className="qr-code-container">
-              <img src={qrCodeImage} alt="QR Code" className="qr-code-image" />
+            {/* Right Side - Steps Sidebar */}
+            <div className="dashboard-sidebar">
+              <div className="step-box">
+                <h3 className="step-title">Step 1</h3>
+                <p className="step-text">Don't forget to retrieve your swag from the front desk!</p>
+              </div>
+              <div className="step-box">
+                <h3 className="step-title">Step 2</h3>
+                <div className="qr-code-container">
+                  <img src={qrCodeImage} alt="QR Code" className="qr-code-image" />
+                </div>
+                <p className="step-text">Join our research community</p>
+              </div>
+              <div className="step-box">
+                <h3 className="step-title">Step 3</h3>
+                <p className="step-text">Join another usability study!</p>
+              </div>
             </div>
           </div>
 
@@ -266,11 +283,23 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
             <div className="logo-placeholder">
               <img src={logoImage} alt="Red Hat Logo" className="logo-image" />
             </div>
+            {showQuestions && inputValue && (
+              <div className="input-display">
+                <p className="input-display-text">
+                  <span className="input-display-label">Your response:</span> {inputValue}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Headline and Input Section */}
           <div className="input-section">
-          {!showQuestions ? (
+          {isLoading ? (
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p className="loading-text">Processing your request...</p>
+            </div>
+          ) : !showQuestions ? (
             <>
               <h1 className="headline">
                 Imagine you have a direct line to our entire technical and business database. No menus, no sales calls.<br />
@@ -424,6 +453,15 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
               )}
 
               <div className="question-navigation">
+                {currentQuestion === 1 && (
+                  <button
+                    type="button"
+                    onClick={onAdjustInput}
+                    className="adjust-input-button"
+                  >
+                    Adjust my input
+                  </button>
+                )}
                 {currentQuestion > 1 && (
                   <button
                     type="button"

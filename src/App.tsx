@@ -7,6 +7,10 @@ const DB_NAME = 'UserFeedbackDB'
 const DB_VERSION = 1
 const STORE_NAME = 'responses'
 
+// Backend API configuration
+// Set VITE_API_ENDPOINT in .env file or replace this URL with your actual API endpoint
+const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT || 'https://your-api-endpoint.com/api/responses'
+
 const initDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION)
@@ -24,6 +28,34 @@ const initDB = (): Promise<IDBDatabase> => {
   })
 }
 
+const saveResponseToBackend = async (data: {
+  timestamp: string
+  question: string
+  format: string
+  location: string
+  autonomy: string
+}): Promise<boolean> => {
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Backend API error: ${response.status} ${response.statusText}`)
+    }
+
+    console.log('Response saved to backend successfully')
+    return true
+  } catch (error) {
+    console.error('Error saving to backend:', error)
+    return false
+  }
+}
+
 const saveResponse = async (data: {
   timestamp: string
   question: string
@@ -31,27 +63,92 @@ const saveResponse = async (data: {
   location: string
   autonomy: string
 }) => {
-  const db = await initDB()
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORE_NAME], 'readwrite')
-    const store = transaction.objectStore(STORE_NAME)
-    const request = store.add(data)
+  // Try to save to backend first (primary storage)
+  const backendSuccess = await saveResponseToBackend(data)
 
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
+  // Always save locally as backup/offline fallback
+  // Save to IndexedDB
+  try {
+    const db = await initDB()
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readwrite')
+      const store = transaction.objectStore(STORE_NAME)
+      const request = store.add(data)
+
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+  } catch (error) {
+    console.error('Error saving to IndexedDB:', error)
+  }
+
+  // Backup to localStorage
+  try {
+    const backupKey = 'userFeedbackBackup'
+    const existingBackup = localStorage.getItem(backupKey)
+    const backupData = existingBackup ? JSON.parse(existingBackup) : []
+    backupData.push({ ...data, id: Date.now() })
+    // Keep only last 1000 responses to avoid exceeding localStorage limits
+    const trimmedData = backupData.slice(-1000)
+    localStorage.setItem(backupKey, JSON.stringify(trimmedData))
+  } catch (error) {
+    console.error('Error saving to localStorage backup:', error)
+  }
+
+  // If backend failed, mark for retry later
+  if (!backendSuccess) {
+    try {
+      const pendingKey = 'userFeedbackPending'
+      const pending = localStorage.getItem(pendingKey)
+      const pendingData = pending ? JSON.parse(pending) : []
+      pendingData.push(data)
+      localStorage.setItem(pendingKey, JSON.stringify(pendingData))
+    } catch (error) {
+      console.error('Error saving pending response:', error)
+    }
+  }
 }
 
 const getAllResponses = async (): Promise<any[]> => {
-  const db = await initDB()
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORE_NAME], 'readonly')
-    const store = transaction.objectStore(STORE_NAME)
-    const request = store.getAll()
+  // Try IndexedDB first (primary storage)
+  try {
+    const db = await initDB()
+    const indexedDBData = await new Promise<any[]>((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readonly')
+      const store = transaction.objectStore(STORE_NAME)
+      const request = store.getAll()
 
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+
+    // If IndexedDB has data, use it and sync to localStorage backup
+    if (indexedDBData && indexedDBData.length > 0) {
+      try {
+        localStorage.setItem('userFeedbackBackup', JSON.stringify(indexedDBData))
+      } catch (error) {
+        console.error('Error syncing to localStorage backup:', error)
+      }
+      return indexedDBData
+    }
+  } catch (error) {
+    console.error('Error reading from IndexedDB, falling back to localStorage:', error)
+  }
+
+  // Fallback to localStorage backup
+  try {
+    const backupKey = 'userFeedbackBackup'
+    const backupData = localStorage.getItem(backupKey)
+    if (backupData) {
+      const parsed = JSON.parse(backupData)
+      console.log('Loaded responses from localStorage backup')
+      return parsed
+    }
+  } catch (error) {
+    console.error('Error reading from localStorage backup:', error)
+  }
+
+  return []
 }
 
 function App() {
@@ -60,6 +157,54 @@ function App() {
   const [currentQuestion, setCurrentQuestion] = useState(1)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [showDashboard, setShowDashboard] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(false)
+
+  // Retry pending responses when online
+  useEffect(() => {
+    const retryPendingResponses = async () => {
+      try {
+        const pendingKey = 'userFeedbackPending'
+        const pending = localStorage.getItem(pendingKey)
+        if (!pending) return
+
+        const pendingData = JSON.parse(pending)
+        if (pendingData.length === 0) return
+
+        const successful: number[] = []
+        for (let i = 0; i < pendingData.length; i++) {
+          const success = await saveResponseToBackend(pendingData[i])
+          if (success) {
+            successful.push(i)
+          }
+        }
+
+        // Remove successfully sent responses
+        if (successful.length > 0) {
+          const remaining = pendingData.filter((_: any, index: number) => !successful.includes(index))
+          if (remaining.length > 0) {
+            localStorage.setItem(pendingKey, JSON.stringify(remaining))
+          } else {
+            localStorage.removeItem(pendingKey)
+          }
+        }
+      } catch (error) {
+        console.error('Error retrying pending responses:', error)
+      }
+    }
+
+    // Retry when coming online
+    window.addEventListener('online', retryPendingResponses)
+    
+    // Also try immediately on mount if online
+    if (navigator.onLine) {
+      retryPendingResponses()
+    }
+
+    return () => {
+      window.removeEventListener('online', retryPendingResponses)
+    }
+  }, [])
   const [dashboardData, setDashboardData] = useState<{
     wordCloud: Array<{ word: string; count: number }>
     stats: {
@@ -242,18 +387,24 @@ function App() {
       if (!inputValue || !inputValue.trim()) {
         return // Don't proceed if input is empty or only whitespace
       }
-      // First submit - show questions
-      setShowQuestions(true)
-      setCurrentQuestion(1)
+      // First submit - show loading state for 2 seconds
+      setIsLoading(true)
+      setTimeout(() => {
+        setIsLoading(false)
+        setShowQuestions(true)
+        setCurrentQuestion(1)
+      }, 2000)
     } else if (currentQuestion < 3) {
       // Move to next question
       setCurrentQuestion(prev => prev + 1)
     } else {
-      // Final submission
-      console.log('Query submitted:', inputValue)
-      console.log('Answers:', answers)
+      // Final submission - show loading state for 2 seconds before dashboard
+      setIsLoadingDashboard(true)
       await saveResponseToDB()
-      setShowDashboard(true)
+      setTimeout(() => {
+        setIsLoadingDashboard(false)
+        setShowDashboard(true)
+      }, 2000)
     }
   }
 
@@ -286,6 +437,13 @@ function App() {
     setCurrentQuestion(1)
     setAnswers({})
     setShowDashboard(false)
+    setIsLoading(false)
+    setIsLoadingDashboard(false)
+  }
+
+  const handleAdjustInput = () => {
+    setShowQuestions(false)
+    setIsLoading(false)
   }
 
   return (
@@ -304,6 +462,9 @@ function App() {
         onStartOver={handleStartOver}
         onExportCSV={exportToCSV}
         dashboardData={dashboardData}
+        isLoading={isLoading}
+        isLoadingDashboard={isLoadingDashboard}
+        onAdjustInput={handleAdjustInput}
       />
     </div>
   )
