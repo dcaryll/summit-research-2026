@@ -1,0 +1,888 @@
+.terminal-screen {
+  width: 100vw;
+  height: 100vh;
+  background: #0f0f0f; /* rh-color-gray-95 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+  overflow: hidden;
+}
+
+.terminal-content {
+  width: 100%;
+  max-width: 1200px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rem;
+  position: relative;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+}
+
+.logo-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.logo-image {
+  max-width: 240px;
+  height: auto;
+  width: 100%;
+  animation: pulse-red-shadow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-red-shadow {
+  0%, 100% {
+    filter: drop-shadow(0 0 15px #ee0000) drop-shadow(0 0 25px #ee0000); /* rh-color-brand-red */
+  }
+  50% {
+    filter: drop-shadow(0 0 25px #ee0000) drop-shadow(0 0 40px #ee0000); /* rh-color-brand-red */
+  }
+}
+
+.input-section {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+  margin-top: 180px;
+}
+
+.headline {
+  color: #ffffff; /* rh-color-white */
+  font-size: 1.5rem;
+  font-weight: 400;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+  font-family: inherit;
+}
+
+.headline strong {
+  display: block;
+  margin-top: 20px;
+}
+
+.input-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.cycling-prompt-wrapper {
+  width: 100%;
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.cycling-prompt {
+  color: #999999;
+  font-size: 0.9rem;
+  font-style: italic;
+  text-align: center;
+  animation: fade-in-out 4s ease-in-out infinite;
+  font-family: inherit;
+}
+
+@keyframes fade-in-out {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.input-row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  align-items: center;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: none;
+  border-bottom: 3px solid #00ff2b;
+  border-radius: 0;
+  padding: 0.75rem 0;
+  transition: all 0.2s ease;
+  flex: 1;
+  position: relative;
+}
+
+.input-wrapper::before {
+  content: '';
+  width: 12px;
+  height: 1.5rem;
+  background: #00ff2b; /* rh-color-brand-red */
+  display: block;
+  margin-right: 0.75rem;
+  animation: terminal-blink 1s step-end infinite;
+}
+
+.input-wrapper:focus-within {
+  border-bottom-color: #067e1a; /* rh-color-brand-red */
+  box-shadow: 0 3px 0 #067e1a;
+}
+
+.input-wrapper:focus-within::before {
+  background: #067e1a; /* rh-color-brand-red */
+}
+
+@keyframes terminal-blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+
+.terminal-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff; /* rh-color-white */
+  font-size: 1.125rem;
+  font-family: inherit;
+  caret-color: #ee0000; /* rh-color-brand-red */
+  padding: 0;
+  margin: 0;
+}
+
+.terminal-input::placeholder {
+  color: #999999; /* Terminal prompt color */
+  font-style: normal;
+}
+
+.clear-button {
+  background: transparent;
+  border: none;
+  color: #999999; /* rh-color-white with opacity */
+  font-size: 1.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+.clear-button:hover {
+  color: #ffffff; /* rh-color-white */
+}
+
+.go-button {
+  background: #00ff2b; /* rh-color-brand-red */
+  border: 2px solid #00ff2b; /* rh-color-brand-red */
+  border-radius: 4px;
+  color: #000; /* rh-color-white */
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+  flex-shrink: 0;
+  height: fit-content;
+}
+
+.go-button:hover {
+  background: #067e1a; /* rh-color-brand-red-dark */
+  border-color: #067e1a; /* rh-color-brand-red-dark */
+}
+
+.go-button:active {
+  background: #067e1a; /* rh-color-brand-red-darker */
+  border-color: #067e1a; /* rh-color-brand-red-darker */
+}
+
+.go-button:disabled {
+  background: #4a4a4a;
+  border-color: #4a4a4a;
+  color: #666666;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.go-button:disabled:hover {
+  background: #4a4a4a;
+  border-color: #4a4a4a;
+  box-shadow: none;
+}
+
+
+.questions-container {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+}
+
+.question-title {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 400;
+  text-align: center;
+  margin: 0;
+  font-family: inherit;
+}
+
+.question-text {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 400;
+  text-align: center;
+  margin: 0;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+.question-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.question-option {
+  background: transparent;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  padding: 1rem 1.25rem;
+  color: #ffffff;
+  font-size: 1rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.question-option .checkmark {
+  color: #000000;
+  font-size: 1.25rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-radius: 50%;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.question-option:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  background: #2a2a2a;
+}
+
+.question-option.selected {
+  border-color: #ffffff;
+  color: #ffffff;
+  background: #3a3a3a;
+}
+
+.question-option:active {
+  background: #4a4a4a;
+}
+
+.question-navigation {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+  width: 100%;
+}
+
+.previous-button {
+  background: transparent;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 400;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.previous-button:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  background: #2a2a2a;
+}
+
+.previous-button:active {
+  background: #4a4a4a;
+}
+
+.other-input-wrapper {
+  width: 100%;
+  max-width: 600px;
+  margin-top: 1rem;
+}
+
+.other-input-wrapper .terminal-input {
+  width: 100%;
+  background: #1f1f1f; /* rh-color-gray-80 */
+  border: 2px solid #ffffff; /* rh-color-white with opacity */
+  border-radius: 4px;
+  padding: 1rem 1.25rem;
+  color: #ffffff; /* rh-color-white */
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+/* Terminal cursor blink animation - handled by input-wrapper::before */
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .headline {
+    font-size: 1.25rem;
+  }
+  
+  .terminal-content {
+    gap: 3rem;
+    padding: 1.5rem;
+  }
+  
+  .input-wrapper {
+    padding: 0.875rem 1rem;
+  }
+  
+  .terminal-input {
+    font-size: 1rem;
+  }
+  
+  .logo-image {
+    max-width: 200px;
+  }
+  
+  .logo-container {
+    top: 20px;
+  }
+  
+  .input-section {
+    margin-top: 140px;
+  }
+  
+  .cycling-prompt {
+    font-size: 0.8rem;
+  }
+  
+  .input-row {
+    flex-direction: column;
+  }
+  
+  .input-wrapper {
+    width: 100%;
+  }
+  
+  .question-navigation {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .previous-button,
+  .go-button {
+    width: 100%;
+    padding: 0.625rem 1.5rem;
+    font-size: 0.9rem;
+    min-width: auto;
+  }
+  
+  .question-text {
+    font-size: 1.125rem;
+  }
+  
+  .question-option {
+    font-size: 0.9rem;
+    padding: 0.875rem 1rem;
+  }
+}
+
+/* Dashboard Styles */
+.dashboard-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2rem;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.dashboard-headline-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.dashboard-headline {
+  color: #fff; /* rh-color-brand-red */
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+.dashboard-subheadline {
+  color: #fff; /* rh-color-brand-red */
+  font-size: 1.125rem;
+  font-weight: 400;
+  text-align: center;
+  margin: 0;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+  line-height: 1.5;
+}
+
+.dashboard-content {
+  width: 95%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 0;
+  flex: 1;
+  min-height: 0;
+}
+
+.section-title {
+  color: #00ff2b; /* green */
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 1rem 0;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+/* Word Cloud Styles */
+.word-cloud-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.word-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  background: #252525; /* rh-color-gray-80 with opacity */
+  border: 1px solid #00ff2b; /* green */
+  border-radius: 8px;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  align-content: flex-start;
+}
+
+.word {
+  color: #00ff2b; /* green */
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  cursor: default;
+  display: inline-block;
+}
+
+.word:hover {
+  background: #004a0a; /* dark green */
+  transform: scale(1.1);
+}
+
+.word-small {
+  font-size: 0.9rem;
+}
+
+.word-medium {
+  font-size: 1.2rem;
+}
+
+.word-large {
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.swag-notice {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: #1a1a1a;
+  border: 1px solid #4a4a4a;
+  border-radius: 8px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.swag-text {
+  color: #ffffff;
+  font-size: 1.125rem;
+  font-weight: 400;
+  margin: 0;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+/* Peer Stats Styles */
+.peer-stats-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.peer-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  width: 100%;
+  min-height: 0;
+}
+
+.stat-card {
+  width: 100%;
+  background: #252525; /* rh-color-gray-80 with opacity */
+  border: 1px solid #00ff2b; /* green */
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.stat-card:hover {
+  border-color: #00ff2b; /* green */
+  background: #002a0a; /* dark green */
+  box-shadow: 0 0 20px #00ff2b;
+}
+
+.stat-value {
+  color: #00ff2b; /* green */
+  font-size: 2.5rem;
+  font-weight: 600;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  color: #fff;
+  font-size: 0.9rem;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+  line-height: 1.4;
+}
+
+.pulse-indicator {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-circle {
+  width: 40px;
+  height: 40px;
+  background: #00ff2b; /* green */
+  border-radius: 50%;
+  position: absolute;
+  z-index: 4;
+  box-shadow: 0 0 20px #00ff2b; /* green */
+}
+
+.pulse-ring {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .dashboard-headline-section {
+    margin-top: 1rem;
+  }
+  
+  .dashboard-headline {
+    font-size: 2rem;
+  }
+  
+  .dashboard-subheadline {
+    font-size: 1rem;
+  }
+  
+  .dashboard-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .word-cloud {
+    min-height: 250px;
+    padding: 1.5rem;
+  }
+  
+  .word-small {
+    font-size: 0.8rem;
+  }
+  
+  .word-medium {
+    font-size: 1rem;
+  }
+  
+  .word-large {
+    font-size: 1.3rem;
+  }
+  
+  .swag-notice {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+  }
+  
+  .swag-text {
+    font-size: 1rem;
+  }
+  
+  .stat-value {
+    font-size: 2.5rem;
+  }
+  
+  .stat-label {
+    font-size: 0.9rem;
+  }
+  
+  .peer-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .pulse-indicator {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .pulse-circle {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .pulse-ring {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+.qr-code-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 0;
+  width: 100%;
+  max-width: 600px;
+  flex-shrink: 0;
+}
+
+.qr-code-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.qr-code-title {
+  color: #ffffff;
+  font-size: 1.125rem;
+  font-weight: 400;
+  text-align: left;
+  margin: 0;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+.qr-code-description {
+  color: #ffffff; /* rh-color-white */
+  font-size: 0.9rem;
+  text-align: left;
+  margin: 0;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+.qr-code-container {
+  padding: 1rem;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-code-image {
+  width: 150px;
+  height: 150px;
+  display: block;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  width: 95%;
+  flex-shrink: 0;
+}
+
+.start-over-button {
+  background: transparent;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 400;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.start-over-button:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  background: #2a2a2a;
+  box-shadow: 0 0 15px #ffffff;
+}
+
+.start-over-button:active {
+  background: #4a4a4a;
+}
+
+.export-csv-button {
+  background: transparent;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 400;
+  font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
+  padding: 0.625rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.export-csv-button:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  background: #2a2a2a;
+  box-shadow: 0 0 10px #ffffff;
+}
+
+.export-csv-button:active {
+  background: #4a4a4a;
+}
+
+@media (max-width: 768px) {
+  .qr-code-section {
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 400px;
+  }
+  
+  .qr-code-text {
+    text-align: center;
+  }
+  
+  .qr-code-title,
+  .qr-code-description {
+    text-align: center;
+  }
+  
+  .qr-code-container {
+    padding: 1rem;
+  }
+  
+  .qr-code-image {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .qr-code-title {
+    font-size: 1.125rem;
+  }
+  
+  .qr-code-description {
+    font-size: 0.85rem;
+  }
+  
+  .dashboard-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+  }
+  
+  .start-over-button,
+  .export-csv-button {
+    width: 100%;
+    font-size: 0.9rem;
+    padding: 0.625rem 1.5rem;
+  }
+}
