@@ -7,6 +7,9 @@ const DB_NAME = 'UserFeedbackDB'
 const DB_VERSION = 1
 const STORE_NAME = 'responses'
 
+const STORAGE_KEY_ON_DASHBOARD = 'wizardOnDashboard'
+const STORAGE_KEY_SESSION_RESPONSES = 'dashboardSessionResponses'
+
 // Backend API configuration
 // Set VITE_API_ENDPOINT in .env file or replace this URL with your actual API endpoint
 const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT || 'https://your-api-endpoint.com/api/responses'
@@ -159,6 +162,7 @@ function App() {
   const [showDashboard, setShowDashboard] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false)
+  const [sessionResponses, setSessionResponses] = useState<Array<{ timestamp: string; question: string; format: string; location: string; autonomy: string }>>([])
 
   // Retry pending responses when online
   useEffect(() => {
@@ -226,6 +230,22 @@ function App() {
     const savedInput = localStorage.getItem('firstScreenInput')
     if (savedInput) {
       setInputValue(savedInput)
+    }
+  }, [])
+
+  useEffect(() => {
+    const onDashboard = sessionStorage.getItem(STORAGE_KEY_ON_DASHBOARD)
+    if (onDashboard) {
+      try {
+        const stored = sessionStorage.getItem(STORAGE_KEY_SESSION_RESPONSES)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (Array.isArray(parsed)) setSessionResponses(parsed)
+        }
+      } catch (e) {
+        console.error('Error restoring session responses:', e)
+      }
+      setShowDashboard(true)
     }
   }, [])
 
@@ -311,12 +331,19 @@ function App() {
 
   const loadDashboardData = async () => {
     try {
-      const responses = await getAllResponses()
-      if (responses.length > 0) {
-        const wordCloud = calculateWordCloud(responses)
-        const stats = calculateStats(responses)
-        setDashboardData({ wordCloud, stats })
+      const responsesForStats = sessionResponses
+      let allResponses: any[] = []
+      try {
+        allResponses = await getAllResponses()
+      } catch (e) {
+        console.error('Error loading responses for word cloud:', e)
       }
+      const wordCloud = allResponses.length > 0 ? calculateWordCloud(allResponses) : []
+      const stats =
+        responsesForStats.length > 0
+          ? calculateStats(responsesForStats)
+          : { formatStats: {}, locationStats: {}, autonomyStats: {} }
+      setDashboardData({ wordCloud, stats })
     } catch (error) {
       console.error('Error loading dashboard data:', error)
     }
@@ -324,16 +351,16 @@ function App() {
 
   const saveResponseToDB = async () => {
     try {
-      await saveResponse({
+      const newResponse = {
         timestamp: new Date().toISOString(),
         question: inputValue || '',
         format: answers.format || '',
         location: answers.location || '',
         autonomy: answers.autonomy || ''
-      })
+      }
+      await saveResponse(newResponse)
       console.log('Response saved to IndexedDB')
-      // Reload dashboard data after saving
-      await loadDashboardData()
+      setSessionResponses(prev => [...prev, newResponse])
     } catch (error) {
       console.error('Error saving response:', error)
     }
@@ -404,15 +431,23 @@ function App() {
       setTimeout(() => {
         setIsLoadingDashboard(false)
         setShowDashboard(true)
+        sessionStorage.setItem(STORAGE_KEY_ON_DASHBOARD, '1')
       }, 2000)
     }
   }
 
   useEffect(() => {
     if (showDashboard) {
+      sessionStorage.setItem(STORAGE_KEY_ON_DASHBOARD, '1')
       loadDashboardData()
     }
-  }, [showDashboard])
+  }, [showDashboard, sessionResponses])
+
+  useEffect(() => {
+    if (sessionResponses.length > 0) {
+      sessionStorage.setItem(STORAGE_KEY_SESSION_RESPONSES, JSON.stringify(sessionResponses))
+    }
+  }, [sessionResponses])
 
   const handleAnswerChange = (questionId: string, value: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }))
@@ -439,6 +474,9 @@ function App() {
     setShowDashboard(false)
     setIsLoading(false)
     setIsLoadingDashboard(false)
+    setSessionResponses([])
+    sessionStorage.removeItem(STORAGE_KEY_ON_DASHBOARD)
+    sessionStorage.removeItem(STORAGE_KEY_SESSION_RESPONSES)
   }
 
   const handleAdjustInput = () => {

@@ -160,6 +160,47 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
         </div>
       ) : showDashboard ? (
         <div className="dashboard-container">
+          <div
+            className="dashboard-actions"
+            data-actions-position="top"
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+              flexShrink: 0,
+              padding: '0.5rem 0',
+              position: 'sticky',
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 10,
+              background: '#0f0f0f',
+              borderBottom: '1px solid rgba(255,255,255,0.2)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={handleStartOver}
+              className="start-over-button"
+            >
+              <span className="start-over-icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
+                </svg>
+              </span>
+              Start over
+            </button>
+            <button
+              type="button"
+              onClick={onExportCSV}
+              className="export-csv-button"
+            >
+              Export responses to CSV
+            </button>
+          </div>
           <div className="dashboard-headline-section">
             <h1 className="dashboard-headline">You aren't alone!</h1>
             <p className="dashboard-subheadline">Your questions are unique, but others have asked similar ones. <br />This will help us build new features and improve our websites.</p>
@@ -205,24 +246,18 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                 {dashboardData && dashboardData.stats ? (
                   <>
                     <div className="peer-stats-grid">
-                      {dashboardData.stats.formatStats['The "ready-to-use" code (CLI/api snippet)'] && (
-                        <div className="stat-card">
-                          <div className="stat-value">{dashboardData.stats.formatStats['The "ready-to-use" code (CLI/api snippet)']}%</div>
-                          <div className="stat-label">of attendees also want CLI snippets</div>
-                        </div>
-                      )}
-                      {dashboardData.stats.locationStats['In the "war room" (fixing a critical issue)'] && (
-                        <div className="stat-card">
-                          <div className="stat-value">{dashboardData.stats.locationStats['In the "war room" (fixing a critical issue)']}%</div>
-                          <div className="stat-label">are in the "war room" fixing critical issues</div>
-                        </div>
-                      )}
-                      {dashboardData.stats.formatStats['The technical deep dive (whitepaper/docs)'] && (
-                        <div className="stat-card">
-                          <div className="stat-value">{dashboardData.stats.formatStats['The technical deep dive (whitepaper/docs)']}%</div>
-                          <div className="stat-label">prefer technical deep dives</div>
-                        </div>
-                      )}
+                      <div className="stat-card">
+                        <div className="stat-value">{dashboardData.stats.formatStats['Ready to use code (CLI/api snippet)'] ?? 0}%</div>
+                        <div className="stat-label">of attendees also want CLI snippets</div>
+                      </div>
+                      <div className="stat-card">
+                        <div className="stat-value">{dashboardData.stats.locationStats['Fixing a critical issue'] ?? 0}%</div>
+                        <div className="stat-label">are fixing critical issues</div>
+                      </div>
+                      <div className="stat-card">
+                        <div className="stat-value">{dashboardData.stats.formatStats['A technical deep dive (whitepaper/docs)'] ?? 0}%</div>
+                        <div className="stat-label">prefer technical deep dives</div>
+                      </div>
                     </div>
                     {Object.keys(dashboardData.stats.formatStats).length === 0 && 
                      Object.keys(dashboardData.stats.locationStats).length === 0 && (
@@ -257,23 +292,6 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                 <p className="step-text">Join another usability study!</p>
               </div>
             </div>
-          </div>
-
-          <div className="dashboard-actions">
-            <button
-              type="button"
-              onClick={handleStartOver}
-              className="start-over-button"
-            >
-              Start over
-            </button>
-            <button
-              type="button"
-              onClick={onExportCSV}
-              className="export-csv-button"
-            >
-              Export responses to CSV
-            </button>
           </div>
         </div>
       ) : (
