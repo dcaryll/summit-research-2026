@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import './TerminalScreen.css'
 import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
-import sparkleImage from '../images/3Dobj-AI_sparkle-Clear-Any_BG.png'
 import qrCodeImage from '../images/qr-code.svg'
 
 interface TerminalScreenProps {
@@ -33,7 +32,6 @@ interface TerminalScreenProps {
 function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, currentQuestion, answers, onAnswerChange, onNextQuestion, onPreviousQuestion, showDashboard, onStartOver, onExportCSV, dashboardData, isLoading, isLoadingDashboard, onAdjustInput }: TerminalScreenProps) {
   const [otherInputValue, setOtherInputValue] = useState('')
   const [otherInputValue2, setOtherInputValue2] = useState('')
-  const [promptSetIndex, setPromptSetIndex] = useState(0)
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
   const [fadeKey, setFadeKey] = useState(0)
   
@@ -47,8 +45,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
   ]
   
   const handleStartOver = () => {
-    // Rotate to next prompt set
-    setPromptSetIndex((prev) => (prev + 1) % 4)
+    // Reset prompt cycling
     setCurrentPromptIndex(0)
     setFadeKey(0)
     onStartOver()
@@ -325,11 +322,6 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
               </h1>
               
               <form onSubmit={onSubmit} className="input-form">
-                <div className="cycling-prompt-wrapper">
-                  <div key={fadeKey} className="cycling-prompt">
-                    {cyclingPrompts[currentPromptIndex]}
-                  </div>
-                </div>
                 <div className="input-row">
                   <div className="input-wrapper">
                     <input
@@ -358,6 +350,11 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                   >
                     &gt; Execute
                   </button>
+                </div>
+                <div className="cycling-prompt-wrapper">
+                  <div key={fadeKey} className="cycling-prompt">
+                    {cyclingPrompts[currentPromptIndex]}
+                  </div>
                 </div>
               </form>
             </>
