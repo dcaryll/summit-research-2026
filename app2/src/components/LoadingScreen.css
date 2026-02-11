@@ -1,0 +1,33 @@
+.loading-screen {
+  width: 100vw;
+  height: 100vh;
+  background: #0f0f0f; /* Red Hat Gray-95 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(0, 102, 204, 0.2);
+  border-top-color: #0066CC;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-family: 'Red Hat Text', sans-serif;
+  margin: 0;
+  text-align: center;
+}

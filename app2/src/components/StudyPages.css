@@ -1,0 +1,231 @@
+.study-pages-screen {
+  width: 100vw;
+  height: 100vh;
+  background: #0f0f0f; /* Red Hat Gray-95 */
+  display: flex;
+  flex-direction: column;
+  font-family: 'Red Hat Text', sans-serif;
+  overflow-y: auto;
+}
+
+.study-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 3rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.study-logo {
+  max-width: 150px;
+  height: auto;
+}
+
+.back-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  font-weight: 400;
+  font-family: 'Red Hat Text', sans-serif;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  border-color: #0066CC;
+  color: #ffffff;
+  background: rgba(0, 102, 204, 0.1);
+}
+
+.study-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  gap: 2rem;
+}
+
+.page-indicator {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  font-family: 'Red Hat Text', sans-serif;
+  text-align: center;
+}
+
+.page-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.page-question {
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: 'Red Hat Display', sans-serif;
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.text-input {
+  width: 100%;
+  background: #1f1f1f;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 1.5rem;
+  color: #ffffff;
+  font-size: 1rem;
+  font-family: 'Red Hat Text', sans-serif;
+  resize: vertical;
+  min-height: 150px;
+  transition: all 0.2s ease;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: #0066CC;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.option-button {
+  background: #1f1f1f;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 1.5rem;
+  color: #ffffff;
+  font-size: 1.125rem;
+  font-family: 'Red Hat Text', sans-serif;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.option-button:hover {
+  border-color: #0066CC;
+  background: rgba(0, 102, 204, 0.1);
+}
+
+.option-button.selected {
+  border-color: #0066CC;
+  background: rgba(0, 102, 204, 0.15);
+}
+
+.rating-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.rating-button {
+  width: 60px;
+  height: 60px;
+  background: #1f1f1f;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-family: 'Red Hat Text', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rating-button:hover {
+  border-color: #0066CC;
+  background: rgba(0, 102, 204, 0.1);
+}
+
+.rating-button.selected {
+  border-color: #0066CC;
+  background: rgba(0, 102, 204, 0.15);
+}
+
+.page-navigation {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
+}
+
+.nav-button {
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: 'Red Hat Text', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.nav-button.previous {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.nav-button.previous:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-button.next {
+  background: #0066CC;
+  border: 2px solid #0066CC;
+  color: #ffffff;
+}
+
+.nav-button.next:hover:not(:disabled) {
+  background: #0052a3;
+  border-color: #0052a3;
+}
+
+.nav-button.next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .study-header {
+    padding: 1.5rem;
+  }
+
+  .study-logo {
+    max-width: 120px;
+  }
+
+  .study-content {
+    padding: 2rem 1.5rem;
+  }
+
+  .page-question {
+    font-size: 1.5rem;
+  }
+
+  .page-navigation {
+    flex-direction: column;
+  }
+
+  .nav-button {
+    width: 100%;
+  }
+}

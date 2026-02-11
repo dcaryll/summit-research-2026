@@ -1,0 +1,209 @@
+.focus-selector-screen {
+  width: 100vw;
+  height: 100vh;
+  background: #0f0f0f; /* Red Hat Gray-95 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2rem;
+  overflow-y: auto;
+  font-family: 'Red Hat Text', sans-serif;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 3rem;
+  margin-top: 2rem;
+}
+
+.logo-image {
+  max-width: 200px;
+  height: auto;
+  width: 100%;
+}
+
+.selector-content {
+  width: 100%;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.selector-title {
+  color: #ffffff;
+  font-size: 3rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0;
+  font-family: 'Red Hat Display', sans-serif;
+}
+
+.selector-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.25rem;
+  font-weight: 400;
+  text-align: center;
+  margin: 0;
+  font-family: 'Red Hat Text', sans-serif;
+}
+
+.randomize-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 3rem;
+  width: 100%;
+}
+
+.randomize-title {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-family: 'Red Hat Display', sans-serif;
+  text-align: center;
+  margin: 0;
+}
+
+.randomize-button {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: 'Red Hat Text', sans-serif;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.randomize-button:hover {
+  border-color: #0066CC;
+  color: #ffffff;
+  background: rgba(0, 102, 204, 0.1);
+}
+
+.randomize-button:active {
+  transform: scale(0.98);
+}
+
+.focus-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  width: 100%;
+  margin-top: 2rem;
+}
+
+.focus-card {
+  background: #1f1f1f; /* Red Hat Gray-80 */
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 3rem 2.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 250px;
+  justify-content: center;
+}
+
+.focus-card:hover {
+  border-color: #0066CC; /* Blue */
+  background: rgba(0, 102, 204, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 102, 204, 0.2);
+}
+
+.focus-card.selected {
+  border-color: #0066CC;
+  background: rgba(0, 102, 204, 0.15);
+  box-shadow: 0 0 30px rgba(0, 102, 204, 0.3);
+}
+
+.focus-card-title {
+  color: #ffffff;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  font-family: 'Red Hat Display', sans-serif;
+}
+
+.focus-card-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.6;
+  font-family: 'Red Hat Text', sans-serif;
+}
+
+.take-study-button {
+  background: #0066CC;
+  border: 2px solid #0066CC;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-family: 'Red Hat Display', sans-serif;
+  padding: 1.25rem 3rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 2rem;
+  min-width: 200px;
+}
+
+.take-study-button:hover {
+  background: #0052a3;
+  border-color: #0052a3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.take-study-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .selector-title {
+    font-size: 2rem;
+  }
+
+  .selector-subtitle {
+    font-size: 1rem;
+  }
+
+  .focus-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .focus-card {
+    padding: 2rem 1.5rem;
+    min-height: 200px;
+  }
+
+  .focus-card-title {
+    font-size: 1.5rem;
+  }
+
+  .logo-image {
+    max-width: 150px;
+  }
+
+  .take-study-button {
+    font-size: 1.125rem;
+    padding: 1rem 2rem;
+    width: 100%;
+    max-width: 400px;
+  }
+}
