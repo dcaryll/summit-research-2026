@@ -1,12 +1,13 @@
 .terminal-screen {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   background: #0f0f0f; /* rh-color-gray-95 */
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .terminal-content {
@@ -393,6 +394,85 @@
 
 .question-option:active {
   background: #4a4a4a;
+}
+
+/* Persona options (Question 4) */
+.persona-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.persona-option {
+  background: transparent;
+  border: 1px solid #ffffff;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  color: #ffffff;
+  font-size: 1rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  border-left: 3px solid transparent;
+}
+
+.persona-option:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  background: #2a2a2a;
+  border-left-color: #00ff2b;
+}
+
+.persona-option.selected {
+  border-color: #00ff2b;
+  color: #ffffff;
+  background: rgba(0, 255, 43, 0.08);
+  border-left-color: #00ff2b;
+}
+
+.persona-option.selected .persona-icon-wrap {
+  color: #00ff2b;
+}
+
+.persona-option:active {
+  background: #3a3a3a;
+}
+
+.persona-icon-wrap {
+  display: flex;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.8);
+  transition: color 0.2s ease;
+}
+
+.persona-icon {
+  flex-shrink: 0;
+}
+
+.persona-label {
+  flex: 1;
+  line-height: 1.5;
+}
+
+.persona-option .checkmark {
+  color: #000000;
+  font-size: 1.25rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-radius: 50%;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .adjust-input-button {

@@ -64,6 +64,47 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
     return () => clearInterval(interval)
   }, [showQuestions, showDashboard, cyclingPrompts.length])
 
+  const personaOptions = [
+    {
+      value: "The builder (developer / architect) – I create new things.",
+      icon: (
+        <svg className="persona-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 19l7-7 3 3-7 7-3-3z" />
+          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+        </svg>
+      )
+    },
+    {
+      value: "The operator (sysadmin / ops / sre) – I keep the lights on.",
+      icon: (
+        <svg className="persona-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+          <path d="M12 5a7 7 0 0 0-7 7" />
+          <path d="M12 19a7 7 0 0 1 7-7" />
+        </svg>
+      )
+    },
+    {
+      value: "The defender (security / compliance) – I manage risk.",
+      icon: (
+        <svg className="persona-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      )
+    },
+    {
+      value: "The strategist (cio / vp / director) – I manage budget and vision.",
+      icon: (
+        <svg className="persona-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10" />
+          <line x1="12" y1="20" x2="12" y2="4" />
+          <line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+      )
+    }
+  ]
+
   const formatOptions = [
     "A summary (3 bullet points max)",
     "A technical deep dive (whitepaper/docs)",
@@ -88,6 +129,13 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
     { value: "5", label: "5 - Fix it automatically; don't even ask me" }
   ]
 
+  const buyingRoleOptions = [
+    "The explorer (I research and find solutions)",
+    "The validator (I test it to see if it breaks)",
+    "The champion (I pitch it to my boss)",
+    "The signer (I approve the budget)"
+  ]
+
 
   const handleClear = () => {
     const syntheticEvent = {
@@ -98,6 +146,10 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
 
   const isOtherSelected = answers.format === 'Other' || (answers.format && !formatOptions.slice(0, -1).includes(answers.format))
   const isOtherSelected2 = answers.location === 'Other' || (answers.location && !locationOptions.slice(0, -1).includes(answers.location))
+
+  const handlePersonaSelect = (value: string) => {
+    onAnswerChange('jobRole', value)
+  }
 
   const handleFormatSelect = (option: string) => {
     if (option === 'Other') {
@@ -135,6 +187,10 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
     onAnswerChange('autonomy', value)
   }
 
+  const handleBuyingRoleSelect = (option: string) => {
+    onAnswerChange('buyingRole', option)
+  }
+
   const canProceed = () => {
     if (currentQuestion === 1) {
       return answers.format && (answers.format !== 'Other' || otherInputValue.trim())
@@ -144,6 +200,12 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
     }
     if (currentQuestion === 3) {
       return !!answers.autonomy
+    }
+    if (currentQuestion === 4) {
+      return !!answers.jobRole
+    }
+    if (currentQuestion === 5) {
+      return !!answers.buyingRole
     }
     return false
   }
@@ -360,7 +422,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
             </>
           ) : (
             <div className="questions-container">
-              <h2 className="question-title">Question {currentQuestion} of 3</h2>
+              <h2 className="question-title">Question {currentQuestion} of 5</h2>
               
               {currentQuestion === 1 && (
                 <>
@@ -467,6 +529,57 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                 </>
               )}
 
+              {currentQuestion === 4 && (
+                <>
+                  <p className="question-text">
+                    To customize your future interface, tell us how you spend your day.
+                  </p>
+                  
+                  <div className="persona-options">
+                    {personaOptions.map((option, index) => {
+                      const isSelected = answers.jobRole === option.value
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          className={`persona-option ${isSelected ? 'selected' : ''}`}
+                          onClick={() => handlePersonaSelect(option.value)}
+                        >
+                          <span className="persona-icon-wrap">{option.icon}</span>
+                          <span className="persona-label">{option.value}</span>
+                          {isSelected && <span className="checkmark">✓</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+
+              {currentQuestion === 5 && (
+                <>
+                  <p className="question-text">
+                    When it comes to buying new tech, what is your role?
+                  </p>
+                  
+                  <div className="question-options">
+                    {buyingRoleOptions.map((option, index) => {
+                      const isSelected = answers.buyingRole === option
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          className={`question-option ${isSelected ? 'selected' : ''}`}
+                          onClick={() => handleBuyingRoleSelect(option)}
+                        >
+                          <span>{option}</span>
+                          {isSelected && <span className="checkmark">✓</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+
               <div className="question-navigation">
                 {currentQuestion === 1 && (
                   <button
@@ -489,10 +602,10 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                 {canProceed() && (
                   <button
                     type="button"
-                    onClick={currentQuestion === 3 ? onSubmit : onNextQuestion}
+                    onClick={currentQuestion === 5 ? onSubmit : onNextQuestion}
                     className="go-button"
                   >
-                    {currentQuestion === 3 ? 'Submit' : 'Next'}
+                    {currentQuestion === 5 ? 'Submit' : 'Next'}
                   </button>
                 )}
               </div>

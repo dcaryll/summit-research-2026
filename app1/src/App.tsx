@@ -34,9 +34,11 @@ const initDB = (): Promise<IDBDatabase> => {
 const saveResponseToBackend = async (data: {
   timestamp: string
   question: string
+  jobRole: string
   format: string
   location: string
   autonomy: string
+  buyingRole: string
 }): Promise<boolean> => {
   try {
     const response = await fetch(API_ENDPOINT, {
@@ -62,9 +64,11 @@ const saveResponseToBackend = async (data: {
 const saveResponse = async (data: {
   timestamp: string
   question: string
+  jobRole: string
   format: string
   location: string
   autonomy: string
+  buyingRole: string
 }) => {
   // Try to save to backend first (primary storage)
   const backendSuccess = await saveResponseToBackend(data)
@@ -162,7 +166,7 @@ function App() {
   const [showDashboard, setShowDashboard] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false)
-  const [sessionResponses, setSessionResponses] = useState<Array<{ timestamp: string; question: string; format: string; location: string; autonomy: string }>>([])
+  const [sessionResponses, setSessionResponses] = useState<Array<{ timestamp: string; question: string; jobRole: string; format: string; location: string; autonomy: string; buyingRole: string }>>([])
 
   // Retry pending responses when online
   useEffect(() => {
@@ -354,9 +358,11 @@ function App() {
       const newResponse = {
         timestamp: new Date().toISOString(),
         question: inputValue || '',
+        jobRole: answers.jobRole || '',
         format: answers.format || '',
         location: answers.location || '',
-        autonomy: answers.autonomy || ''
+        autonomy: answers.autonomy || '',
+        buyingRole: answers.buyingRole || ''
       }
       await saveResponse(newResponse)
       console.log('Response saved to IndexedDB')
@@ -371,7 +377,7 @@ function App() {
       const allResponses = await getAllResponses()
       
       // Create CSV headers
-      const headers = ['Timestamp', 'Question', 'Format Preference', 'Location', 'Autonomy Level']
+      const headers = ['Timestamp', 'Question', 'Job Role', 'Format Preference', 'Location', 'Autonomy Level', 'Tech Buying Role']
       const rows = [headers]
 
       // Add all responses
@@ -379,9 +385,11 @@ function App() {
         rows.push([
           response.timestamp || '',
           response.question || '',
+          response.jobRole || '',
           response.format || '',
           response.location || '',
-          response.autonomy || ''
+          response.autonomy || '',
+          response.buyingRole || ''
         ])
       })
 
@@ -421,7 +429,7 @@ function App() {
         setShowQuestions(true)
         setCurrentQuestion(1)
       }, 2000)
-    } else if (currentQuestion < 3) {
+    } else if (currentQuestion < 5) {
       // Move to next question
       setCurrentQuestion(prev => prev + 1)
     } else {
@@ -454,7 +462,7 @@ function App() {
   }
 
   const handleNextQuestion = () => {
-    if (currentQuestion < 3) {
+    if (currentQuestion < 5) {
       setCurrentQuestion(prev => prev + 1)
     }
   }
