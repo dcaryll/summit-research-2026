@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:single": "lsof -ti:5181 | xargs kill -9 2>/dev/null; vite",
+    "dev:fresh": "rm -rf node_modules/.vite && vite",
     "build": "tsc && npx vite build",
     "preview": "vite preview"
   },

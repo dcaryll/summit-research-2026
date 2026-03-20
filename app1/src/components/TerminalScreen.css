@@ -34,11 +34,19 @@
   gap: 1rem;
 }
 
-.input-display {
+.input-display-row {
   margin-top: 0.5rem;
   max-width: 1000px;
   width: 100%;
   padding: 0 2rem;
+}
+
+.input-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .input-display-text {
@@ -408,6 +416,7 @@
 .persona-option {
   background: transparent;
   border: 1px solid #ffffff;
+  border-left: 3px solid #ffffff;
   border-radius: 8px;
   padding: 1.25rem 1.5rem;
   color: #ffffff;
@@ -419,7 +428,6 @@
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  border-left: 3px solid transparent;
 }
 
 .persona-option:hover {
@@ -476,17 +484,17 @@
 }
 
 .adjust-input-button {
+  flex-shrink: 0;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 4px;
   color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
+  font-size: 0.7rem;
   font-weight: 400;
   font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
-  padding: 0.75rem 2rem;
+  padding: 0.25rem 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 100px;
 }
 
 .adjust-input-button:hover {
@@ -631,13 +639,25 @@
   overflow-x: hidden;
 }
 
+.dashboard-headline-row {
+  width: 95%;
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 24px;
+  flex-shrink: 0;
+}
+
 .dashboard-headline-section {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
   margin: 0;
-  margin-top: 24px;
+}
+
+.dashboard-headline-spacer {
+  width: 260px;
   flex-shrink: 0;
 }
 
@@ -655,7 +675,7 @@
   font-size: 1rem;
   font-weight: 400;
   text-align: center;
-  margin: 0;
+  margin: 0 0 32px 0;
   font-family: 'Red Hat Mono', 'Courier New', 'Monaco', 'Menlo', monospace;
   line-height: 1.4;
 }
@@ -829,7 +849,7 @@
   background: #252525; /* rh-color-gray-80 with opacity */
   border: 1px solid #00ff2b; /* green */
   border-radius: 8px;
-  padding: 2.5rem 2rem;
+  padding: 2rem;
   text-align: center;
   transition: all 0.3s ease;
   flex-shrink: 0;
@@ -880,8 +900,13 @@
 }
 
 @media (max-width: 768px) {
-  .dashboard-headline-section {
+  .dashboard-headline-row {
+    width: 100%;
     margin-top: 1rem;
+  }
+
+  .dashboard-headline-spacer {
+    display: none;
   }
   
   .dashboard-headline {
@@ -1045,7 +1070,7 @@
   align-items: center;
   width: 100%;
   flex-shrink: 0;
-  padding: 24px 0;
+  padding: 0 0 24px 0;
   position: sticky;
   top: 0;
   left: 0;

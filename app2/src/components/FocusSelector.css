@@ -34,11 +34,27 @@
   gap: 2rem;
 }
 
+.selector-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.selector-headline-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
 .selector-title {
   color: #ffffff;
   font-size: 3rem;
   font-weight: 700;
-  text-align: center;
+  text-align: left;
   margin: 0;
   font-family: 'Red Hat Display', sans-serif;
 }
@@ -47,7 +63,7 @@
   color: rgba(255, 255, 255, 0.8);
   font-size: 1.25rem;
   font-weight: 400;
-  text-align: center;
+  text-align: left;
   margin: 0;
   font-family: 'Red Hat Text', sans-serif;
 }
@@ -55,10 +71,9 @@
 .randomize-section {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 1rem;
-  margin-top: 3rem;
-  width: 100%;
+  flex-shrink: 0;
 }
 
 .randomize-title {
@@ -66,11 +81,22 @@
   font-size: 1.25rem;
   font-weight: 600;
   font-family: 'Red Hat Display', sans-serif;
-  text-align: center;
+  text-align: right;
   margin: 0;
 }
 
+.randomize-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .randomize-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   background: transparent;
   border: 2px solid rgba(255, 255, 255, 0.4);
   border-radius: 8px;
@@ -83,6 +109,18 @@
   transition: all 0.2s ease;
 }
 
+.randomize-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.randomize-button-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
 .randomize-button:hover {
   border-color: #0066CC;
   color: #ffffff;
@@ -93,10 +131,71 @@
   transform: scale(0.98);
 }
 
+.choose-by-role-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.choose-by-role-title {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-family: 'Red Hat Display', sans-serif;
+  text-align: left;
+  margin: 0;
+}
+
+.choose-by-role-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+  font-weight: 400;
+  font-family: 'Red Hat Text', sans-serif;
+  text-align: left;
+  margin: 0;
+}
+
+.role-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.role-button {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: 'Red Hat Text', sans-serif;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.role-button:hover {
+  border-color: #0066CC;
+  color: #ffffff;
+  background: rgba(0, 102, 204, 0.1);
+}
+
+.role-button:active {
+  transform: scale(0.98);
+}
+
 .focus-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
   width: 100%;
   margin-top: 2rem;
 }
@@ -105,15 +204,15 @@
   background: #1f1f1f; /* Red Hat Gray-80 */
   border: 3px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  padding: 3rem 2.5rem;
+  padding: 1rem 2rem;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: left;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-height: 250px;
-  justify-content: center;
+  justify-content: flex-start;
+  min-height: 0;
 }
 
 .focus-card:hover {
@@ -129,9 +228,44 @@
   box-shadow: 0 0 30px rgba(0, 102, 204, 0.3);
 }
 
+/* Random study result animation */
+.focus-card--random-dismiss {
+  opacity: 0;
+  transform: scale(0.92);
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.focus-card--random-selected {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(1.08);
+  z-index: 100;
+  transition: all 0.5s ease;
+  box-shadow: 0 0 60px rgba(0, 102, 204, 0.4);
+  pointer-events: none;
+}
+
+.focus-cards-grid--animating .focus-card--random-selected:hover {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.focus-card-icon-wrap {
+  display: block;
+  line-height: 0;
+}
+
+.focus-card-icon-wrap .focus-card-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .focus-card-title {
   color: #ffffff;
-  font-size: 1.75rem;
+  font-size: 20px;
   font-weight: 700;
   margin: 0;
   font-family: 'Red Hat Display', sans-serif;
@@ -139,7 +273,7 @@
 
 .focus-card-description {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 1rem;
+  font-size: 14px;
   font-weight: 400;
   margin: 0;
   line-height: 1.6;
@@ -172,14 +306,55 @@
   transform: translateY(0);
 }
 
+.take-study-button--on-card {
+  margin-top: auto;
+  width: 100%;
+  margin-bottom: 0;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  min-width: 0;
+}
+
+.take-study-button--on-card:hover {
+  transform: translateY(-2px);
+}
+
+.take-study-button--on-card:active {
+  transform: translateY(0);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
+  .selector-header-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+  }
+
+  .selector-headline-block {
+    text-align: center;
+  }
+
   .selector-title {
     font-size: 2rem;
+    text-align: center;
   }
 
   .selector-subtitle {
     font-size: 1rem;
+    text-align: center;
+  }
+
+  .randomize-section {
+    align-items: center;
+  }
+
+  .randomize-title {
+    text-align: center;
+  }
+
+  .randomize-buttons {
+    justify-content: center;
   }
 
   .focus-cards-grid {
@@ -188,12 +363,11 @@
   }
 
   .focus-card {
-    padding: 2rem 1.5rem;
-    min-height: 200px;
+    padding: 1rem 1.2rem;
   }
 
   .focus-card-title {
-    font-size: 1.5rem;
+    font-size: 18px;
   }
 
   .logo-image {

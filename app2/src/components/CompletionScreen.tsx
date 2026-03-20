@@ -22,18 +22,18 @@ function CompletionScreen({ onBack }: CompletionScreenProps) {
 
         <div className="completion-steps">
           <div className="step-box">
-            <h3 className="step-title">Step 1</h3>
+            <h3 className="step-title">SWAG</h3>
             <p className="step-text">Don't forget to retrieve your swag from the front desk!</p>
           </div>
           <div className="step-box">
-            <h3 className="step-title">Step 2</h3>
+            <h3 className="step-title">Community</h3>
             <div className="qr-code-container">
               <img src={qrCodeImage} alt="QR Code" className="qr-code-image" />
             </div>
             <p className="step-text">Join our research community</p>
           </div>
           <div className="step-box">
-            <h3 className="step-title">Step 3</h3>
+            <h3 className="step-title">Keep going</h3>
             <p className="step-text">Take another usability study</p>
             <button
               className="step-button"

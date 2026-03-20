@@ -66,7 +66,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
 
   const personaOptions = [
     {
-      value: "The builder (developer / architect) – I create new things.",
+      value: "The builder (Developer / Architect) – I create new things.",
       icon: (
         <svg className="persona-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 19l7-7 3 3-7 7-3-3z" />
@@ -75,7 +75,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
       )
     },
     {
-      value: "The operator (sysadmin / ops / sre) – I keep the lights on.",
+      value: "The operator (SysAdmin / Ops / SRE) – I keep the lights on.",
       icon: (
         <svg className="persona-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
@@ -86,7 +86,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
       )
     },
     {
-      value: "The defender (security / compliance) – I manage risk.",
+      value: "The defender (Security / Compliance) – I manage risk.",
       icon: (
         <svg className="persona-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -94,7 +94,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
       )
     },
     {
-      value: "The strategist (cio / vp / director) – I manage budget and vision.",
+      value: "The strategist (CIO / VP / Director) – I manage budget and vision.",
       icon: (
         <svg className="persona-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="18" y1="20" x2="18" y2="10" />
@@ -110,6 +110,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
     "A technical deep dive (whitepaper/docs)",
     "Ready to use code (CLI/api snippet)",
     "Visual proof (charts/diagrams)",
+    "Interactive experience (animations/videos/slides)",
     "Other"
   ]
 
@@ -122,18 +123,33 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
   ]
 
   const autonomyOptions = [
-    { value: "1", label: "1 - I need to verify every word" },
-    { value: "2", label: "2 - Show me a draft first, then I'll approve" },
-    { value: "3", label: "3 - Give me options, I'll choose" },
-    { value: "4", label: "4 - Execute with minimal confirmation" },
-    { value: "5", label: "5 - Fix it automatically; don't even ask me" }
+    { value: "1", label: "I need to verify every word" },
+    { value: "2", label: "Show me a draft first, then I'll approve" },
+    { value: "3", label: "Give me options, I'll choose" },
+    { value: "4", label: "Execute with minimal confirmation" },
+    { value: "5", label: "Fix it automatically; don't even ask me" }
   ]
 
   const buyingRoleOptions = [
-    "The explorer (I research and find solutions)",
-    "The validator (I test it to see if it breaks)",
-    "The champion (I pitch it to my boss)",
-    "The signer (I approve the budget)"
+    "I research and find solutions",
+    "I test it to see if it breaks",
+    "I pitch it to my boss",
+    "I approve the budget"
+  ]
+
+  const timeToFindOptions = [
+    "Instant",
+    "Around 5 minutes",
+    "Deep dive (30+ minutes)",
+    "I would give up"
+  ]
+
+  const whereNextOptions = [
+    "Google search",
+    "ChatGPT / Claude / Gemini",
+    "Community forums (Reddit / Stack Overflow / Spiceworks)",
+    "My peer network (Slack / Discord groups)",
+    "Your support line (Phone / Ticket)"
   ]
 
 
@@ -191,6 +207,14 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
     onAnswerChange('buyingRole', option)
   }
 
+  const handleTimeToFindSelect = (option: string) => {
+    onAnswerChange('timeToFind', option)
+  }
+
+  const handleWhereNextSelect = (option: string) => {
+    onAnswerChange('whereNext', option)
+  }
+
   const canProceed = () => {
     if (currentQuestion === 1) {
       return answers.format && (answers.format !== 'Other' || otherInputValue.trim())
@@ -206,6 +230,12 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
     }
     if (currentQuestion === 5) {
       return !!answers.buyingRole
+    }
+    if (currentQuestion === 6) {
+      return !!answers.timeToFind
+    }
+    if (currentQuestion === 7) {
+      return !!answers.whereNext
     }
     return false
   }
@@ -229,7 +259,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
               alignItems: 'center',
               width: '100%',
               flexShrink: 0,
-              padding: '0.5rem 0',
+              padding: '0 0 0.5rem 0',
               position: 'sticky',
               top: 0,
               left: 0,
@@ -260,9 +290,12 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
               Export responses to CSV
             </button>
           </div>
-          <div className="dashboard-headline-section">
-            <h1 className="dashboard-headline">You aren't alone!</h1>
-            <p className="dashboard-subheadline">Your questions are unique, but others have asked similar ones. <br />This will help us build new features and improve our websites.</p>
+          <div className="dashboard-headline-row">
+            <div className="dashboard-headline-section">
+              <h1 className="dashboard-headline">You aren't alone!</h1>
+              <p className="dashboard-subheadline">Your questions are unique, but others have asked similar ones. <br />This will help us build new features and improve our websites.</p>
+            </div>
+            <div className="dashboard-headline-spacer" aria-hidden="true" />
           </div>
           
           <div className="dashboard-main-layout">
@@ -336,18 +369,18 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
             {/* Right Side - Steps Sidebar */}
             <div className="dashboard-sidebar">
               <div className="step-box">
-                <h3 className="step-title">Step 1</h3>
+                <h3 className="step-title">SWAG</h3>
                 <p className="step-text">Don't forget to retrieve your swag from the front desk!</p>
               </div>
               <div className="step-box">
-                <h3 className="step-title">Step 2</h3>
+                <h3 className="step-title">Community</h3>
                 <div className="qr-code-container">
                   <img src={qrCodeImage} alt="QR Code" className="qr-code-image" />
                 </div>
                 <p className="step-text">Join our research community</p>
               </div>
               <div className="step-box">
-                <h3 className="step-title">Step 3</h3>
+                <h3 className="step-title">Keep going</h3>
                 <p className="step-text">Join another usability study!</p>
               </div>
             </div>
@@ -361,10 +394,21 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
               <img src={logoImage} alt="Red Hat Logo" className="logo-image" />
             </div>
             {showQuestions && inputValue && (
-              <div className="input-display">
-                <p className="input-display-text">
-                  <span className="input-display-label">Your response:</span> {inputValue}
-                </p>
+              <div className="input-display-row">
+                <div className="input-display">
+                  <p className="input-display-text">
+                    <span className="input-display-label">Your response:</span> {inputValue}
+                  </p>
+                  {currentQuestion === 1 && (
+                    <button
+                      type="button"
+                      onClick={onAdjustInput}
+                      className="adjust-input-button"
+                    >
+                      Edit my response
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -422,7 +466,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
             </>
           ) : (
             <div className="questions-container">
-              <h2 className="question-title">Question {currentQuestion} of 5</h2>
+              <h2 className="question-title">Question {currentQuestion} of 7</h2>
               
               {currentQuestion === 1 && (
                 <>
@@ -580,16 +624,57 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                 </>
               )}
 
+              {currentQuestion === 6 && (
+                <>
+                  <p className="question-text">
+                    Be honest: How long would it take you to find this specific answer on our (or any vendor's) website today?
+                  </p>
+                  
+                  <div className="question-options">
+                    {timeToFindOptions.map((option, index) => {
+                      const isSelected = answers.timeToFind === option
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          className={`question-option ${isSelected ? 'selected' : ''}`}
+                          onClick={() => handleTimeToFindSelect(option)}
+                        >
+                          <span>{option}</span>
+                          {isSelected && <span className="checkmark">✓</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+
+              {currentQuestion === 7 && (
+                <>
+                  <p className="question-text">
+                    If you couldn't find this answer on our site in 2 minutes, where would you go next?
+                  </p>
+                  
+                  <div className="question-options">
+                    {whereNextOptions.map((option, index) => {
+                      const isSelected = answers.whereNext === option
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          className={`question-option ${isSelected ? 'selected' : ''}`}
+                          onClick={() => handleWhereNextSelect(option)}
+                        >
+                          <span>{option}</span>
+                          {isSelected && <span className="checkmark">✓</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+
               <div className="question-navigation">
-                {currentQuestion === 1 && (
-                  <button
-                    type="button"
-                    onClick={onAdjustInput}
-                    className="adjust-input-button"
-                  >
-                    Adjust my input
-                  </button>
-                )}
                 {currentQuestion > 1 && (
                   <button
                     type="button"
@@ -602,10 +687,10 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                 {canProceed() && (
                   <button
                     type="button"
-                    onClick={currentQuestion === 5 ? onSubmit : onNextQuestion}
+                    onClick={currentQuestion === 7 ? onSubmit : onNextQuestion}
                     className="go-button"
                   >
-                    {currentQuestion === 5 ? 'Submit' : 'Next'}
+                    {currentQuestion === 7 ? 'Submit' : 'Next'}
                   </button>
                 )}
               </div>
