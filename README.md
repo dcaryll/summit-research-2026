@@ -158,6 +158,16 @@ Both apps follow Red Hat Design System principles:
 
 Each app can be deployed independently. Both apps are configured for Vercel deployment, but can be adapted for other platforms.
 
+### GitHub Pages
+
+A GitHub Actions workflow builds and deploys both apps to GitHub Pages on every push to `main`.
+
+**Required setup:** In the repo **Settings → Pages**, set **Source** to **GitHub Actions**. Without this, the workflow will not deploy.
+
+**URLs after deployment:**
+- App 1 (Wizard of OS): `https://<username>.github.io/summit-research-2026/app1/`
+- App 2 (User Study Screener): `https://<username>.github.io/summit-research-2026/app2/`
+
 ## License
 
 Private repository for Red Hat user research studies.
