@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, type DragEvent } from 'react'
 import './StudyPages.css'
 import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
 import CompletionScreen from './CompletionScreen'
@@ -16,7 +16,7 @@ type CreditCard = { id: string; label: string; cost: number; description?: strin
 type StudyPage = {
   id: string
   question: string
-  type: 'text' | 'multiple-choice' | 'rating' | 'matrix' | 'buckets' | 'multi-select' | 'slider' | 'value-credits' | 'overview'
+  type: 'text' | 'multiple-choice' | 'rating' | 'matrix' | 'buckets' | 'multi-select' | 'slider' | 'value-credits' | 'overview' | 'ranking'
   options?: string[]
   rows?: { id: string; label: string }[]
   instruction?: string
@@ -33,11 +33,24 @@ type StudyPage = {
   sliderMaxLabel?: string
   sliderLabels?: string[]
   figmaEmbedUrl?: string
+  /** Shown above the question; use with `imageAlt` for accessibility. */
+  imageSrc?: string
+  imageAlt?: string
+  /** Gray placeholder block when the final image is not ready yet. */
+  placeholderImage?: boolean
+  /** Topic-page style placeholder before the question (e.g. hybrid cloud prototype). */
+  prototypePlaceholder?: boolean
+  /** When set with `figmaEmbedUrl`, render the iframe above the question instead of below. */
+  figmaEmbedAboveQuestion?: boolean
   /** On `multiple-choice`: show follow-up when main answer equals this. */
   followUpWhen?: string
   followUpAnswerKey?: string
   followUpQuestion?: string
   followUpOptions?: string[]
+  /** With `followUpWhen` + `followUpAnswerKey`, show a text area instead of `followUpOptions`. */
+  followUpFreeText?: boolean
+  /** Replace each `{{TOPIC}}` in `question` with the participant's answer from this page id. */
+  questionTopicFromPageId?: string
 }
 
 /** Option A on product evaluation trust question — triggers browser-sandbox follow-up. */
@@ -46,6 +59,7 @@ const TRUST_OWN_METAL_OPTION =
 
 const CREDIT_FOLLOWUP_ASSETS_PLACEHOLDER = '{{ASSETS}}'
 const CREDIT_FOLLOWUP_OMITTED_PLACEHOLDER = '{{OMITTED_ASSETS}}'
+const QUESTION_TOPIC_PLACEHOLDER = '{{TOPIC}}'
 
 function joinCardLabels(cards: CreditCard[]): string {
   const names = cards.map((c) => c.label)
@@ -106,12 +120,182 @@ function resolveStudyQuestion(page: StudyPage, allPages: StudyPage[], answers: R
         : null
     q = q.replace(CREDIT_FOLLOWUP_OMITTED_PLACEHOLDER, phrase ?? 'some evaluation options')
   }
+  if (page.questionTopicFromPageId) {
+    const refId = page.questionTopicFromPageId
+    const topic = answers[refId]?.trim()
+    q = q.split(QUESTION_TOPIC_PLACEHOLDER).join(topic || 'your chosen topic')
+  }
   return q
+}
+
+function isValidRankingOrder(order: unknown, rowIds: string[]): order is string[] {
+  if (!Array.isArray(order) || order.length !== rowIds.length) return false
+  if (!order.every((x): x is string => typeof x === 'string')) return false
+  const set = new Set(order)
+  return rowIds.every((id) => set.has(id)) && set.size === rowIds.length
+}
+
+function isValidRankingAnswer(raw: string | undefined, rowIds: string[]): boolean {
+  if (!rowIds.length) return false
+  try {
+    return isValidRankingOrder(JSON.parse(raw || '[]') as unknown, rowIds)
+  } catch {
+    return false
+  }
+}
+
+type RankingRowModel = { id: string; label: string }
+
+function RankingQuestionBlock({
+  page,
+  answerRaw,
+  onCommit
+}: {
+  page: StudyPage
+  answerRaw: string | undefined
+  onCommit: (orderedIds: string[]) => void
+}) {
+  const rows = page.rows!
+  const rowIds = rows.map((r) => r.id)
+  const byId = Object.fromEntries(rows.map((r) => [r.id, r])) as Record<string, RankingRowModel>
+
+  let order: string[] = [...rowIds]
+  try {
+    const parsed = JSON.parse(answerRaw || '[]') as unknown
+    if (isValidRankingOrder(parsed, rowIds)) order = parsed
+  } catch {
+    /* keep default */
+  }
+  const orderedRows = order.map((id) => byId[id]).filter(Boolean) as RankingRowModel[]
+  const displayRows = orderedRows.length === rowIds.length ? orderedRows : rows
+
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+
+  const commitOrder = (next: string[]) => {
+    onCommit(next)
+  }
+
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= displayRows.length) return
+    const ids = displayRows.map((r) => r.id)
+    const next = [...ids]
+    const [removed] = next.splice(from, 1)
+    next.splice(to, 0, removed)
+    commitOrder(next)
+  }
+
+  const reorderByDrag = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return
+    const ids = displayRows.map((r) => r.id)
+    const next = [...ids]
+    const [removed] = next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, removed)
+    commitOrder(next)
+  }
+
+  const handleDragStart = (e: DragEvent, rowId: string) => {
+    e.dataTransfer.setData('text/plain', rowId)
+    e.dataTransfer.effectAllowed = 'move'
+    setDraggingId(rowId)
+  }
+
+  const handleDragEnd = () => {
+    setDraggingId(null)
+    setDragOverIndex(null)
+  }
+
+  const handleDragOver = (e: DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverIndex(index)
+  }
+
+  const handleDragLeave = (e: DragEvent) => {
+    const related = e.relatedTarget as Node | null
+    if (related && e.currentTarget.contains(related)) return
+    setDragOverIndex(null)
+  }
+
+  const handleDrop = (e: DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    const dragId = e.dataTransfer.getData('text/plain')
+    setDragOverIndex(null)
+    setDraggingId(null)
+    if (!dragId) return
+    const ids = displayRows.map((r) => r.id)
+    const fromIndex = ids.indexOf(dragId)
+    if (fromIndex === -1) return
+    reorderByDrag(fromIndex, dropIndex)
+  }
+
+  return (
+    <div className="ranking-question">
+      {page.instruction ? <p className="ranking-instruction">{page.instruction}</p> : null}
+      <ul className="ranking-list">
+        {displayRows.map((row, i) => (
+          <li
+            key={row.id}
+            className={`ranking-row ${draggingId === row.id ? 'ranking-row--dragging' : ''} ${dragOverIndex === i && draggingId && draggingId !== row.id ? 'ranking-row--drop-target' : ''}`}
+            onDragOver={(e) => handleDragOver(e, i)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, i)}
+          >
+            <span
+              className="ranking-drag-handle"
+              draggable
+              onDragStart={(e) => handleDragStart(e, row.id)}
+              onDragEnd={handleDragEnd}
+              aria-label={`Drag to reorder: ${row.label}`}
+              title="Drag to reorder"
+            >
+              <span className="ranking-drag-grip" aria-hidden>
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </span>
+            </span>
+            <span className="ranking-rank-badge" aria-hidden>
+              {i + 1}
+            </span>
+            <span className="ranking-row-label">{row.label}</span>
+            <div className="ranking-row-actions">
+              <button
+                type="button"
+                className="ranking-move-button"
+                disabled={i === 0}
+                onClick={() => move(i, i - 1)}
+                aria-label={`Move ${row.label} up in priority`}
+              >
+                Up
+              </button>
+              <button
+                type="button"
+                className="ranking-move-button"
+                disabled={i === displayRows.length - 1}
+                onClick={() => move(i, i + 1)}
+                aria-label={`Move ${row.label} down in priority`}
+              >
+                Down
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 
 function computeCanProceed(page: StudyPage | undefined, ans: Record<string, string>): boolean {
   if (!page) return false
   if (page.type === 'overview') return true
+  if (page.type === 'ranking' && page.rows?.length) {
+    const ids = page.rows.map((r) => r.id)
+    return isValidRankingAnswer(ans[page.id], ids)
+  }
   if ((page.type === 'matrix' || page.type === 'buckets') && page.rows) {
     return page.rows.every(
       row => ans[`${page.id}:${row.id}`] && ans[`${page.id}:${row.id}`].trim() !== ''
@@ -404,9 +588,79 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         question:
           "Hi there, we're looking to learn more about how you like to learn about technology topics you're interested in and in what mediums you prefer to learn.\n\nIn the next 5 minutes, you'll help us improve our topical learning content offerings by ranking and choosing between different types of learning content. Your feedback will help us provide more relevant and useful learning content across our sites."
       },
-      { id: '1', question: 'When you need to learn something about a Red Hat product, where do you look first?', type: 'multiple-choice', options: ['Documentation (docs.redhat.com)', 'Red Hat website', 'Search engine', 'learn.redhat.com', 'Developer resources', 'Community forums', 'Other'] },
-      { id: '2', question: 'What makes technical content easy or hard for you to discover and use?', type: 'text' },
-      { id: '3', question: 'What would improve content discovery for you?', type: 'text' }
+      {
+        id: '1',
+        type: 'multiple-choice',
+        placeholderImage: true,
+        question:
+          "Take a second to look at the 5 topics on this page. Choose the topic you're most interested in learning about.",
+        options: ['AI', 'Virtualization', 'App Platforms', 'Automation', 'Linux Standardization']
+      },
+      {
+        id: '2',
+        type: 'multiple-choice',
+        prototypePlaceholder: true,
+        instruction: 'Select your choice on the screen.',
+        question:
+          'If you wanted to learn more about this topic, which additional piece of content are you most likely to choose?',
+        options: [
+          'Hands-on lab or sandbox',
+          'Short video overview',
+          'In-depth documentation',
+          'Structured learning path or course',
+          'Live webinar or workshop',
+          'Code samples or reference architecture'
+        ]
+      },
+      {
+        id: '3',
+        type: 'multiple-choice',
+        question: 'Why did you pick this content offering?',
+        options: ['Option 1', 'Option 2', 'Option 3', 'Other'],
+        followUpWhen: 'Other',
+        followUpAnswerKey: '3-other',
+        followUpFreeText: true,
+        followUpQuestion: 'Please specify:'
+      },
+      {
+        id: '4',
+        type: 'ranking',
+        question:
+          'Rank these factors based on how much they influence your initial choice of learning content.',
+        instruction:
+          'Please rank them in order of importance with 1 being the most important and 4 being less important.',
+        rows: [
+          { id: 'medium', label: "Medium (whether it's listening, reading, visual)" },
+          { id: 'length', label: 'Length of content' },
+          { id: 'title', label: 'Title' },
+          { id: 'source', label: 'Source' }
+        ]
+      },
+      {
+        id: '5',
+        type: 'ranking',
+        questionTopicFromPageId: '1',
+        question:
+          "Please rank the following pieces of content based on which one you're most likely to choose when learning about {{TOPIC}}?",
+        instruction:
+          'Rank with 1 being the format you are most likely to choose first, and 3 the least.',
+        rows: [
+          { id: 'podcast', label: 'Example of Podcast episode' },
+          { id: 'video', label: 'Example of Video' },
+          { id: 'blog', label: 'Example of Blog article' }
+        ]
+      },
+      {
+        id: '5-follow',
+        type: 'text',
+        question: 'Why did you pick this content offering?'
+      },
+      {
+        id: '6',
+        type: 'text',
+        question:
+          "Are there any types of learning content that you didn't see today that you think is missing?"
+      }
     ]
   }
   const legacy: Record<string, string> = {
@@ -442,6 +696,18 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   useEffect(() => {
     if (currentPage?.type === 'slider' && answers[currentPage.id] === undefined) {
       setAnswers(prev => ({ ...prev, [currentPage.id]: String(currentPage.sliderMin ?? 1) }))
+    }
+  }, [currentPage?.id, currentPage?.type])
+
+  // Default ranking order = definition order until the participant reorders
+  useEffect(() => {
+    if (currentPage?.type === 'ranking' && currentPage.rows?.length) {
+      const pid = currentPage.id
+      const ids = currentPage.rows.map((r) => r.id)
+      setAnswers((prev) => {
+        if (isValidRankingAnswer(prev[pid], ids)) return prev
+        return { ...prev, [pid]: JSON.stringify(ids) }
+      })
     }
   }, [currentPage?.id, currentPage?.type])
   const isLastPage = studyPages.length > 0 && currentPageIndex === studyPages.length - 1
@@ -485,6 +751,13 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       overrides[page.id] = page.options[0]
       if (page.followUpAnswerKey && page.followUpOptions?.length) {
         overrides[page.followUpAnswerKey] = page.followUpOptions[0]
+      } else if (
+        page.followUpAnswerKey &&
+        page.followUpFreeText &&
+        page.followUpWhen &&
+        page.options[0] === page.followUpWhen
+      ) {
+        overrides[page.followUpAnswerKey] = '[skipped]'
       }
     } else if (page.type === 'rating') {
       overrides[page.id] = '3'
@@ -505,6 +778,8 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       overrides[page.id] = JSON.stringify(ids.length ? ids : [page.creditCards[0].id])
     } else if (page.type === 'slider') {
       overrides[page.id] = String(page.sliderMin ?? 3)
+    } else if (page.type === 'ranking' && page.rows?.length) {
+      overrides[page.id] = JSON.stringify(page.rows.map((r) => r.id))
     }
     return overrides
   }
@@ -604,6 +879,41 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
         </div>
 
         <div className="page-content">
+          {currentPage.imageSrc ? (
+            <img
+              src={currentPage.imageSrc}
+              alt={currentPage.imageAlt ?? ''}
+              className="study-page-hero-image"
+            />
+          ) : currentPage.placeholderImage ? (
+            <div
+              className="study-page-image-placeholder"
+              role="img"
+              aria-label="Illustration of the five learning topics (placeholder)"
+            >
+              <span className="study-page-image-placeholder-label">Image placeholder</span>
+            </div>
+          ) : currentPage.figmaEmbedAboveQuestion && currentPage.figmaEmbedUrl ? (
+            <div className="figma-embed-wrap figma-embed-wrap--above">
+              <iframe
+                src={currentPage.figmaEmbedUrl}
+                className="figma-embed"
+                allowFullScreen
+                title="Topic page prototype"
+              />
+            </div>
+          ) : currentPage.prototypePlaceholder ? (
+            <div
+              className="study-page-prototype-placeholder"
+              role="region"
+              aria-label="Hybrid cloud topic page prototype with selectable learning content offerings"
+            >
+              <span className="study-page-prototype-placeholder-label">
+                Hybrid cloud topic page prototype with selectable learning content offerings
+              </span>
+            </div>
+          ) : null}
+
           {currentPage.type === 'overview' ? (
             <div className="study-overview" role="region" aria-label="Study introduction">
               {currentPage.question
@@ -620,7 +930,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             <h2 className="page-question">{displayedQuestion}</h2>
           )}
 
-          {currentPage.figmaEmbedUrl && (
+          {currentPage.figmaEmbedUrl && !currentPage.figmaEmbedAboveQuestion && (
             <div className="figma-embed-wrap">
               <iframe
                 src={currentPage.figmaEmbedUrl}
@@ -643,6 +953,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
 
           {currentPage.type === 'multiple-choice' && currentPage.options && (
             <div className={currentPage.followUpWhen !== undefined ? 'evaluation-trust' : undefined}>
+              {currentPage.instruction && (
+                <p className="multiple-choice-instruction">{currentPage.instruction}</p>
+              )}
               <div className="options-list">
                 {currentPage.options.map((option) => (
                   <button
@@ -657,9 +970,33 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
               </div>
               {currentPage.followUpWhen !== undefined &&
                 answers[currentPage.id] === currentPage.followUpWhen &&
+                currentPage.followUpAnswerKey &&
+                currentPage.followUpFreeText && (
+                  <div className="multiple-choice-other-follow">
+                    {currentPage.followUpQuestion ? (
+                      <p className="multiple-choice-other-follow-label">{currentPage.followUpQuestion}</p>
+                    ) : null}
+                    <textarea
+                      className="text-input"
+                      value={answers[currentPage.followUpAnswerKey] || ''}
+                      onChange={(e) =>
+                        setAnswers((prev) => ({
+                          ...prev,
+                          [currentPage.followUpAnswerKey!]: e.target.value
+                        }))
+                      }
+                      placeholder="Type your answer here..."
+                      rows={4}
+                      aria-label={currentPage.followUpQuestion || 'Other — please specify'}
+                    />
+                  </div>
+                )}
+              {currentPage.followUpWhen !== undefined &&
+                answers[currentPage.id] === currentPage.followUpWhen &&
                 currentPage.followUpQuestion &&
                 currentPage.followUpOptions &&
-                currentPage.followUpAnswerKey && (
+                currentPage.followUpAnswerKey &&
+                !currentPage.followUpFreeText && (
                   <div className="evaluation-trust-follow">
                     <p className="evaluation-trust-follow-question">{currentPage.followUpQuestion}</p>
                     <div className="options-list">
@@ -875,6 +1212,14 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   : (answers[currentPage.id] ?? currentPage.sliderMin ?? 1)}
               </p>
             </div>
+          )}
+
+          {currentPage.type === 'ranking' && currentPage.rows && currentPage.rows.length >= 2 && (
+            <RankingQuestionBlock
+              page={currentPage}
+              answerRaw={answers[currentPage.id]}
+              onCommit={(ids) => handleAnswerChange(JSON.stringify(ids))}
+            />
           )}
 
           {currentPage.type === 'matrix' && currentPage.rows && currentPage.options && (
