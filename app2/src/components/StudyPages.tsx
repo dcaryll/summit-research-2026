@@ -567,9 +567,51 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       }
     ],
     'product-marketing': [
-      { id: '1', question: 'How do you typically learn about or purchase Red Hat products?', type: 'multiple-choice', options: ['Red Hat website and campaigns', 'Direct from Red Hat sales', 'Through a partner or reseller', 'My organization\'s procurement', 'Events and webinars', 'Other'] },
-      { id: '2', question: 'What challenges do you face when evaluating product information or making a purchase decision?', type: 'text' },
-      { id: '3', question: 'What would make product marketing and buying information more useful for you?', type: 'text' }
+      {
+        id: 'intro',
+        type: 'overview',
+        question:
+          "In this study, when we say 'product within a portfolio,' we mean:\n\nFor Red Hat OpenShift, think 'Red Hat OpenShift Dedicated.'\n\nFor RHEL, think 'RHEL Server.'\n\nFor Red Hat Ansible Automation, think 'Red Hat Ansible Automation Platform on Microsoft Azure.'\n\nFor Red Hat AI, think 'Red Hat AI Inference Server.'"
+      },
+      {
+        id: '1',
+        type: 'multiple-choice',
+        question:
+          'With that context in mind, if you are looking for a specific product within a product portfolio, which menu label would you prefer them to be housed under?',
+        options: ['Product editions', 'Product variants', 'Deployment options', 'Sub-products', 'Other'],
+        followUpWhen: 'Other',
+        followUpAnswerKey: '1-other',
+        followUpFreeText: true,
+        followUpQuestion: 'Please specify:'
+      },
+      {
+        id: '2',
+        type: 'buckets',
+        question: 'Drag these items into the menu label where you would expect to find them:',
+        instruction: '',
+        options: ['Learn', 'Explore', 'Overview', 'Get started'],
+        rows: [
+          { id: 'product-news', label: 'Product news' },
+          { id: 'relevant-articles-topics-blogs', label: 'Relevant articles, topics and blogs' },
+          { id: 'product-use-cases', label: 'Product use cases' },
+          { id: 'product-learning-hubs', label: 'Product learning hubs' },
+          { id: 'product-training-certification', label: 'Product training & certification' },
+          { id: 'product-interactive-walkthroughs', label: 'Product interactive walkthroughs' },
+          { id: 'product-quickstarts', label: 'Product quickstarts' },
+          { id: 'product-interactive-labs', label: 'Product interactive labs' },
+          { id: 'customer-success-stories', label: 'Customer success stories' },
+          { id: 'product-learning-paths', label: 'Product learning paths' },
+          { id: 'persona-based-content', label: 'Persona-based content' },
+          { id: 'product-trials', label: 'Product trials' },
+          { id: 'product-sandbox-environments', label: 'Product sandbox environments' },
+          { id: 'product-pricing', label: 'Product pricing' },
+          { id: 'how-to-buy-pricing', label: 'How to buy/pricing' },
+          { id: 'product-features', label: 'Product features' },
+          { id: 'product-insights-reviews-testimonials', label: 'Product insights, reviews and testimonials' }
+        ]
+      },
+      { id: '3', question: 'What challenges do you face when evaluating product information or making a purchase decision?', type: 'text' },
+      { id: '4', question: 'What would make product marketing and buying information more useful for you?', type: 'text' }
     ],
     'developer-program': [
       { id: '1', question: 'Which parts of the Red Hat Developer program or tools do you use today?', type: 'multiple-choice', options: ['OpenShift', 'RHEL', 'Ansible', 'Quay', 'Buildah/Podman', 'Developer portal / sandbox', 'Other'] },
