@@ -108,6 +108,94 @@ const saveResponse = async (data: {
   }
 }
 
+type StoredStudyResponse = {
+  id?: number
+  timestamp: string
+  focusId: string
+  answers: Record<string, string>
+}
+
+const getAllResponses = async (): Promise<StoredStudyResponse[]> => {
+  try {
+    const db = await initDB()
+    const indexedDBData = await new Promise<StoredStudyResponse[]>((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readonly')
+      const store = transaction.objectStore(STORE_NAME)
+      const request = store.getAll()
+      request.onsuccess = () => resolve(request.result || [])
+      request.onerror = () => reject(request.error)
+    })
+    if (indexedDBData.length > 0) {
+      try {
+        localStorage.setItem('userStudyBackup', JSON.stringify(indexedDBData))
+      } catch (e) {
+        console.error('Error syncing study backup to localStorage:', e)
+      }
+      return indexedDBData
+    }
+  } catch (error) {
+    console.error('Error reading study responses from IndexedDB:', error)
+  }
+  try {
+    const raw = localStorage.getItem('userStudyBackup')
+    if (raw) {
+      const parsed = JSON.parse(raw) as StoredStudyResponse[]
+      return Array.isArray(parsed) ? parsed : []
+    }
+  } catch (e) {
+    console.error('Error reading study backup from localStorage:', e)
+  }
+  return []
+}
+
+function escapeCsvCell(value: string): string {
+  return `"${String(value).replace(/"/g, '""')}"`
+}
+
+const exportResponsesToCsv = async () => {
+  try {
+    const all = await getAllResponses()
+    if (all.length === 0) {
+      window.alert(
+        'No responses found to export. Responses are saved when a participant finishes a study.'
+      )
+      return
+    }
+    const sorted = [...all].sort((a, b) =>
+      (a.timestamp || '').localeCompare(b.timestamp || '')
+    )
+    const answerKeySet = new Set<string>()
+    sorted.forEach((r) => {
+      Object.keys(r.answers || {}).forEach((k) => answerKeySet.add(k))
+    })
+    const answerKeys = [...answerKeySet].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    const headers = ['timestamp', 'focusId', ...answerKeys]
+    const rows: string[][] = [headers]
+    for (const r of sorted) {
+      rows.push([
+        r.timestamp || '',
+        r.focusId || '',
+        ...answerKeys.map((k) => r.answers?.[k] ?? '')
+      ])
+    }
+    const csvBody = rows.map((row) => row.map(escapeCsvCell).join(',')).join('\n')
+    const csvContent = `\uFEFF${csvBody}`
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `summit-research-app2-responses-${new Date().toISOString().slice(0, 10)}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Error exporting study responses CSV:', error)
+    window.alert('Could not export CSV. Check the console for details.')
+  }
+}
+
 function App() {
   const [selectedFocus, setSelectedFocus] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -213,16 +301,25 @@ function App() {
   }
 
   if (showStudy && selectedFocus) {
-    return <StudyPages focusId={selectedFocus} onBack={handleBackToSelection} onComplete={handleStudyComplete} />
+    return (
+      <StudyPages
+        key={selectedFocus}
+        focusId={selectedFocus}
+        onBack={handleBackToSelection}
+        onComplete={handleStudyComplete}
+        onExportCsv={exportResponsesToCsv}
+      />
+    )
   }
 
   return (
     <div className="app">
-      <FocusSelector 
+      <FocusSelector
         onFocusSelect={handleFocusSelect}
         selectedFocus={selectedFocus}
         onTakeStudy={handleTakeStudy}
         onStartQualifying={handleStartQualifying}
+        onExportCsv={exportResponsesToCsv}
       />
       {import.meta.env.DEV && (
         <div data-build="dev-indicator" style={{ position: 'fixed', bottom: 8, right: 8, fontSize: 10, color: 'rgba(255,255,255,0.5)', pointerEvents: 'none' }}>

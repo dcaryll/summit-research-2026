@@ -9,14 +9,13 @@ interface QualifyingQuestionsProps {
 
 // Focus options for Q3 - maps answer to focus id
 const FOCUS_OPTIONS = [
-  { id: 'renew-subscription', label: 'Renewing a subscription' },
-  { id: 'trying-products', label: 'Trying new Products' },
-  { id: 'dashboard', label: 'My Red Hat Dashboard' },
-  { id: 'guided-learning-genai', label: 'GenAI Guided Learning' },
   { id: 'user-preferences', label: 'User preferences' },
-  { id: 'buying-products', label: 'Buying products' },
-  { id: 'accessibility-usability', label: 'Accessibility and usability' },
-  { id: 'developer-for-business', label: 'Developer for business' }
+  { id: 'product-evaluation', label: 'Product evaluation' },
+  { id: 'developer-program', label: 'Developer program' },
+  { id: 'my-red-hat', label: 'My Red Hat' },
+  { id: 'my-trials', label: 'My trials' },
+  { id: 'product-marketing', label: 'Product marketing' },
+  { id: 'content-discovery', label: 'Content discovery' }
 ] as const
 
 const QUESTIONS = [
@@ -24,10 +23,13 @@ const QUESTIONS = [
     id: 'q1',
     question: 'What best describes your goal today?',
     options: [
-      { value: 'renew', label: 'I need to renew or manage a subscription' },
-      { value: 'explore', label: "I'm exploring new Red Hat products" },
-      { value: 'dashboard', label: 'I use or want to improve my Red Hat Dashboard' },
-      { value: 'learning', label: "I'm interested in Guided Learning with GenAI" }
+      { value: 'preferences', label: 'Profile, preferences, and personalization across Red Hat' },
+      { value: 'evaluate', label: 'Evaluating or trying products' },
+      { value: 'developer', label: 'Developer program, tools, or sandbox' },
+      { value: 'portal', label: 'My Red Hat portal or dashboard' },
+      { value: 'trials', label: 'Product trials and evaluation access' },
+      { value: 'marketing', label: 'Product information, marketing, or procurement' },
+      { value: 'content', label: 'Finding documentation, learning, or technical content' }
     ]
   },
   {

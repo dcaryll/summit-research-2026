@@ -4,9 +4,10 @@ import qrCodeImage from '../images/qr-code.svg'
 
 interface CompletionScreenProps {
   onBack: () => void
+  onExportCsv?: () => void | Promise<void>
 }
 
-function CompletionScreen({ onBack }: CompletionScreenProps) {
+function CompletionScreen({ onBack, onExportCsv }: CompletionScreenProps) {
   return (
     <div className="completion-screen">
       <div className="completion-header">
@@ -18,6 +19,11 @@ function CompletionScreen({ onBack }: CompletionScreenProps) {
         <div className="completion-headline-section">
           <h1 className="completion-headline">Thank you!</h1>
           <p className="completion-subheadline">Your feedback helps us build better products and experiences.</p>
+          {onExportCsv && (
+            <button type="button" className="completion-export-csv" onClick={() => void onExportCsv()}>
+              Download all responses (CSV)
+            </button>
+          )}
         </div>
 
         <div className="completion-steps">

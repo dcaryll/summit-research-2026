@@ -34,9 +34,9 @@
 }
 
 .qualifying-back-button:hover {
-  border-color: #0066CC;
+  border-color: var(--accent-blue);
   color: #ffffff;
-  background: rgba(0, 102, 204, 0.1);
+  background: rgba(var(--accent-blue-rgb), 0.1);
 }
 
 .qualifying-content {
@@ -89,13 +89,13 @@
 }
 
 .qualifying-option:hover {
-  border-color: #0066CC;
-  background: rgba(0, 102, 204, 0.1);
+  border-color: var(--accent-blue);
+  background: rgba(var(--accent-blue-rgb), 0.1);
 }
 
 .qualifying-option.selected {
-  border-color: #0066CC;
-  background: rgba(0, 102, 204, 0.15);
+  border-color: var(--accent-blue);
+  background: rgba(var(--accent-blue-rgb), 0.15);
 }
 
 .qualifying-navigation {
@@ -130,14 +130,14 @@
 }
 
 .qualifying-nav.next {
-  background: #0066CC;
-  border: 2px solid #0066CC;
+  background: var(--accent-blue);
+  border: 2px solid var(--accent-blue);
   color: #ffffff;
 }
 
 .qualifying-nav.next:hover:not(:disabled) {
-  background: #0052a3;
-  border-color: #0052a3;
+  background: var(--accent-blue-hover);
+  border-color: var(--accent-blue-hover);
 }
 
 .qualifying-nav.next:disabled {

@@ -35,9 +35,9 @@
 }
 
 .back-button:hover {
-  border-color: #0066CC;
+  border-color: var(--accent-blue);
   color: #ffffff;
-  background: rgba(0, 102, 204, 0.1);
+  background: rgba(var(--accent-blue-rgb), 0.1);
 }
 
 .completion-content {
@@ -74,6 +74,25 @@
   margin: 0;
 }
 
+.completion-export-csv {
+  margin-top: 0.5rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9375rem;
+  font-family: 'Red Hat Text', sans-serif;
+  padding: 0.65rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.completion-export-csv:hover {
+  border-color: var(--accent-blue);
+  color: #ffffff;
+  background: rgba(var(--accent-blue-rgb), 0.1);
+}
+
 .completion-steps {
   display: flex;
   flex-direction: row;
@@ -104,7 +123,7 @@
 }
 
 .step-title {
-  color: #0066CC;
+  color: var(--accent-blue);
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
@@ -152,8 +171,8 @@
 
 .step-button:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-color: #0066CC;
-  color: #0066CC;
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
 }
 
 @media (max-width: 768px) {

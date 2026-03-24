@@ -122,9 +122,9 @@
 }
 
 .randomize-button:hover {
-  border-color: #0066CC;
+  border-color: var(--accent-blue);
   color: #ffffff;
-  background: rgba(0, 102, 204, 0.1);
+  background: rgba(var(--accent-blue-rgb), 0.1);
 }
 
 .randomize-button:active {
@@ -183,9 +183,9 @@
 }
 
 .role-button:hover {
-  border-color: #0066CC;
+  border-color: var(--accent-blue);
   color: #ffffff;
-  background: rgba(0, 102, 204, 0.1);
+  background: rgba(var(--accent-blue-rgb), 0.1);
 }
 
 .role-button:active {
@@ -216,16 +216,16 @@
 }
 
 .focus-card:hover {
-  border-color: #0066CC; /* Blue */
-  background: rgba(0, 102, 204, 0.1);
+  border-color: var(--accent-blue); /* Blue */
+  background: rgba(var(--accent-blue-rgb), 0.1);
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 102, 204, 0.2);
+  box-shadow: 0 8px 24px rgba(var(--accent-blue-rgb), 0.2);
 }
 
 .focus-card.selected {
-  border-color: #0066CC;
-  background: rgba(0, 102, 204, 0.15);
-  box-shadow: 0 0 30px rgba(0, 102, 204, 0.3);
+  border-color: var(--accent-blue);
+  background: rgba(var(--accent-blue-rgb), 0.15);
+  box-shadow: 0 0 30px rgba(var(--accent-blue-rgb), 0.3);
 }
 
 /* Random study result animation */
@@ -243,7 +243,7 @@
   transform: translate(-50%, -50%) scale(1.08);
   z-index: 100;
   transition: all 0.5s ease;
-  box-shadow: 0 0 60px rgba(0, 102, 204, 0.4);
+  box-shadow: 0 0 60px rgba(var(--accent-blue-rgb), 0.4);
   pointer-events: none;
 }
 
@@ -281,8 +281,8 @@
 }
 
 .take-study-button {
-  background: #0066CC;
-  border: 2px solid #0066CC;
+  background: var(--accent-blue);
+  border: 2px solid var(--accent-blue);
   border-radius: 8px;
   color: #ffffff;
   font-size: 1.25rem;
@@ -296,10 +296,10 @@
 }
 
 .take-study-button:hover {
-  background: #0052a3;
-  border-color: #0052a3;
+  background: var(--accent-blue-hover);
+  border-color: var(--accent-blue-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+  box-shadow: 0 4px 12px rgba(var(--accent-blue-rgb), 0.3);
 }
 
 .take-study-button:active {
@@ -380,4 +380,32 @@
     width: 100%;
     max-width: 400px;
   }
+}
+
+.focus-selector-facilitator {
+  width: 100%;
+  max-width: 1400px;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: center;
+}
+
+.focus-export-csv {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.875rem;
+  font-family: 'Red Hat Text', sans-serif;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.focus-export-csv:hover {
+  border-color: var(--accent-blue);
+  color: #ffffff;
+  background: rgba(var(--accent-blue-rgb), 0.08);
 }
