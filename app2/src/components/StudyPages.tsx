@@ -521,38 +521,63 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         id: 'gen-ai-intro',
         type: 'overview',
         question:
-          "**Section 2: Generative and intelligent customization**\n\nOverview copy for this section will go here. (You'll provide the full introduction text.)"
+          "**Section 2: Generative and intelligent customization**\n\nTake the wheel or let AI drive?\n\nHelp us design a dashboard that builds itself around your actual workday."
       },
       {
         id: 'gen-ai-prototype',
         type: 'prototype',
         question:
-          'Explore the clickable prototype below. When you are ready, continue to the follow-up question.',
+          'Explore the clickable prototype below. When you are ready, continue to the follow-up questions.',
         figmaEmbedUrl: ''
       },
       {
         id: 'gen-ai-followup',
         type: 'text',
         question:
-          'Follow-up about generative and intelligent customization — question text to be added.'
+          "If you could 'prompt' this blank space to show you exactly what you need right now, what would you say? (e.g., 'Show me everything related to my OpenShift upgrade' or 'Build me a security health view'.)"
+      },
+      {
+        id: 'gen-ai-layout',
+        type: 'text',
+        question:
+          'When your needs change—like during an active system breach—do you want to manually drag-and-drop new components into place, or would you prefer the dashboard to automatically shift its layout to prioritize security data?'
+      },
+      {
+        id: 'gen-ai-trust',
+        type: 'text',
+        question:
+          "If an AI built a custom view for you, how would we earn your trust that the information is accurate? Would you need to see a 'Why was this shown?' explanation, or is the speed of the data more important?"
       },
       {
         id: 'proof-intro',
         type: 'overview',
         question:
-          "**Section 3: Proof of subscription value lookback**\n\nOverview copy for this section will go here. (You'll provide the full introduction text.)"
+          "**Section 3: Proof of subscription value lookback**\n\nMake your next renewal a breeze.\n\nHelp us design the ultimate 'Proof of Value' report that shows your boss exactly how much your team has achieved with Red Hat this year."
       },
       {
         id: 'proof-prototype',
         type: 'prototype',
         question:
-          'Explore the clickable prototype below. When you are ready, continue to the follow-up question.',
+          'Explore the clickable prototype below. When you are ready, continue to the follow-up questions.',
         figmaEmbedUrl: ''
       },
       {
         id: 'proof-followup',
         type: 'text',
-        question: 'Follow-up about proof of subscription value — question text to be added.'
+        question:
+          "If you could 'prompt' this blank space to show you exactly what you need right now, what would you say? (e.g., 'Show me everything related to my OpenShift upgrade' or 'Build me a security health view'.)"
+      },
+      {
+        id: 'proof-layout',
+        type: 'text',
+        question:
+          'When your needs change—like during an active system breach—do you want to manually drag-and-drop new components into place, or would you prefer the dashboard to automatically shift its layout to prioritize security data?'
+      },
+      {
+        id: 'proof-trust',
+        type: 'text',
+        question:
+          "If an AI built a custom view for you, how would we earn your trust that the information is accurate? Would you need to see a 'Why was this shown?' explanation, or is the speed of the data more important?"
       }
     ],
     'user-preferences': [
