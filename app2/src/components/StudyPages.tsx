@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, type DragEvent } from 'react'
+import { useState, useEffect, useMemo, useRef, type DragEvent, type ReactNode } from 'react'
 import './StudyPages.css'
 import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
 import CompletionScreen from './CompletionScreen'
@@ -16,7 +16,7 @@ type CreditCard = { id: string; label: string; cost: number; description?: strin
 type StudyPage = {
   id: string
   question: string
-  type: 'text' | 'multiple-choice' | 'rating' | 'matrix' | 'buckets' | 'multi-select' | 'slider' | 'value-credits' | 'overview' | 'ranking'
+  type: 'text' | 'multiple-choice' | 'rating' | 'matrix' | 'buckets' | 'multi-select' | 'slider' | 'value-credits' | 'overview' | 'ranking' | 'prototype'
   options?: string[]
   rows?: { id: string; label: string }[]
   instruction?: string
@@ -60,6 +60,13 @@ const TRUST_OWN_METAL_OPTION =
 const CREDIT_FOLLOWUP_ASSETS_PLACEHOLDER = '{{ASSETS}}'
 const CREDIT_FOLLOWUP_OMITTED_PLACEHOLDER = '{{OMITTED_ASSETS}}'
 const QUESTION_TOPIC_PLACEHOLDER = '{{TOPIC}}'
+
+/** Wrap a whole overview paragraph in **double asterisks** to render it as a bold headline. */
+function formatOverviewParagraphBody(trimmed: string): ReactNode {
+  const m = /^\*\*(.+)\*\*$/.exec(trimmed)
+  if (m) return <strong className="study-overview-headline">{m[1]}</strong>
+  return trimmed
+}
 
 function joinCardLabels(cards: CreditCard[]): string {
   const names = cards.map((c) => c.label)
@@ -291,7 +298,7 @@ function RankingQuestionBlock({
 
 function computeCanProceed(page: StudyPage | undefined, ans: Record<string, string>): boolean {
   if (!page) return false
-  if (page.type === 'overview') return true
+  if (page.type === 'overview' || page.type === 'prototype') return true
   if (page.type === 'ranking' && page.rows?.length) {
     const ids = page.rows.map((r) => r.id)
     return isValidRankingAnswer(ans[page.id], ids)
@@ -479,14 +486,74 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       }
     ],
     'my-red-hat': [
-      { id: '1', question: 'How often do you use My Red Hat (dashboard / customer portal)?', type: 'multiple-choice', options: ['Daily', 'Weekly', 'Monthly', 'Rarely'] },
       {
-        id: '2',
-        question: 'Review the prototype below, then tell us: What features do you use most frequently?',
-        type: 'text',
-        figmaEmbedUrl: 'https://embed.figma.com/proto/RagMk0n5dRjRUiWypq1jw4?node-id=2561-29592&embed-host=summit-research&scaling=scale-down-width&content-scaling=fixed'
+        id: 'portable-intro',
+        type: 'overview',
+        question:
+          "**Section 1: The portable My Red Hat**\n\nStop the tab-switching madness.\n\nHelp us decide what tools should follow you across every Red Hat site so you never lose your place."
       },
-      { id: '3', question: 'What improvements would you like to see?', type: 'text' }
+      {
+        id: 'portable-prototype',
+        type: 'prototype',
+        question:
+          'Explore the clickable prototype below. When you are ready, continue to the follow-up questions.',
+        figmaEmbedUrl: ''
+      },
+      {
+        id: 'portable-followup',
+        type: 'text',
+        question:
+          'As you move between looking at documentation and managing your systems in the Console, is there one piece of data you find yourself constantly copying/pasting or switching tabs to check? What is it?'
+      },
+      {
+        id: 'portable-sidekick',
+        type: 'text',
+        question:
+          "If we gave you a 'persistent sidekick'—a small panel that stays on your screen everywhere you go on Red Hat sites—which 3 items (like active support cases, security CVEs, or specific product versions) would you pin to it?"
+      },
+      {
+        id: 'portable-notifications',
+        type: 'text',
+        question:
+          "If this 'sidekick' showed you a notification, would you want it to be a passive alert you check on your own time, or a proactive nudge that interrupts you for something critical? What type of notification content would be valuable (ex: security CVEs)?"
+      },
+      {
+        id: 'gen-ai-intro',
+        type: 'overview',
+        question:
+          "**Section 2: Generative and intelligent customization**\n\nOverview copy for this section will go here. (You'll provide the full introduction text.)"
+      },
+      {
+        id: 'gen-ai-prototype',
+        type: 'prototype',
+        question:
+          'Explore the clickable prototype below. When you are ready, continue to the follow-up question.',
+        figmaEmbedUrl: ''
+      },
+      {
+        id: 'gen-ai-followup',
+        type: 'text',
+        question:
+          'Follow-up about generative and intelligent customization — question text to be added.'
+      },
+      {
+        id: 'proof-intro',
+        type: 'overview',
+        question:
+          "**Section 3: Proof of subscription value lookback**\n\nOverview copy for this section will go here. (You'll provide the full introduction text.)"
+      },
+      {
+        id: 'proof-prototype',
+        type: 'prototype',
+        question:
+          'Explore the clickable prototype below. When you are ready, continue to the follow-up question.',
+        figmaEmbedUrl: ''
+      },
+      {
+        id: 'proof-followup',
+        type: 'text',
+        question: 'Follow-up about proof of subscription value — question text to be added.'
+      }
     ],
     'user-preferences': [
       {
@@ -784,7 +851,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
 
   const getPlaceholderAnswers = (page: StudyPage): Record<string, string> => {
     const overrides: Record<string, string> = {}
-    if (page.type === 'overview') {
+    if (page.type === 'overview' || page.type === 'prototype') {
       return overrides
     }
     if (page.type === 'text') {
@@ -964,7 +1031,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                 .filter(Boolean)
                 .map((para, i) => (
                   <p key={i} className="study-overview-paragraph">
-                    {para}
+                    {formatOverviewParagraphBody(para)}
                   </p>
                 ))}
             </div>
@@ -972,15 +1039,39 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             <h2 className="page-question">{displayedQuestion}</h2>
           )}
 
-          {currentPage.figmaEmbedUrl && !currentPage.figmaEmbedAboveQuestion && (
-            <div className="figma-embed-wrap">
-              <iframe
-                src={currentPage.figmaEmbedUrl}
-                className="figma-embed"
-                allowFullScreen
-                title="Figma prototype"
-              />
-            </div>
+          {currentPage.type === 'prototype' ? (
+            currentPage.figmaEmbedUrl ? (
+              <div className="figma-embed-wrap">
+                <iframe
+                  src={currentPage.figmaEmbedUrl}
+                  className="figma-embed"
+                  allowFullScreen
+                  title="Clickable prototype"
+                />
+              </div>
+            ) : (
+              <div
+                className="study-page-prototype-placeholder"
+                role="region"
+                aria-label="Prototype embed not configured yet"
+              >
+                <span className="study-page-prototype-placeholder-label">
+                  Figma prototype — add the embed URL for this page when the embed is ready.
+                </span>
+              </div>
+            )
+          ) : (
+            currentPage.figmaEmbedUrl &&
+            !currentPage.figmaEmbedAboveQuestion && (
+              <div className="figma-embed-wrap">
+                <iframe
+                  src={currentPage.figmaEmbedUrl}
+                  className="figma-embed"
+                  allowFullScreen
+                  title="Figma prototype"
+                />
+              </div>
+            )
           )}
 
           {currentPage.type === 'text' && (
@@ -1374,7 +1465,10 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
           )}
         </div>
 
-        <div className="page-navigation" ref={pageNavigationRef}>
+        <div
+          className={`page-navigation${currentPage.type === 'overview' ? ' page-navigation--overview' : ''}`}
+          ref={pageNavigationRef}
+        >
           {!isFirstPage && (
             <button className="nav-button previous" onClick={handlePrevious}>
               Previous

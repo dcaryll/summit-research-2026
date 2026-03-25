@@ -354,6 +354,10 @@
   text-align: center;
 }
 
+.study-overview-headline {
+  font-weight: 700;
+}
+
 .evaluation-trust {
   width: 100%;
   display: flex;
@@ -961,6 +965,14 @@
   margin-left: auto;
 }
 
+.page-navigation--overview {
+  justify-content: center;
+}
+
+.page-navigation--overview .page-navigation-right {
+  margin-left: 0;
+}
+
 .nav-button.skip {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -1038,8 +1050,21 @@
     justify-content: flex-end;
   }
 
+  .page-navigation--overview {
+    align-items: center;
+  }
+
+  .page-navigation--overview .page-navigation-right {
+    justify-content: center;
+  }
+
   .nav-button.previous {
     width: 100%;
+  }
+
+  .page-navigation--overview .nav-button.previous {
+    width: auto;
+    max-width: 100%;
   }
 
   .nav-button.skip,
