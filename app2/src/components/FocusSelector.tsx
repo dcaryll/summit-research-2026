@@ -1,6 +1,54 @@
-import { useMemo, useState, useEffect, ReactNode } from 'react'
+import { useMemo, useState, useEffect, useLayoutEffect, useRef } from 'react'
+import gearSource from '@rhds/icons/standard/gear.js'
+import assessmentSource from '@rhds/icons/ui/assessment.js'
+import developerSource from '@rhds/icons/standard/developer.js'
+import controlPanelSource from '@rhds/icons/standard/control-panel.js'
+import productTrialSource from '@rhds/icons/standard/product-trial.js'
+import megaphoneSource from '@rhds/icons/standard/megaphone.js'
+import magnifyingGlassSource from '@rhds/icons/standard/magnifying-glass.js'
 import './FocusSelector.css'
 import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
+
+/**
+ * Official RHDS SVG assets (same as https://ux.redhat.com/foundations/iconography/).
+ * We import modules statically — `rh-icon` uses dynamic imports that Vite does not resolve reliably.
+ */
+const RHDS_STUDY_ICON_SOURCES: Record<string, Node> = {
+  'user-preferences': gearSource,
+  'product-evaluation': assessmentSource,
+  'developer-program': developerSource,
+  'my-red-hat': controlPanelSource,
+  'my-trials': productTrialSource,
+  'product-marketing': megaphoneSource,
+  'content-discovery': magnifyingGlassSource
+}
+
+function cloneRhdsStudySvg(source: Node): SVGSVGElement {
+  const copy = source.cloneNode(true)
+  if (copy instanceof DocumentFragment) {
+    const inner = copy.firstElementChild
+    if (inner instanceof SVGSVGElement) {
+      return inner.cloneNode(true) as SVGSVGElement
+    }
+  }
+  if (copy instanceof SVGSVGElement) {
+    return copy.cloneNode(true) as SVGSVGElement
+  }
+  throw new Error('Unexpected @rhds/icons module shape')
+}
+
+function StudyTrackIcon({ focusId }: { focusId: string }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  useLayoutEffect(() => {
+    const host = ref.current
+    const src = RHDS_STUDY_ICON_SOURCES[focusId]
+    if (!host || !src) return
+    const svg = cloneRhdsStudySvg(src)
+    svg.setAttribute('aria-hidden', 'true')
+    host.replaceChildren(svg)
+  }, [focusId])
+  return <span ref={ref} className="focus-card-rh-icon" />
+}
 
 function shuffleArray<T>(array: T[]): T[] {
   const copy = [...array]
@@ -23,91 +71,43 @@ interface FocusOption {
   id: string
   title: string
   description: string
-  icon: ReactNode
 }
 
 const focusOptions: FocusOption[] = [
   {
     id: 'user-preferences',
     title: 'User preferences',
-    description: 'Help us improve how Red Hat manages your information for a more personal experience across our sites.',
-    icon: (
-      <svg className="focus-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <circle cx="12" cy="12" r="3" />
-        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-      </svg>
-    )
+    description: 'Help us improve how Red Hat manages your information for a more personal experience across our sites.'
   },
   {
     id: 'product-evaluation',
     title: 'Product evaluation',
-    description: 'Help us make it easier for you to try out and evaluate our products.',
-    icon: (
-      <svg className="focus-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-        <line x1="8" y1="21" x2="16" y2="21" />
-        <line x1="12" y1="17" x2="12" y2="21" />
-      </svg>
-    )
+    description: 'Help us make it easier for you to try out and evaluate our products.'
   },
   {
     id: 'developer-program',
     title: 'Developer program',
-    description: 'Tell us how you use Red Hat developer resources and what would make them more valuable.',
-    icon: (
-      <svg className="focus-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <polyline points="16 18 22 12 16 6" />
-        <polyline points="8 6 2 12 8 18" />
-        <path d="M12 2v20" />
-      </svg>
-    )
+    description: 'Tell us how you use Red Hat developer resources and what would make them more valuable.'
   },
   {
     id: 'my-red-hat',
     title: 'My Red Hat',
-    description: 'Share how you use the portal, dashboard, and customer experience.',
-    icon: (
-      <svg className="focus-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <rect x="3" y="3" width="7" height="7" />
-        <rect x="14" y="3" width="7" height="7" />
-        <rect x="14" y="14" width="7" height="7" />
-        <rect x="3" y="14" width="7" height="7" />
-      </svg>
-    )
+    description: 'Share how you use the portal, dashboard, and customer experience.'
   },
   {
     id: 'my-trials',
     title: 'My trials',
-    description: 'Help us improve how you discover, start, and use product trials.',
-    icon: (
-      <svg className="focus-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M9 3h6v5a5 5 0 0 0 2.5 4.33L19 18H5l2.5-5.67A5 5 0 0 0 10 8V3z" />
-        <line x1="9" y1="3" x2="15" y2="3" />
-      </svg>
-    )
+    description: 'Help us improve how you discover, start, and use product trials.'
   },
   {
     id: 'product-marketing',
     title: 'Product marketing',
-    description: 'Tell us how you find product information and what supports your buying decisions.',
-    icon: (
-      <svg className="focus-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M3 11v2a2 2 0 0 0 2 2h1l4 3v-8l-4 3H5a2 2 0 0 1-2-2z" />
-        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-        <path d="M17.66 6.34a8 8 0 0 1 0 11.32" />
-      </svg>
-    )
+    description: 'Tell us how you find product information and what supports your buying decisions.'
   },
   {
     id: 'content-discovery',
     title: 'Content discovery',
-    description: 'Help us improve how you find docs, learning, and technical content.',
-    icon: (
-      <svg className="focus-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <circle cx="11" cy="11" r="8" />
-        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-      </svg>
-    )
+    description: 'Help us improve how you find docs, learning, and technical content.'
   }
 ]
 
@@ -240,7 +240,9 @@ function FocusSelector({ onFocusSelect, selectedFocus, onTakeStudy, onStartQuali
                   }
                 }}
               >
-                <span className="focus-card-icon-wrap">{option.icon}</span>
+                <span className="focus-card-icon-wrap">
+                  <StudyTrackIcon focusId={option.id} />
+                </span>
                 <h2 className="focus-card-title">{option.title}</h2>
                 <p className="focus-card-description">{option.description}</p>
                 {isSelected && !isShowingRandomResult && (

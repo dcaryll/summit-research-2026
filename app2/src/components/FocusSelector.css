@@ -256,11 +256,18 @@
   line-height: 0;
 }
 
-.focus-card-icon-wrap .focus-card-icon {
+.focus-card-icon-wrap .focus-card-rh-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.focus-card-icon-wrap .focus-card-rh-icon svg {
   width: 32px;
   height: 32px;
   flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.9);
+  fill: currentColor;
 }
 
 .focus-card-title {

@@ -497,7 +497,8 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         type: 'prototype',
         question:
           'Explore the clickable prototype below. When you are ready, continue to the follow-up questions.',
-        figmaEmbedUrl: ''
+        figmaEmbedUrl:
+          'https://embed.figma.com/proto/LHgDJjj80waVYdJCskxasF/My-Red-Hat---Dashboard-customization?node-id=1011-90920&embed-host=summit-research&scaling=scale-down-width&content-scaling=fixed'
       },
       {
         id: 'portable-followup',
@@ -1006,7 +1007,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
 
       <div className="study-content">
         <div className="page-indicator">
-          <span className="study-track-name">{studyTitle}</span>
+          <span className="study-track-name">Current study: {studyTitle}</span>
           <span className="page-indicator-count">
             Page {currentPageIndex + 1} of {studyPages.length}
           </span>
