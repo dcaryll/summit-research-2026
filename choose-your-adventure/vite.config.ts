@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
-  base: command === 'build' ? '/summit-research-2026/app2/' : '/',
+  base: command === 'build' ? '/summit-research-2026/choose-your-adventure/' : '/',
   plugins: [react()],
   server: {
     port: 5181,

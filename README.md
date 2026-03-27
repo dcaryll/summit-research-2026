@@ -4,8 +4,8 @@ This repository contains two React applications designed for user feedback studi
 
 ## Applications
 
-### App 1: The Wizard of OS
-**Location:** `app1/`
+### The Wizard of OS
+**Location:** `wizard-of-os/`
 
 Interactive terminal-style application for collecting user feedback. Features a command-line interface where users can input questions and receive a multi-step questionnaire flow, culminating in a dashboard showing word clouds and peer statistics.
 
@@ -18,10 +18,10 @@ Interactive terminal-style application for collecting user feedback. Features a 
 - Offline-first approach with automatic retry when connection is restored
 - Red Hat branding with custom fonts and colors
 
-### App 2: User Study Screener
-**Location:** `app2/`
+### Choose your adventure (user study screener)
+**Location:** `choose-your-adventure/`
 
-A kiosk-style "choose your adventure" screener that allows user research participants to select their focus area for completing a study. Participants can choose from predefined study tracks or be randomly assigned one.
+A kiosk-style screener that allows user research participants to select their focus area for completing a study. Participants can choose from predefined study tracks or be randomly assigned one.
 
 **Key Features:**
 - Large, clear focus cards for easy selection
@@ -29,7 +29,7 @@ A kiosk-style "choose your adventure" screener that allows user research partici
 - Random study assignment option
 - Multi-page study flow with various question types (text, multiple-choice, rating)
 - Completion screen with next steps guidance
-- Same robust data storage as App 1 (IndexedDB, localStorage, backend API)
+- Same robust data storage as the Wizard of OS app (IndexedDB, localStorage, backend API)
 - Red Hat Display font for headlines, Red Hat Text for body copy
 - Blue accent colors for interactive elements
 
@@ -43,15 +43,15 @@ A kiosk-style "choose your adventure" screener that allows user research partici
 
 Each app has its own dependencies. Navigate to the app directory and install:
 
-**For App 1:**
+**Wizard of OS:**
 ```bash
-cd app1
+cd wizard-of-os
 npm install
 ```
 
-**For App 2:**
+**Choose your adventure:**
 ```bash
-cd app2
+cd choose-your-adventure
 npm install
 ```
 
@@ -59,15 +59,15 @@ npm install
 
 ### Running Locally
 
-**App 1:**
+**Wizard of OS:**
 ```bash
-cd app1
+cd wizard-of-os
 npm run dev
 ```
 
-**App 2:**
+**Choose your adventure:**
 ```bash
-cd app2
+cd choose-your-adventure
 npm run dev
 ```
 
@@ -79,11 +79,11 @@ Both apps support backend API integration for data persistence. To configure:
 
 1. Copy the `.env.example` file to `.env` in the respective app directory:
    ```bash
-   # For App 1
-   cp app1/.env.example app1/.env
+   # Wizard of OS
+   cp wizard-of-os/.env.example wizard-of-os/.env
    
-   # For App 2
-   cp app2/.env.example app2/.env
+   # Choose your adventure
+   cp choose-your-adventure/.env.example choose-your-adventure/.env
    ```
 
 2. Update the `VITE_API_ENDPOINT` variable in each `.env` file with your API endpoint URL:
@@ -104,15 +104,15 @@ This ensures data is never lost, even in offline scenarios.
 
 ## Building for Production
 
-**App 1:**
+**Wizard of OS:**
 ```bash
-cd app1
+cd wizard-of-os
 npm run build
 ```
 
-**App 2:**
+**Choose your adventure:**
 ```bash
-cd app2
+cd choose-your-adventure
 npm run build
 ```
 
@@ -122,14 +122,14 @@ Build outputs will be in the `dist/` directory of each app.
 
 ```
 .
-├── app1/                 # Terminal-style feedback application
+├── wizard-of-os/                 # Terminal-style feedback application
 │   ├── src/
 │   │   ├── components/
 │   │   ├── images/
 │   │   └── App.tsx
 │   ├── package.json
 │   └── vite.config.ts
-├── app2/                 # Focus selector screener application
+├── choose-your-adventure/        # Focus selector screener application
 │   ├── src/
 │   │   ├── components/
 │   │   ├── images/
@@ -165,8 +165,8 @@ A GitHub Actions workflow builds and deploys both apps to GitHub Pages on every 
 **Required setup:** In the repo **Settings → Pages**, set **Source** to **GitHub Actions**. Without this, the workflow will not deploy.
 
 **URLs after deployment:**
-- App 1 (Wizard of OS): `https://<username>.github.io/summit-research-2026/app1/`
-- App 2 (User Study Screener): `https://<username>.github.io/summit-research-2026/app2/`
+- The Wizard of OS: `https://<username>.github.io/summit-research-2026/wizard-of-os/`
+- Choose your adventure: `https://<username>.github.io/summit-research-2026/choose-your-adventure/`
 
 ## License
 

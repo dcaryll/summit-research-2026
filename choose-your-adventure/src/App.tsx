@@ -184,7 +184,7 @@ const exportResponsesToCsv = async () => {
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', `summit-research-app2-responses-${new Date().toISOString().slice(0, 10)}.csv`)
+    link.setAttribute('download', `summit-research-choose-your-adventure-responses-${new Date().toISOString().slice(0, 10)}.csv`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()

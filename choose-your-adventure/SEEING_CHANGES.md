@@ -6,7 +6,7 @@ This doc explains common reasons the app looks unchanged after edits, and a repe
 
 ### 1. **Wrong port / multiple dev servers**
 
-- The app2 dev server is configured to use **port 5181** only (`strictPort: true`).
+- The choose-your-adventure dev server is configured to use **port 5181** only (`strictPort: true`).
 - If you (or another terminal) previously ran `npm run dev` and it bound to **5182**, **5183**, etc. (because 5181 was in use), you may have tabs open on those ports.
 - **What you see:** An old bundle. Edits don’t show because the browser is talking to a different (or stale) server.
 
@@ -20,7 +20,7 @@ This doc explains common reasons the app looks unchanged after edits, and a repe
 **Fix:** Stop the other process, then start again:
 
 ```bash
-cd app2
+cd choose-your-adventure
 npm run dev:single   # kills anything on 5181, then starts Vite
 # or manually:
 lsof -ti:5181 | xargs kill -9   # macOS/Linux
@@ -40,7 +40,7 @@ npm run dev
 **Fix:** Clear cache and restart:
 
 ```bash
-cd app2
+cd choose-your-adventure
 npm run dev:fresh
 ```
 
@@ -48,24 +48,24 @@ Then open **http://localhost:5181** and hard refresh (Cmd+Shift+R).
 
 ### 5. **Wrong app or build**
 
-- **app1** (wizard-of-os) and **app2** (user-study-screener) are different apps and ports.
+- **wizard-of-os** and **choose-your-adventure** are different apps and ports.
 - If you’re viewing a **production build** (e.g. `npm run build` then `npm run preview`), you’re seeing the last build, not live dev.
 
 **Fix:** Run dev from the app you’re editing:
 
 ```bash
-cd app2
+cd choose-your-adventure
 npm run dev
 ```
 
-Use the printed URL (e.g. `http://localhost:5181`). In dev you should see a small label at bottom-right: **“dev · Take-study-on-card · http://localhost:5181”**. If you don’t see that label, you’re not on the app2 dev server.
+Use the printed URL (e.g. `http://localhost:5181`). In dev you should see a small label at bottom-right: **“dev · Take-study-on-card · http://localhost:5181”**. If you don’t see that label, you’re not on the choose-your-adventure dev server.
 
 ---
 
 ## Repeatable “see my changes” workflow
 
 1. **One dev server only**  
-   From `app2`:
+   From `choose-your-adventure`:
    ```bash
    npm run dev:single
    ```
@@ -84,7 +84,7 @@ Use the printed URL (e.g. `http://localhost:5181`). In dev you should see a smal
 
 ## Quick checklist
 
-- [ ] I ran `npm run dev` (or `dev:single`) from **app2**.
+- [ ] I ran `npm run dev` (or `dev:single`) from **choose-your-adventure**.
 - [ ] I opened the URL Vite printed (e.g. **http://localhost:5181**).
 - [ ] I see the dev label at bottom-right (“dev · Take-study-on-card · http://localhost:5181”).
 - [ ] I did a hard refresh (Cmd+Shift+R) after my last edit.

@@ -26,25 +26,25 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Build app1
+      - name: Build wizard-of-os
         run: |
-          cd app1
+          cd wizard-of-os
           npm ci
           npm run build
 
-      - name: Build app2
+      - name: Build choose-your-adventure
         run: |
-          cd app2
+          cd choose-your-adventure
           npm ci
           npm run build
 
       - name: Prepare deployment
         run: |
-          mkdir -p deploy/app1 deploy/app2
-          cp -r app1/dist/* deploy/app1/
-          cp -r app2/dist/* deploy/app2/
+          mkdir -p deploy/wizard-of-os deploy/choose-your-adventure
+          cp -r wizard-of-os/dist/* deploy/wizard-of-os/
+          cp -r choose-your-adventure/dist/* deploy/choose-your-adventure/
           # Root index for easy navigation
-          echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Summit Research 2026</title></head><body><h1>Summit Research 2026</h1><ul><li><a href="app1/">App 1: The Wizard of OS</a></li><li><a href="app2/">App 2: User Study Screener</a></li></ul></body></html>' > deploy/index.html
+          echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Summit Research 2026</title></head><body><h1>Summit Research 2026</h1><ul><li><a href="wizard-of-os/">The Wizard of OS</a></li><li><a href="choose-your-adventure/">Choose your adventure</a></li></ul></body></html>' > deploy/index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

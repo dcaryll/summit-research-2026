@@ -3,5 +3,5 @@
   "outputDirectory": "dist",
   "installCommand": "npm install --include=dev",
   "framework": "vite",
-  "rootDirectory": "app2"
+  "rootDirectory": "wizard-of-os"
 }
