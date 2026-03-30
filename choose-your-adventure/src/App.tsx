@@ -252,6 +252,10 @@ function App() {
     setSelectedFocus(focus)
   }
 
+  const handleClearFocusSelection = () => {
+    setSelectedFocus(null)
+  }
+
   const handleTakeStudy = () => {
     if (!selectedFocus) return
     setIsLoading(true)
@@ -316,6 +320,7 @@ function App() {
     <div className="app">
       <FocusSelector
         onFocusSelect={handleFocusSelect}
+        onClearFocusSelection={handleClearFocusSelection}
         selectedFocus={selectedFocus}
         onTakeStudy={handleTakeStudy}
         onStartQualifying={handleStartQualifying}
@@ -323,7 +328,7 @@ function App() {
       />
       {import.meta.env.DEV && (
         <div data-build="dev-indicator" style={{ position: 'fixed', bottom: 8, right: 8, fontSize: 10, color: 'rgba(255,255,255,0.5)', pointerEvents: 'none' }}>
-          dev · Take-study-on-card · http://localhost:5181
+          dev · Study detail modal · http://localhost:5181
         </div>
       )}
     </div>

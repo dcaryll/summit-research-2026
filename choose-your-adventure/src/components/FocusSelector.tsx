@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import gearSource from '@rhds/icons/standard/gear.js'
 import assessmentSource from '@rhds/icons/ui/assessment.js'
 import developerSource from '@rhds/icons/standard/developer.js'
@@ -8,6 +8,8 @@ import megaphoneSource from '@rhds/icons/standard/megaphone.js'
 import magnifyingGlassSource from '@rhds/icons/standard/magnifying-glass.js'
 import './FocusSelector.css'
 import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
+import studyDetailVisualPlaceholder from '../images/study-detail-visual-placeholder.svg'
+import myRedHatStudyDetailHero from '../images/my-red-hat-study-detail-hero.png'
 
 /**
  * Official RHDS SVG assets (same as https://ux.redhat.com/foundations/iconography/).
@@ -61,6 +63,8 @@ function shuffleArray<T>(array: T[]): T[] {
 
 interface FocusSelectorProps {
   onFocusSelect: (focus: string) => void
+  /** Called when the study detail modal is dismissed without starting the study. */
+  onClearFocusSelection?: () => void
   selectedFocus: string | null
   onTakeStudy: () => void
   onStartQualifying: () => void
@@ -71,43 +75,66 @@ interface FocusOption {
   id: string
   title: string
   description: string
+  /** Richer copy for the detail modal (right column). */
+  detailDescription: string
+  /** Optional hero image; defaults to a shared placeholder SVG. */
+  detailVisualSrc?: string
+  /** Short alt for the hero image (decorative placeholder uses empty alt). */
+  detailVisualAlt?: string
 }
 
 const focusOptions: FocusOption[] = [
   {
     id: 'user-preferences',
     title: 'User preferences',
-    description: 'Help us improve how Red Hat manages your information for a more personal experience across our sites.'
+    description: 'Help us improve how Red Hat manages your information for a more personal experience across our sites.',
+    detailDescription:
+      'This study explores where you expect to manage account-related preferences across Red Hat experiences, what should carry across sites, and how you feel about sharing settings. You will work through short scenarios and questions at your own pace—typically about 10–20 minutes. Your feedback helps us design clearer, more consistent preference experiences.'
   },
   {
     id: 'product-evaluation',
     title: 'Product evaluation',
-    description: 'Help us make it easier for you to try out and evaluate our products.'
+    description: 'Help us make it easier for you to try out and evaluate our products.',
+    detailDescription:
+      'We want to understand how you evaluate software in real life—what builds trust, how you weigh trials versus installs, and what you need before recommending a product. The session includes a few interactive moments and follow-up questions. Plan for roughly 10–20 minutes; there are no wrong answers.'
   },
   {
     id: 'developer-program',
     title: 'Developer program',
-    description: 'Tell us how you use Red Hat developer resources and what would make them more valuable.'
+    description: 'Tell us how you use Red Hat developer resources and what would make them more valuable.',
+    detailDescription:
+      'Share which developer tools and programs you use today, how they fit into your workflow, and what would make Red Hat’s developer offerings more useful. Expect multiple-choice and open-ended questions. Most participants finish in about 10–15 minutes.'
   },
   {
     id: 'my-red-hat',
     title: 'My Red Hat',
-    description: 'Share how you use the portal, dashboard, and customer experience.'
+    description: 'Share how you use the portal, dashboard, and customer experience.',
+    detailDescription:
+      'This track focuses on the My Red Hat portal and related experiences—navigation, dashboards, and tasks you perform as a customer. You may see lightweight interactive previews and follow-up questions. Set aside about 15–20 minutes to complete the study comfortably.',
+    detailVisualSrc: myRedHatStudyDetailHero,
+    detailVisualAlt:
+      'Screenshot of the My dashboard page in the Red Hat customer portal, showing trials, subscriptions, support cases, and related widgets.'
   },
   {
     id: 'my-trials',
     title: 'Trying & buying new products',
-    description: 'Tell us how you and your team prefer to purchase after using a product trial.'
+    description: 'Tell us how you and your team prefer to purchase after using a product trial.',
+    detailDescription:
+      'We are learning how people move from trial to purchase—including what you expect from “buy” flows, what feels unclear, and how we can make post-trial paths easier. You will answer questions about trials, buying options, and proposed improvements. Allow roughly 15–25 minutes.'
   },
   {
     id: 'product-marketing',
     title: 'Product marketing',
-    description: 'Tell us how you find product information and what supports your buying decisions.'
+    description: 'Tell us how you find product information and what supports your buying decisions.',
+    detailDescription:
+      'Help us understand how you scan product menus and information architecture when researching or buying. This study includes sorting, ranking, and preference tasks grounded in realistic examples. Expect about 15–25 minutes depending on how much you explore.'
   },
   {
     id: 'content-discovery',
     title: 'Content discovery',
-    description: 'Help us improve how you find docs, learning, and technical content.'
+    description: 'Help us improve how you find docs, learning, and technical content.',
+    detailDescription:
+      'We want to learn how you prefer to discover learning content by topic—what you notice first, how you rank formats, and what would help you go deeper. You will pick a topic, make a few choices, and rank options. Most people finish in about 15–20 minutes.'
   }
 ]
 
@@ -124,11 +151,40 @@ const roleOptions: { id: string; label: string; focusId: string }[] = [
   { id: 'trials', label: 'Trials & subscriptions', focusId: 'my-trials' }
 ]
 
-function FocusSelector({ onFocusSelect, selectedFocus, onTakeStudy, onStartQualifying, onExportCsv }: FocusSelectorProps) {
+function FocusSelector({
+  onFocusSelect,
+  onClearFocusSelection,
+  selectedFocus,
+  onTakeStudy,
+  onStartQualifying,
+  onExportCsv
+}: FocusSelectorProps) {
   const orderedOptions = useMemo(() => shuffleArray(focusOptions), [])
   const [isShowingRandomResult, setIsShowingRandomResult] = useState(false)
   const [randomChosenFocus, setRandomChosenFocus] = useState<string | null>(null)
   const [showRoleSection, setShowRoleSection] = useState(false)
+  const [openDetailId, setOpenDetailId] = useState<string | null>(null)
+
+  const detailOption = openDetailId ? focusOptions.find((o) => o.id === openDetailId) : undefined
+
+  const closeStudyDetail = useCallback(() => {
+    setOpenDetailId(null)
+    onClearFocusSelection?.()
+  }, [onClearFocusSelection])
+
+  useEffect(() => {
+    if (!openDetailId) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeStudyDetail()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [openDetailId, closeStudyDetail])
 
   useEffect(() => {
     if (!isShowingRandomResult) return
@@ -157,49 +213,49 @@ function FocusSelector({ onFocusSelect, selectedFocus, onTakeStudy, onStartQuali
 
   return (
     <div className="focus-selector-screen">
-      <div className="logo-container">
-        <img src={logoImage} alt="Red Hat Logo" className="logo-image" />
-      </div>
+      <header className="focus-selector-top-bar">
+        <div className="logo-container">
+          <img src={logoImage} alt="Red Hat Logo" className="logo-image" />
+        </div>
+        <div className="randomize-section">
+          <h2 className="randomize-title">Not sure which to choose?</h2>
+          <div className="randomize-buttons">
+            <button
+              className="randomize-button"
+              onClick={handleRandomize}
+            >
+              <span className="randomize-button-icon" aria-hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="4" y="4" width="16" height="16" rx="2" ry="2" />
+                  <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+                  <circle cx="16" cy="16" r="1.5" fill="currentColor" />
+                  <circle cx="8" cy="16" r="1.5" fill="currentColor" />
+                  <circle cx="16" cy="8" r="1.5" fill="currentColor" />
+                  <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                </svg>
+              </span>
+              Random study
+            </button>
+            <button
+              className="randomize-button qualifying-button"
+              onClick={onStartQualifying}
+            >
+              Help me choose
+            </button>
+            <button
+              className="randomize-button"
+              onClick={() => setShowRoleSection(true)}
+            >
+              Choose by role
+            </button>
+          </div>
+        </div>
+      </header>
 
       <div className="selector-content">
-        <div className="selector-header-row">
-          <div className="selector-headline-block">
-            <h1 className="selector-title">Select your focus</h1>
-            <p className="selector-subtitle">Choose a study track that interests you</p>
-          </div>
-          <div className="randomize-section">
-            <h2 className="randomize-title">Not sure which to choose?</h2>
-            <div className="randomize-buttons">
-              <button
-                className="randomize-button"
-                onClick={handleRandomize}
-              >
-                <span className="randomize-button-icon" aria-hidden>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="4" y="4" width="16" height="16" rx="2" ry="2" />
-                    <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-                    <circle cx="16" cy="16" r="1.5" fill="currentColor" />
-                    <circle cx="8" cy="16" r="1.5" fill="currentColor" />
-                    <circle cx="16" cy="8" r="1.5" fill="currentColor" />
-                    <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                  </svg>
-                </span>
-                Random study
-              </button>
-              <button
-                className="randomize-button qualifying-button"
-                onClick={onStartQualifying}
-              >
-                Help me choose
-              </button>
-              <button
-                className="randomize-button"
-                onClick={() => setShowRoleSection(true)}
-              >
-                Choose by role
-              </button>
-            </div>
-          </div>
+        <div className="selector-headline-block">
+          <h1 className="selector-title">Select your focus</h1>
+          <p className="selector-subtitle">Choose a study track that interests you</p>
         </div>
 
         {showRoleSection && (
@@ -232,11 +288,17 @@ function FocusSelector({ onFocusSelect, selectedFocus, onTakeStudy, onStartQuali
                 role="button"
                 tabIndex={0}
                 className={`focus-card ${isSelected ? 'selected' : ''} ${isChosen ? 'focus-card--random-selected' : ''} ${isDismissed ? 'focus-card--random-dismiss' : ''}`}
-                onClick={() => !isShowingRandomResult && onFocusSelect(option.id)}
+                onClick={() => {
+                  if (isShowingRandomResult) return
+                  onFocusSelect(option.id)
+                  setOpenDetailId(option.id)
+                }}
                 onKeyDown={(e) => {
-                  if (!isShowingRandomResult && (e.key === 'Enter' || e.key === ' ')) {
+                  if (isShowingRandomResult) return
+                  if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
                     onFocusSelect(option.id)
+                    setOpenDetailId(option.id)
                   }
                 }}
               >
@@ -245,18 +307,6 @@ function FocusSelector({ onFocusSelect, selectedFocus, onTakeStudy, onStartQuali
                 </span>
                 <h2 className="focus-card-title">{option.title}</h2>
                 <p className="focus-card-description">{option.description}</p>
-                {isSelected && !isShowingRandomResult && (
-                  <button
-                    type="button"
-                    className="take-study-button take-study-button--on-card"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onTakeStudy()
-                    }}
-                  >
-                    Take the study
-                  </button>
-                )}
               </div>
             )
           })}
@@ -267,6 +317,61 @@ function FocusSelector({ onFocusSelect, selectedFocus, onTakeStudy, onStartQuali
           <button type="button" className="focus-export-csv" onClick={() => void onExportCsv()}>
             Download all responses (CSV)
           </button>
+        </div>
+      )}
+
+      {detailOption && (
+        <div
+          className="study-detail-backdrop"
+          role="presentation"
+          onClick={closeStudyDetail}
+        >
+          <div
+            className="study-detail-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="study-detail-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="study-detail-close"
+              onClick={closeStudyDetail}
+              aria-label="Close study details"
+            >
+              ×
+            </button>
+            <div className="study-detail-body">
+              <div
+                className={
+                  detailOption.id === 'my-red-hat'
+                    ? 'study-detail-visual study-detail-visual--tall-screenshot'
+                    : 'study-detail-visual'
+                }
+              >
+                <img
+                  src={detailOption.detailVisualSrc ?? studyDetailVisualPlaceholder}
+                  alt={detailOption.detailVisualAlt ?? ''}
+                  className="study-detail-visual-img"
+                />
+              </div>
+              <div className="study-detail-copy">
+                <h2 id="study-detail-modal-title" className="study-detail-modal-title">
+                  {detailOption.title}
+                </h2>
+                <p className="study-detail-long-description">{detailOption.detailDescription}</p>
+                <button
+                  type="button"
+                  className="study-detail-cta take-study-button"
+                  onClick={() => {
+                    onTakeStudy()
+                  }}
+                >
+                  Take this study
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

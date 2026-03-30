@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="studyPhGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a2038"/>
+      <stop offset="55%" stop-color="#151018"/>
+      <stop offset="100%" stop-color="#0a0a0c"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#studyPhGrad)"/>
+  <rect x="0" y="0" width="960" height="540" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+</svg>
