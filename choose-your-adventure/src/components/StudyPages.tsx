@@ -51,6 +51,9 @@ type StudyPage = {
   followUpOptions?: string[]
   /** With `followUpWhen` + `followUpAnswerKey`, show a text area instead of `followUpOptions`. */
   followUpFreeText?: boolean
+  /** With multiple-choice: always show this free-text field below options; both choice and text are required. */
+  multiChoiceRequiredFreeTextKey?: string
+  multiChoiceRequiredFreeTextLabel?: string
   /** Replace each `{{TOPIC}}` in `question` with the participant's answer from this page id. */
   questionTopicFromPageId?: string
   /** For multi-select: build options from another page's `options`, excluding `answers[excludePageId]` from that pick. */
@@ -400,11 +403,16 @@ function computeCanProceed(
     const val = ans[page.id]
     return val !== undefined && val !== ''
   }
-  if (page.type === 'multiple-choice' && page.followUpWhen !== undefined && page.followUpAnswerKey) {
+  if (page.type === 'multiple-choice') {
     const main = ans[page.id]
     if (!main?.trim()) return false
-    if (main === page.followUpWhen) {
-      return !!ans[page.followUpAnswerKey]?.trim()
+    if (page.multiChoiceRequiredFreeTextKey) {
+      if (!ans[page.multiChoiceRequiredFreeTextKey]?.trim()) return false
+    }
+    if (page.followUpWhen !== undefined && page.followUpAnswerKey) {
+      if (main === page.followUpWhen) {
+        return !!ans[page.followUpAnswerKey]?.trim()
+      }
     }
     return true
   }
@@ -772,8 +780,65 @@ const getStudyPages = (focusId: string): StudyPage[] => {
           { id: 'product-insights-reviews-testimonials', label: 'Product insights, reviews and testimonials' }
         ]
       },
-      { id: '3', question: 'What challenges do you face when evaluating product information or making a purchase decision?', type: 'text' },
-      { id: '4', question: 'What would make product marketing and buying information more useful for you?', type: 'text' }
+      {
+        id: '3',
+        type: 'ranking',
+        question:
+          'Rank these menu items in order of importance, ranking 1 as the most important and ranking 9 as the least important:',
+        rows: [
+          { id: 'pm-doc', label: 'Documentation' },
+          { id: 'pm-explore', label: 'Further exploration' },
+          { id: 'pm-overview', label: 'Product overview information' },
+          { id: 'pm-pricing', label: 'Pricing/Subscription options' },
+          { id: 'pm-trials', label: 'Trials' },
+          { id: 'pm-use-cases', label: 'Use cases' },
+          { id: 'pm-portfolio', label: 'Product within portfolio options' },
+          { id: 'pm-integrations', label: 'Product integrations' },
+          { id: 'pm-partners', label: 'Information on partners' }
+        ]
+      },
+      {
+        id: '4',
+        type: 'multiple-choice',
+        question: 'If you could remove a menu item option, which would it be and why?',
+        options: [
+          'Documentation',
+          'Explore',
+          'Overview',
+          'Pricing/Subscription options',
+          'Trials',
+          'Use cases',
+          'Product within portfolio options',
+          'Integrations',
+          'Partners'
+        ],
+        multiChoiceRequiredFreeTextKey: '4-why',
+        multiChoiceRequiredFreeTextLabel: 'Why would you remove it? Please explain.'
+      },
+      {
+        id: '5',
+        type: 'multiple-choice',
+        question:
+          "Do you expect the menu item labels to be consistent across each product's secondary navigation menu? Please explain the reasoning behind your answer.",
+        options: ['Yes', 'No'],
+        multiChoiceRequiredFreeTextKey: '5-consistency-why',
+        multiChoiceRequiredFreeTextLabel: 'Your explanation:'
+      },
+      {
+        id: '6',
+        type: 'multiple-choice',
+        question:
+          "In the Red Hat AI navigation menu example, it consolidates 'Products & documentation' into one menu item. Would you prefer this consolidation across all product secondary navigation menus? Please explain the reasoning behind your answer.",
+        options: ['Yes', 'No'],
+        multiChoiceRequiredFreeTextKey: '6-consolidation-why',
+        multiChoiceRequiredFreeTextLabel: 'Your explanation:'
+      },
+      {
+        id: '7',
+        type: 'text',
+        question:
+          'If you could add a menu item option, which would it be and why? What content types would fall under this menu item label?'
+      }
     ],
     'developer-program': [
       { id: '1', question: 'Which parts of the Red Hat Developer program or tools do you use today?', type: 'multiple-choice', options: ['OpenShift', 'RHEL', 'Ansible', 'Quay', 'Buildah/Podman', 'Developer portal / sandbox', 'Other'] },
@@ -1023,6 +1088,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       overrides[page.id] = '[skipped]'
     } else if (page.type === 'multiple-choice' && page.options?.length) {
       overrides[page.id] = page.options[0]
+      if (page.multiChoiceRequiredFreeTextKey) {
+        overrides[page.multiChoiceRequiredFreeTextKey] = '[skipped]'
+      }
       if (page.followUpAnswerKey && page.followUpOptions?.length) {
         overrides[page.followUpAnswerKey] = page.followUpOptions[0]
       } else if (
@@ -1287,6 +1355,27 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   </button>
                 ))}
               </div>
+              {currentPage.multiChoiceRequiredFreeTextKey &&
+                currentPage.multiChoiceRequiredFreeTextLabel && (
+                  <div className="multiple-choice-other-follow">
+                    <p className="multiple-choice-other-follow-label">
+                      {currentPage.multiChoiceRequiredFreeTextLabel}
+                    </p>
+                    <textarea
+                      className="text-input"
+                      value={answers[currentPage.multiChoiceRequiredFreeTextKey] || ''}
+                      onChange={(e) =>
+                        setAnswers((prev) => ({
+                          ...prev,
+                          [currentPage.multiChoiceRequiredFreeTextKey!]: e.target.value
+                        }))
+                      }
+                      placeholder="Type your explanation here..."
+                      rows={4}
+                      aria-label={currentPage.multiChoiceRequiredFreeTextLabel}
+                    />
+                  </div>
+                )}
               {currentPage.followUpWhen !== undefined &&
                 answers[currentPage.id] === currentPage.followUpWhen &&
                 currentPage.followUpAnswerKey &&

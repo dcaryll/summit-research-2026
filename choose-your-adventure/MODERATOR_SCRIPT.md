@@ -107,7 +107,7 @@ Use these **only if** they ask “what will I be doing?” or look lost.
 | **Developer program** | “We’re asking **which developer tools** you use and **how** those resources help you—or could help more.” |
 | **My Red Hat** | “There are **three parts**—portable tools, **AI-style** dashboard ideas, and **proof of value** for renewals. Each part has **intro text**, a **clickable preview**, then **follow-up questions**.” |
 | **My trials** | “We’re asking **how you start trials** and what’s **hard** or **could be better**.” |
-| **Product marketing** | “We’re asking how **product names and menus** should work when you’re buying or researching, then **open-ended** feedback.” |
+| **Product marketing** | “We’re asking how **product names and menus** should work—a **sort**, **rank nine**, **drop** one + **why**, **consistent** labels + **why**, **Products & documentation** **combined** + **why**, then **add** a menu item (label, **why**, **content types**) in **open text**.” |
 | **Content discovery** | “We’re asking **how you prefer to learn**—topic, **numbered** first pick + **why**, **optional** other numbers, **branching** four-factor ranking, **six-type** ranking for the topic, then **Yes/No** on wanting **more** content types and **specifics** if Yes.” |
 
 ---

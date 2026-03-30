@@ -59,7 +59,7 @@ How they **evaluate** software: experience level, **trust** (e.g. own environmen
 If a preview area looks like a **gray placeholder**, your team may still be wiring the design—stay calm, ask them to read the question and answer honestly, and flag it to staff.
 
 ### Product marketing
-Short **context** on what “a product in a portfolio” means, then **label preference** for how products are grouped, a **sorting task** (where they’d expect different types of content in a menu), then **two open questions** on buying and marketing information.
+Short **context** on what “a product in a portfolio” means, then **label preference** for how products are grouped, a **sorting task** (where they’d expect different types of content in a menu), then **rank nine menu items** (1 = most through 9 = least important), then **which one menu item they would remove** (nine choices) plus **why**, then **Yes/No** on **consistent** labels across products’ secondary nav plus **required** reasoning, then **Yes/No** on consolidating **Products & documentation** (Red Hat AI–style) across all product secondary nav plus **required** reasoning, then **one open** prompt to **add** a menu item: what it would be, **why**, and what **content types** belong under it.
 
 ### Developer program
 What **developer tools** they use (multi-choice), then **two open questions** on how resources help them and what would make the program more valuable.
