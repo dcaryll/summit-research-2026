@@ -1,7 +1,7 @@
 .terminal-screen {
   width: 100vw;
   min-height: 100vh;
-  background: #0f0f0f; /* rh-color-gray-95 */
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;

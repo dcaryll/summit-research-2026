@@ -1,7 +1,7 @@
 .study-pages-screen {
   width: 100vw;
   height: 100vh;
-  background: #0f0f0f; /* Red Hat Gray-95 */
+  background: transparent;
   display: flex;
   flex-direction: column;
   font-family: 'Red Hat Text', sans-serif;
@@ -334,6 +334,27 @@
   .ranking-row-actions {
     flex-direction: row;
   }
+}
+
+.study-ranking-other-followup {
+  width: 100%;
+  max-width: 36rem;
+  margin: 1.5rem auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.study-ranking-other-label {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 1rem;
+  font-family: 'Red Hat Text', sans-serif;
+}
+
+.study-ranking-other-textarea {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .figma-embed-wrap--above {

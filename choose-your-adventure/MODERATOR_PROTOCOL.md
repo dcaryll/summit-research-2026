@@ -68,7 +68,7 @@ What **developer tools** they use (multi-choice), then **two open questions** on
 How they **start trials**, then **two open questions** on challenges and improvements.
 
 ### Content discovery
-How they **learn**: intro, **pick a topic** from a list, a **mock topic page** with a placeholder image and a question about **type of content** they’d choose, a follow-up on **why**, **ranking** what influences their choices and **ranking** formats for their chosen topic, then **short written** follow-ups. If the “why” question shows generic **Option 1 / 2 / 3**, tell them to pick the closest fit or **Other** and explain—that’s a known placeholder in the UI.
+How they **learn**: intro, **pick a topic**, **numbered resource** choice + **why**, **optional** other resources (image placeholder), then a **branching 5-factor ranking** (video/podcast/event vs blog vs ebook/use case/whitepaper lists) plus optional **Other** text, **rank six content types** for the topic, then **Yes/No** on wanting **more** content types; **if Yes**, **open text** for specifics.
 
 ---
 

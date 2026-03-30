@@ -1,7 +1,7 @@
 .completion-screen {
   width: 100vw;
   height: 100vh;
-  background: #0f0f0f; /* Red Hat Gray-95 */
+  background: transparent;
   display: flex;
   flex-direction: column;
   font-family: 'Red Hat Text', sans-serif;

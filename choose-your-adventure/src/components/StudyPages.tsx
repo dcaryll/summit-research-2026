@@ -40,6 +40,8 @@ type StudyPage = {
   placeholderImage?: boolean
   /** Topic-page style placeholder before the question (e.g. hybrid cloud prototype). */
   prototypePlaceholder?: boolean
+  /** Shown in the prototype placeholder box (e.g. numbered resources matching on-screen labels). */
+  prototypePlaceholderHint?: string
   /** When set with `figmaEmbedUrl`, render the iframe above the question instead of below. */
   figmaEmbedAboveQuestion?: boolean
   /** On `multiple-choice`: show follow-up when main answer equals this. */
@@ -51,6 +53,20 @@ type StudyPage = {
   followUpFreeText?: boolean
   /** Replace each `{{TOPIC}}` in `question` with the participant's answer from this page id. */
   questionTopicFromPageId?: string
+  /** For multi-select: build options from another page's `options`, excluding `answers[excludePageId]` from that pick. */
+  multiSelectOptionsFromPageId?: string
+  /** Page id storing the single-choice answer to remove from the list. Defaults to `multiSelectOptionsFromPageId`. */
+  multiSelectExcludeAnswerFromPageId?: string
+  /** If false, 0..max selections allowed (default max = options length). If true (default), must pick exactly `maxSelections`. */
+  multiSelectExactCount?: boolean
+  /** For `ranking`: first branch where `answers[rankingRowsBranchFromPageId]` includes a `matchAnyOf` substring. */
+  rankingRowsBranchFromPageId?: string
+  rankingRowBranches?: { matchAnyOf: string[]; rows: { id: string; label: string }[] }[]
+  /** When no branch matches (e.g. unexpected prior answer). */
+  rankingRowBranchesDefault?: { id: string; label: string }[]
+  /** Optional free-text after ranking (e.g. specify what "Other" means). */
+  rankingOtherAnswerKey?: string
+  rankingOtherQuestion?: string
 }
 
 /** Option A on product evaluation trust question — triggers browser-sandbox follow-up. */
@@ -154,15 +170,16 @@ function isValidRankingAnswer(raw: string | undefined, rowIds: string[]): boolea
 type RankingRowModel = { id: string; label: string }
 
 function RankingQuestionBlock({
-  page,
+  instruction,
+  rows,
   answerRaw,
   onCommit
 }: {
-  page: StudyPage
+  instruction?: string
+  rows: RankingRowModel[]
   answerRaw: string | undefined
   onCommit: (orderedIds: string[]) => void
 }) {
-  const rows = page.rows!
   const rowIds = rows.map((r) => r.id)
   const byId = Object.fromEntries(rows.map((r) => [r.id, r])) as Record<string, RankingRowModel>
 
@@ -238,7 +255,7 @@ function RankingQuestionBlock({
 
   return (
     <div className="ranking-question">
-      {page.instruction ? <p className="ranking-instruction">{page.instruction}</p> : null}
+      {instruction ? <p className="ranking-instruction">{instruction}</p> : null}
       <ul className="ranking-list">
         {displayRows.map((row, i) => (
           <li
@@ -296,11 +313,46 @@ function RankingQuestionBlock({
   )
 }
 
-function computeCanProceed(page: StudyPage | undefined, ans: Record<string, string>): boolean {
+function getBranchedRankingRows(
+  page: StudyPage,
+  answers: Record<string, string>
+): { id: string; label: string }[] | undefined {
+  if (!page.rankingRowsBranchFromPageId || !page.rankingRowBranches?.length) {
+    return page.rows
+  }
+  const prior = answers[page.rankingRowsBranchFromPageId]?.trim() ?? ''
+  for (const b of page.rankingRowBranches) {
+    if (b.matchAnyOf.some((m) => prior.includes(m))) return b.rows
+  }
+  return page.rankingRowBranchesDefault ?? page.rankingRowBranches[page.rankingRowBranches.length - 1]?.rows
+}
+
+function getDerivedMultiSelectOptions(
+  page: StudyPage,
+  allPages: StudyPage[],
+  answers: Record<string, string>
+): string[] | undefined {
+  if (!page.multiSelectOptionsFromPageId) return page.options
+  const src = allPages.find((p) => p.id === page.multiSelectOptionsFromPageId)
+  const base = src?.options
+  if (!base?.length) return page.options
+  const exId = page.multiSelectExcludeAnswerFromPageId ?? page.multiSelectOptionsFromPageId
+  const chosen = answers[exId]?.trim()
+  if (!chosen) return [...base]
+  return base.filter((o) => o !== chosen)
+}
+
+function computeCanProceed(
+  page: StudyPage | undefined,
+  ans: Record<string, string>,
+  allPages: StudyPage[]
+): boolean {
   if (!page) return false
   if (page.type === 'overview' || page.type === 'prototype') return true
-  if (page.type === 'ranking' && page.rows?.length) {
-    const ids = page.rows.map((r) => r.id)
+  if (page.type === 'ranking') {
+    const rows = getBranchedRankingRows(page, ans) ?? page.rows
+    if (!rows?.length) return false
+    const ids = rows.map((r) => r.id)
     return isValidRankingAnswer(ans[page.id], ids)
   }
   if ((page.type === 'matrix' || page.type === 'buckets') && page.rows) {
@@ -308,10 +360,27 @@ function computeCanProceed(page: StudyPage | undefined, ans: Record<string, stri
       row => ans[`${page.id}:${row.id}`] && ans[`${page.id}:${row.id}`].trim() !== ''
     )
   }
-  if (page.type === 'multi-select' && page.maxSelections) {
+  if (page.type === 'multi-select') {
+    const options = getDerivedMultiSelectOptions(page, allPages, ans) ?? page.options ?? []
+    const exact = page.multiSelectExactCount !== false
+    if (options.length === 0) return true
+    let selected: string[]
     try {
-      const selected = JSON.parse(ans[page.id] || '[]') as string[]
-      return selected.length === page.maxSelections
+      const raw = ans[page.id]
+      if (raw === undefined || raw === '') {
+        if (exact) return false
+        selected = []
+      } else {
+        selected = JSON.parse(raw) as string[]
+      }
+      if (!Array.isArray(selected)) return false
+      if (!selected.every((s) => typeof s === 'string' && (options as string[]).includes(s))) return false
+      if (exact) {
+        if (page.maxSelections == null) return false
+        return selected.length === page.maxSelections
+      }
+      const cap = page.maxSelections ?? options.length
+      return selected.length <= cap
     } catch {
       return false
     }
@@ -721,80 +790,128 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         id: 'intro',
         type: 'overview',
         question:
-          "Hi there, we're looking to learn more about how you like to learn about technology topics you're interested in and in what mediums you prefer to learn.\n\nIn the next 5 minutes, you'll help us improve our topical learning content offerings by ranking and choosing between different types of learning content. Your feedback will help us provide more relevant and useful learning content across our sites."
+          "**Thanks for taking part.**\n\nWe want to understand how you prefer to learn about technology topics you care about—which formats you notice first, and what drives those choices.\n\nOver the next few screens you'll pick a topic, choose and rank different types of learning content, and share a bit of context in your own words. Your answers help us make topical learning more useful on our sites."
       },
       {
         id: '1',
         type: 'multiple-choice',
         placeholderImage: true,
         question:
-          "Take a second to look at the 5 topics on this page. Choose the topic you're most interested in learning about.",
-        options: ['AI', 'Virtualization', 'App Platforms', 'Automation', 'Linux Standardization']
+          'These topics are examples of areas people come to learn about. Which one are you most interested in exploring right now?',
+        options: ['AI', 'Virtualization', 'App platforms', 'Automation', 'Linux standardization']
       },
       {
         id: '2',
         type: 'multiple-choice',
         prototypePlaceholder: true,
-        instruction: 'Select your choice on the screen.',
+        prototypePlaceholderHint:
+          'On screen, resources are numbered: 1 Video · 2 Blog article · 3 E-book · 4 Event · 5 Technical use case · 6 Whitepaper',
+        questionTopicFromPageId: '1',
         question:
-          'If you wanted to learn more about this topic, which additional piece of content are you most likely to choose?',
+          'Great! So you want to learn more about {{TOPIC}}. Which additional resource are you most likely to choose next to learn more? Select the corresponding number of the resource on the screen.',
         options: [
-          'Hands-on lab or sandbox',
-          'Short video overview',
-          'In-depth documentation',
-          'Structured learning path or course',
-          'Live webinar or workshop',
-          'Code samples or reference architecture'
+          '1. Video',
+          '2. Blog article',
+          '3. E-book',
+          '4. Event',
+          '5. Technical Use Case',
+          '6. Whitepaper'
         ]
       },
       {
         id: '3',
-        type: 'multiple-choice',
-        question: 'Why did you pick this content offering?',
-        options: ['Option 1', 'Option 2', 'Option 3', 'Other'],
-        followUpWhen: 'Other',
-        followUpAnswerKey: '3-other',
-        followUpFreeText: true,
-        followUpQuestion: 'Please specify:'
+        type: 'text',
+        question: 'Follow-up question: Why did you pick this content offering?'
       },
       {
         id: '4',
-        type: 'ranking',
+        type: 'multi-select',
+        placeholderImage: true,
         question:
-          'Rank these factors based on how much they influence your initial choice of learning content.',
-        instruction:
-          'Please rank them in order of importance with 1 being the most important and 4 being less important.',
-        rows: [
-          { id: 'medium', label: "Medium (whether it's listening, reading, visual)" },
-          { id: 'length', label: 'Length of content' },
-          { id: 'title', label: 'Title' },
-          { id: 'source', label: 'Source' }
-        ]
+          'Are you also interested in any of the other offerings? If so, select all the other ones you would be interested in. Select the corresponding number of the resource on the screen.',
+        instruction: 'Optional — choose any other numbered resources that interest you, or select none and continue.',
+        multiSelectOptionsFromPageId: '2',
+        multiSelectExcludeAnswerFromPageId: '2',
+        multiSelectExactCount: false
       },
       {
         id: '5',
         type: 'ranking',
-        questionTopicFromPageId: '1',
         question:
-          "Please rank the following pieces of content based on which one you're most likely to choose when learning about {{TOPIC}}?",
+          'Rank the following factors based on how much they influence your choice of learning content.',
         instruction:
-          'Rank with 1 being the format you are most likely to choose first, and 3 the least.',
-        rows: [
-          { id: 'podcast', label: 'Example of Podcast episode' },
-          { id: 'video', label: 'Example of Video' },
-          { id: 'blog', label: 'Example of Blog article' }
-        ]
-      },
-      {
-        id: '5-follow',
-        type: 'text',
-        question: 'Why did you pick this content offering?'
+          'Please rank them in order of importance with 1 being the most important and 5 being the least important.',
+        rankingRowsBranchFromPageId: '2',
+        rankingRowBranches: [
+          {
+            matchAnyOf: ['Blog article'],
+            rows: [
+              { id: 'cd-blog-read-time', label: 'Predicted read time' },
+              { id: 'cd-blog-title', label: 'Title of article' },
+              { id: 'cd-blog-author', label: 'Author of article' },
+              { id: 'cd-blog-preview', label: 'Preview of content' },
+              { id: 'cd-blog-other', label: 'Other' }
+            ]
+          },
+          {
+            matchAnyOf: ['E-book', 'Technical Use Case', 'Whitepaper'],
+            rows: [
+              { id: 'cd-ebook-title', label: 'Title of resource' },
+              { id: 'cd-ebook-summary', label: 'Summary of content' },
+              { id: 'cd-ebook-depth', label: 'Perceived depth of content' },
+              { id: 'cd-ebook-thumb', label: 'Thumbnail' },
+              { id: 'cd-ebook-other', label: 'Other' }
+            ]
+          },
+          {
+            matchAnyOf: ['Video', 'Podcast', 'Event'],
+            rows: [
+              { id: 'cd-av-length', label: 'Length of video/audio' },
+              { id: 'cd-av-title', label: 'Title' },
+              { id: 'cd-av-summary', label: 'Summary of content' },
+              { id: 'cd-av-thumb', label: 'Thumbnail' },
+              { id: 'cd-av-other', label: 'Other' }
+            ]
+          }
+        ],
+        rankingRowBranchesDefault: [
+          { id: 'cd-def-length', label: 'Length of video/audio' },
+          { id: 'cd-def-title', label: 'Title' },
+          { id: 'cd-def-summary', label: 'Summary of content' },
+          { id: 'cd-def-thumb', label: 'Thumbnail' },
+          { id: 'cd-def-other', label: 'Other' }
+        ],
+        rankingOtherAnswerKey: '5-other-detail',
+        rankingOtherQuestion: 'If you ranked Other, briefly specify what you had in mind (optional):'
       },
       {
         id: '6',
-        type: 'text',
+        type: 'ranking',
+        questionTopicFromPageId: '1',
         question:
-          "Are there any types of learning content that you didn't see today that you think is missing?"
+          'For {{TOPIC}}, rank these content types by which you are most likely to choose first when learning about the topic.',
+        instruction:
+          '1 = most likely to choose first; 6 = least likely among these six.',
+        rows: [
+          { id: 'cd-ctype-short-video', label: 'A short video (less than 5 min)' },
+          { id: 'cd-ctype-long-video', label: 'A longer, in-depth video (longer than 5 min)' },
+          { id: 'cd-ctype-podcast', label: 'A podcast episode' },
+          { id: 'cd-ctype-ebook', label: 'An e-book' },
+          { id: 'cd-ctype-article', label: 'An article' },
+          { id: 'cd-ctype-case-study', label: 'A customer case study' }
+        ]
+      },
+      {
+        id: '7',
+        type: 'multiple-choice',
+        question:
+          "Are there any types of learning content that you didn't see today that you would like to see offered?",
+        options: ['Yes', 'No'],
+        followUpWhen: 'Yes',
+        followUpAnswerKey: '7-yes-detail',
+        followUpFreeText: true,
+        followUpQuestion:
+          'What other content offerings would you like to see? (We greatly appreciate specificity!)'
       }
     ]
   }
@@ -834,17 +951,45 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     }
   }, [currentPage?.id, currentPage?.type])
 
+  const rankingBranchSourceAnswer =
+    currentPage?.type === 'ranking' && currentPage.rankingRowsBranchFromPageId
+      ? answers[currentPage.rankingRowsBranchFromPageId]
+      : undefined
+
   // Default ranking order = definition order until the participant reorders
   useEffect(() => {
-    if (currentPage?.type === 'ranking' && currentPage.rows?.length) {
-      const pid = currentPage.id
-      const ids = currentPage.rows.map((r) => r.id)
-      setAnswers((prev) => {
-        if (isValidRankingAnswer(prev[pid], ids)) return prev
-        return { ...prev, [pid]: JSON.stringify(ids) }
-      })
-    }
-  }, [currentPage?.id, currentPage?.type])
+    if (currentPage?.type !== 'ranking') return
+    const rows = getBranchedRankingRows(currentPage, answers) ?? currentPage.rows
+    if (!rows?.length) return
+    const pid = currentPage.id
+    const ids = rows.map((r) => r.id)
+    setAnswers((prev) => {
+      if (isValidRankingAnswer(prev[pid], ids)) return prev
+      return { ...prev, [pid]: JSON.stringify(ids) }
+    })
+  }, [currentPage?.id, currentPage?.type, rankingBranchSourceAnswer, studyPages])
+
+  // Optional multi-select: default to empty selection so Next works with zero picks
+  useEffect(() => {
+    if (currentPage?.type !== 'multi-select' || currentPage.multiSelectExactCount !== false) return
+    setAnswers((prev) => {
+      if (prev[currentPage.id] !== undefined) return prev
+      return { ...prev, [currentPage.id]: '[]' }
+    })
+  }, [currentPage?.id, currentPage?.type, currentPage?.multiSelectExactCount])
+
+  const derivedMultiSelectOptions = useMemo(() => {
+    const p = studyPages[currentPageIndex]
+    if (p?.type !== 'multi-select') return undefined
+    return getDerivedMultiSelectOptions(p, studyPages, answers) ?? []
+  }, [currentPageIndex, studyPages, answers])
+
+  const rankingRowsResolved = useMemo(() => {
+    const p = studyPages[currentPageIndex]
+    if (p?.type !== 'ranking') return undefined
+    return getBranchedRankingRows(p, answers) ?? p.rows
+  }, [currentPageIndex, studyPages, answers])
+
   const isLastPage = studyPages.length > 0 && currentPageIndex === studyPages.length - 1
   const isFirstPage = currentPageIndex === 0
 
@@ -899,6 +1044,8 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     } else if ((page.type === 'matrix' || page.type === 'buckets') && page.rows && page.options?.length) {
       const opt = page.options[0]
       page.rows.forEach(row => { overrides[`${page.id}:${row.id}`] = opt })
+    } else if (page.type === 'multi-select' && page.multiSelectExactCount === false) {
+      overrides[page.id] = '[]'
     } else if (page.type === 'multi-select' && page.options && page.maxSelections) {
       overrides[page.id] = JSON.stringify(page.options.slice(0, page.maxSelections))
     } else if (page.type === 'value-credits' && page.creditCards?.length && page.creditBudget != null) {
@@ -913,8 +1060,14 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       overrides[page.id] = JSON.stringify(ids.length ? ids : [page.creditCards[0].id])
     } else if (page.type === 'slider') {
       overrides[page.id] = String(page.sliderMin ?? 3)
-    } else if (page.type === 'ranking' && page.rows?.length) {
-      overrides[page.id] = JSON.stringify(page.rows.map((r) => r.id))
+    } else if (page.type === 'ranking') {
+      const rows = getBranchedRankingRows(page, answers) ?? page.rows
+      if (rows?.length) {
+        overrides[page.id] = JSON.stringify(rows.map((r) => r.id))
+        if (page.rankingOtherAnswerKey) {
+          overrides[page.rankingOtherAnswerKey] = '[skipped]'
+        }
+      }
     }
     return overrides
   }
@@ -939,7 +1092,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     if (currentPageIndex > 0) setCurrentPageIndex((i) => i - 1)
   }
 
-  const canProceed = () => computeCanProceed(currentPage, answers)
+  const canProceed = () => computeCanProceed(currentPage, answers, studyPages)
 
   useEffect(() => {
     prevCanProceedRef.current = null
@@ -948,7 +1101,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   useEffect(() => {
     const page = studyPages[currentPageIndex]
     if (!page) return
-    const ok = computeCanProceed(page, answers)
+    const ok = computeCanProceed(page, answers, studyPages)
     const prev = prevCanProceedRef.current
     if (prev === false && ok) {
       pageNavigationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
@@ -1024,7 +1177,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             <div
               className="study-page-image-placeholder"
               role="img"
-              aria-label="Illustration of the five learning topics (placeholder)"
+              aria-label="Illustration placeholder for example learning topics (AI, virtualization, and similar)"
             >
               <span className="study-page-image-placeholder-label">Image placeholder</span>
             </div>
@@ -1041,10 +1194,23 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             <div
               className="study-page-prototype-placeholder"
               role="region"
-              aria-label="Hybrid cloud topic page prototype with selectable learning content offerings"
+              aria-label={
+                [
+                  answers['1']?.trim() && `${answers['1'].trim()} topic page preview`,
+                  currentPage.prototypePlaceholderHint,
+                  !currentPage.prototypePlaceholderHint &&
+                    (answers['1']?.trim()
+                      ? 'selectable learning content'
+                      : 'Topic page preview with selectable learning content')
+                ]
+                  .filter(Boolean)
+                  .join('. ')
+              }
             >
               <span className="study-page-prototype-placeholder-label">
-                Hybrid cloud topic page prototype with selectable learning content offerings
+                {answers['1']?.trim() && `${answers['1'].trim()} — `}
+                {currentPage.prototypePlaceholderHint ??
+                  'topic page preview (selectable learning content)'}
               </span>
             </div>
           ) : null}
@@ -1180,13 +1346,28 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             </div>
           )}
 
-          {currentPage.type === 'multi-select' && currentPage.options && (
+          {currentPage.type === 'multi-select' &&
+            (() => {
+              const opts: string[] =
+                currentPage.multiSelectOptionsFromPageId != null
+                  ? (derivedMultiSelectOptions ?? [])
+                  : (currentPage.options ?? [])
+              const exact = currentPage.multiSelectExactCount !== false
+              const cap = currentPage.maxSelections ?? opts.length
+              if (opts.length === 0) {
+                return (
+                  <p className="multi-select-instruction" role="status">
+                    There are no other resources to select on this screen.
+                  </p>
+                )
+              }
+              return (
             <div className="multi-select-question">
               {currentPage.instruction && (
                 <p className="multi-select-instruction">{currentPage.instruction}</p>
               )}
               <div className="multi-select-options">
-                {currentPage.options.map((option) => {
+                {opts.map((option) => {
                   const selected = (() => {
                     try {
                       const arr = JSON.parse(answers[currentPage.id] || '[]') as string[]
@@ -1198,7 +1379,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                       return (JSON.parse(answers[currentPage.id] || '[]') as string[]).length
                     } catch { return 0 }
                   })()
-                  const canSelect = selected || selectedCount < (currentPage.maxSelections ?? 999)
+                  const canSelect = selected || selectedCount < cap
                   return (
                     <button
                       key={option}
@@ -1228,7 +1409,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   )
                 })}
               </div>
-              {currentPage.maxSelections && (
+              {exact && currentPage.maxSelections != null ? (
                 <p className="multi-select-count">
                   {((): number => {
                     try { return (JSON.parse(answers[currentPage.id] || '[]') as string[]).length }
@@ -1236,9 +1417,18 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   })()}
                   /{currentPage.maxSelections} selected
                 </p>
+              ) : (
+                <p className="multi-select-count">
+                  {((): number => {
+                    try { return (JSON.parse(answers[currentPage.id] || '[]') as string[]).length }
+                    catch { return 0 }
+                  })()}
+                  {' '}selected — optional
+                </p>
               )}
             </div>
-          )}
+              )
+            })()}
 
           {currentPage.type === 'value-credits' && currentPage.creditCards && currentPage.creditBudget != null && (
             <div className="value-credits-question">
@@ -1373,12 +1563,37 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             </div>
           )}
 
-          {currentPage.type === 'ranking' && currentPage.rows && currentPage.rows.length >= 2 && (
-            <RankingQuestionBlock
-              page={currentPage}
-              answerRaw={answers[currentPage.id]}
-              onCommit={(ids) => handleAnswerChange(JSON.stringify(ids))}
-            />
+          {currentPage.type === 'ranking' &&
+            rankingRowsResolved &&
+            rankingRowsResolved.length >= 2 && (
+            <>
+              <RankingQuestionBlock
+                instruction={currentPage.instruction}
+                rows={rankingRowsResolved}
+                answerRaw={answers[currentPage.id]}
+                onCommit={(ids) => handleAnswerChange(JSON.stringify(ids))}
+              />
+              {currentPage.rankingOtherAnswerKey && currentPage.rankingOtherQuestion ? (
+                <div className="study-ranking-other-followup">
+                  <label className="study-ranking-other-label" htmlFor={`ranking-other-${currentPage.id}`}>
+                    {currentPage.rankingOtherQuestion}
+                  </label>
+                  <textarea
+                    id={`ranking-other-${currentPage.id}`}
+                    className="text-input study-ranking-other-textarea"
+                    rows={3}
+                    placeholder="Type here if relevant…"
+                    value={answers[currentPage.rankingOtherAnswerKey] ?? ''}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [currentPage.rankingOtherAnswerKey!]: e.target.value
+                      }))
+                    }
+                  />
+                </div>
+              ) : null}
+            </>
           )}
 
           {currentPage.type === 'matrix' && currentPage.rows && currentPage.options && (
