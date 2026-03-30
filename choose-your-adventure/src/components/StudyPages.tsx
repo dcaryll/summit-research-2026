@@ -840,7 +840,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         question:
           'Rank the following factors based on how much they influence your choice of learning content.',
         instruction:
-          'Please rank them in order of importance with 1 being the most important and 5 being the least important.',
+          'Please rank them in order of importance with 1 being the most important and 4 being the least important.',
         rankingRowsBranchFromPageId: '2',
         rankingRowBranches: [
           {
@@ -849,8 +849,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
               { id: 'cd-blog-read-time', label: 'Predicted read time' },
               { id: 'cd-blog-title', label: 'Title of article' },
               { id: 'cd-blog-author', label: 'Author of article' },
-              { id: 'cd-blog-preview', label: 'Preview of content' },
-              { id: 'cd-blog-other', label: 'Other' }
+              { id: 'cd-blog-preview', label: 'Preview of content' }
             ]
           },
           {
@@ -859,8 +858,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
               { id: 'cd-ebook-title', label: 'Title of resource' },
               { id: 'cd-ebook-summary', label: 'Summary of content' },
               { id: 'cd-ebook-depth', label: 'Perceived depth of content' },
-              { id: 'cd-ebook-thumb', label: 'Thumbnail' },
-              { id: 'cd-ebook-other', label: 'Other' }
+              { id: 'cd-ebook-thumb', label: 'Thumbnail' }
             ]
           },
           {
@@ -869,8 +867,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
               { id: 'cd-av-length', label: 'Length of video/audio' },
               { id: 'cd-av-title', label: 'Title' },
               { id: 'cd-av-summary', label: 'Summary of content' },
-              { id: 'cd-av-thumb', label: 'Thumbnail' },
-              { id: 'cd-av-other', label: 'Other' }
+              { id: 'cd-av-thumb', label: 'Thumbnail' }
             ]
           }
         ],
@@ -878,11 +875,8 @@ const getStudyPages = (focusId: string): StudyPage[] => {
           { id: 'cd-def-length', label: 'Length of video/audio' },
           { id: 'cd-def-title', label: 'Title' },
           { id: 'cd-def-summary', label: 'Summary of content' },
-          { id: 'cd-def-thumb', label: 'Thumbnail' },
-          { id: 'cd-def-other', label: 'Other' }
-        ],
-        rankingOtherAnswerKey: '5-other-detail',
-        rankingOtherQuestion: 'If you ranked Other, briefly specify what you had in mind (optional):'
+          { id: 'cd-def-thumb', label: 'Thumbnail' }
+        ]
       },
       {
         id: '6',
