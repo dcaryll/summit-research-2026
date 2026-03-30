@@ -96,8 +96,8 @@ const focusOptions: FocusOption[] = [
   },
   {
     id: 'my-trials',
-    title: 'My trials',
-    description: 'Help us improve how you discover, start, and use product trials.'
+    title: 'Trying & buying new products',
+    description: 'Tell us how you and your team prefer to purchase after using a product trial.'
   },
   {
     id: 'product-marketing',

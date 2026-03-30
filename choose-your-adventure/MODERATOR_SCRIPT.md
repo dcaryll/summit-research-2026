@@ -78,7 +78,7 @@ When you’re ready, go ahead.”
 | **Buyer / Procurement** | Product marketing |
 | **Learning & content** | Content discovery |
 | **Technical evaluator** | Product evaluation |
-| **Trials & subscriptions** | My trials |
+| **Trials & subscriptions** | Trying & buying new products |
 
 **After they tap:** “The study will **open on its own** in a second—no **Take the study** needed.”
 
@@ -106,7 +106,7 @@ Use these **only if** they ask “what will I be doing?” or look lost.
 | **Product evaluation** | “We’re asking how you **evaluate** software—trust, sandboxes vs installs, and a **budget-style** exercise about what you’d want in a trial.” |
 | **Developer program** | “We’re asking **which developer tools** you use and **how** those resources help you—or could help more.” |
 | **My Red Hat** | “There are **three parts**—portable tools, **AI-style** dashboard ideas, and **proof of value** for renewals. Each part has **intro text**, a **clickable preview**, then **follow-up questions**.” |
-| **My trials** | “We’re asking **how you start trials** and what’s **hard** or **could be better**.” |
+| **Trying & buying new products** | “We’re asking **how you start trials** and what’s **hard** or **could be better**.” |
 | **Product marketing** | “We’re asking how **product names and menus** should work—a **sort**, **rank nine**, **drop** one + **why**, **consistent** labels + **why**, **Products & documentation** **combined** + **why**, then **add** a menu item (label, **why**, **content types**) in **open text**.” |
 | **Content discovery** | “We’re asking **how you prefer to learn**—topic, **numbered** first pick + **why**, **optional** other numbers, **branching** four-factor ranking, **six-type** ranking for the topic, then **Yes/No** on wanting **more** content types and **specifics** if Yes.” |
 

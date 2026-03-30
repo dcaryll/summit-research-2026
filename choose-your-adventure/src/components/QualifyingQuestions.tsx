@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './QualifyingQuestions.css'
+import { confirmLeaveQualifyingFlow, registerBeforeUnloadIfInProgress } from '../studyExitPrompt'
 import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
 
 interface QualifyingQuestionsProps {
@@ -13,7 +14,7 @@ const FOCUS_OPTIONS = [
   { id: 'product-evaluation', label: 'Product evaluation' },
   { id: 'developer-program', label: 'Developer program' },
   { id: 'my-red-hat', label: 'My Red Hat' },
-  { id: 'my-trials', label: 'My trials' },
+  { id: 'my-trials', label: 'Trying & buying new products' },
   { id: 'product-marketing', label: 'Product marketing' },
   { id: 'content-discovery', label: 'Content discovery' }
 ] as const
@@ -77,11 +78,23 @@ function QualifyingQuestions({ onBack, onComplete }: QualifyingQuestionsProps) {
     if (!isFirstQuestion) setCurrentIndex((i) => i - 1)
   }
 
+  const hasQualifyingProgress = currentIndex > 0 || Object.keys(answers).length > 0
+
+  useEffect(() => {
+    return registerBeforeUnloadIfInProgress(hasQualifyingProgress)
+  }, [hasQualifyingProgress])
+
+  const handleLeaveQualifying = () => {
+    if (!hasQualifyingProgress || confirmLeaveQualifyingFlow()) {
+      onBack()
+    }
+  }
+
   return (
     <div className="qualifying-screen">
       <div className="qualifying-header">
         <img src={logoImage} alt="Red Hat Logo" className="qualifying-logo" />
-        <button type="button" className="qualifying-back-button" onClick={onBack}>
+        <button type="button" className="qualifying-back-button" onClick={handleLeaveQualifying}>
           Back
         </button>
       </div>

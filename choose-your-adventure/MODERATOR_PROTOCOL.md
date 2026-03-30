@@ -64,7 +64,7 @@ Short **context** on what “a product in a portfolio” means, then **label pre
 ### Developer program
 What **developer tools** they use (multi-choice), then **two open questions** on how resources help them and what would make the program more valuable.
 
-### My trials
+### Trying & buying new products
 How they **start trials**, then **two open questions** on challenges and improvements.
 
 ### Content discovery

@@ -3,6 +3,10 @@ import './StudyPages.css'
 import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
 import CompletionScreen from './CompletionScreen'
 import LoadingScreen from './LoadingScreen'
+import {
+  confirmLeaveActiveStudy,
+  registerBeforeUnloadIfInProgress
+} from '../studyExitPrompt'
 
 interface StudyPagesProps {
   focusId: string
@@ -40,6 +44,8 @@ type StudyPage = {
   placeholderImage?: boolean
   /** Topic-page style placeholder before the question (e.g. hybrid cloud prototype). */
   prototypePlaceholder?: boolean
+  /** After `overview` paragraphs only: interactive mock (e.g. Ready to Buy) for participants to explore. */
+  prototypePlaceholderAfterOverview?: boolean
   /** Shown in the prototype placeholder box (e.g. numbered resources matching on-screen labels). */
   prototypePlaceholderHint?: string
   /** When set with `figmaEmbedUrl`, render the iframe above the question instead of below. */
@@ -62,6 +68,8 @@ type StudyPage = {
   multiSelectExcludeAnswerFromPageId?: string
   /** If false, 0..max selections allowed (default max = options length). If true (default), must pick exactly `maxSelections`. */
   multiSelectExactCount?: boolean
+  /** With `multi-select` and non-exact count: minimum selections before **Next** is enabled (default 0). */
+  multiSelectMinSelections?: number
   /** For `ranking`: first branch where `answers[rankingRowsBranchFromPageId]` includes a `matchAnyOf` substring. */
   rankingRowsBranchFromPageId?: string
   rankingRowBranches?: { matchAnyOf: string[]; rows: { id: string; label: string }[] }[]
@@ -85,6 +93,74 @@ function formatOverviewParagraphBody(trimmed: string): ReactNode {
   const m = /^\*\*(.+)\*\*$/.exec(trimmed)
   if (m) return <strong className="study-overview-headline">{m[1]}</strong>
   return trimmed
+}
+
+/** Stand-in for the real Ready to Buy screen; menu labels are placeholders until final creative ships. */
+function ReadyToBuyExplorePlaceholder({ hint }: { hint?: string }) {
+  const [lastChoice, setLastChoice] = useState<string | null>(null)
+  const [dismissed, setDismissed] = useState(false)
+
+  const menuLabels = [
+    'Buy subscription',
+    'Contact sales',
+    'View pricing and packaging',
+    'Compare editions',
+    'Not now'
+  ]
+
+  return (
+    <div
+      className="ready-to-buy-explore"
+      role="region"
+      aria-label={hint ?? 'Example Ready to Buy screen with menu options to explore'}
+    >
+      <div className="ready-to-buy-explore-modal">
+        <div className="ready-to-buy-explore-chrome">
+          <span className="ready-to-buy-explore-title">Ready to Buy</span>
+          <button
+            type="button"
+            className="ready-to-buy-explore-close"
+            aria-label="Close (example only—does not leave the study)"
+            onClick={() => {
+              setDismissed(true)
+              setLastChoice(null)
+            }}
+          >
+            ×
+          </button>
+        </div>
+        <p className="ready-to-buy-explore-hint">
+          Tap the options below as you would on a real screen. Labels are placeholders for research.
+        </p>
+        <ul className="ready-to-buy-explore-menu">
+          {menuLabels.map((label) => (
+            <li key={label}>
+              <button
+                type="button"
+                className={`ready-to-buy-explore-option${lastChoice === label ? ' ready-to-buy-explore-option--active' : ''}`}
+                onClick={() => {
+                  setDismissed(false)
+                  setLastChoice(label)
+                }}
+              >
+                {label}
+              </button>
+            </li>
+          ))}
+        </ul>
+        {dismissed && (
+          <p className="ready-to-buy-explore-feedback" aria-live="polite">
+            Example only: closing without choosing matches what many people do on the real screen.
+          </p>
+        )}
+        {!dismissed && lastChoice && (
+          <p className="ready-to-buy-explore-feedback" aria-live="polite">
+            Example feedback — you selected: {lastChoice}
+          </p>
+        )}
+      </div>
+    </div>
+  )
 }
 
 function joinCardLabels(cards: CreditCard[]): string {
@@ -382,6 +458,8 @@ function computeCanProceed(
         if (page.maxSelections == null) return false
         return selected.length === page.maxSelections
       }
+      const minSel = page.multiSelectMinSelections ?? 0
+      if (selected.length < minSel) return false
       const cap = page.maxSelections ?? options.length
       return selected.length <= cap
     } catch {
@@ -427,10 +505,28 @@ const STUDY_DISPLAY_NAME: Record<string, string> = {
   'developer-for-business': 'Developer program',
   'my-red-hat': 'My Red Hat',
   dashboard: 'My Red Hat',
-  'my-trials': 'My trials',
+  'my-trials': 'Trying & buying new products',
   'product-marketing': 'Product marketing',
   'buying-products': 'Product marketing',
   'content-discovery': 'Content discovery'
+}
+
+/** Pulled out so `type` + `options` cannot be dropped or merged incorrectly inside the big pages map. */
+const MY_TRIALS_PAGE_READY_TO_BUY_EXPECT: StudyPage = {
+  id: '2',
+  type: 'multi-select',
+  instruction:
+    'Select all that apply — tap each outcome you would reasonably expect might happen next (you can choose more than one).',
+  question:
+    "Be honest: When you click a button labeled 'Ready to Buy,' what do you expect to happen next?",
+  options: [
+    'A) I expect to enter a credit card or PO number immediately.',
+    "B) I expect to generate a price quote to get my boss's approval.",
+    'C) I expect to notify my Red Hat Rep or Partner.'
+  ],
+  multiSelectExactCount: false,
+  maxSelections: 3,
+  multiSelectMinSelections: 1
 }
 
 // Mock study pages/questions - this will be customized based on focusId
@@ -846,9 +942,92 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       { id: '3', question: 'What would make the developer program more valuable for you?', type: 'text' }
     ],
     'my-trials': [
-      { id: '1', question: 'How do you usually start or access a trial of a Red Hat product?', type: 'multiple-choice', options: ['redhat.com', 'My Red Hat / customer portal', 'Through my sales contact', 'At an event', 'Partner or marketplace', 'Other'] },
-      { id: '2', question: 'What has been your biggest challenge with product trials?', type: 'text' },
-      { id: '3', question: 'What would make trials easier or more useful for you?', type: 'text' }
+      {
+        id: 'intro',
+        type: 'overview',
+        prototypePlaceholderAfterOverview: true,
+        prototypePlaceholderHint:
+          'Example Ready to Buy dialog with placeholder menu options you can tap to explore',
+        question:
+          "Right now, when you finish a product trial and click 'Ready to Buy,' you see these exact menu options.\n\nHowever, our data shows the majority of users close this window without clicking anything. Help us understand why."
+      },
+      {
+        id: '1',
+        type: 'multiple-choice',
+        question:
+          'You are nearing the end of a product trial and want to keep using the software. Which button are you more likely to click to figure out your options?',
+        options: [
+          'A) Ready to Buy (I know exactly what I want and have the budget).',
+          "B) What's Next? / Explore Next Steps (I need to see my options, talk to my team, or check my contract first).",
+          'C) Contact Sales (I just want to talk to a human to sort it out).'
+        ]
+      },
+      MY_TRIALS_PAGE_READY_TO_BUY_EXPECT,
+      {
+        id: '3',
+        type: 'multiple-choice',
+        question:
+          'Look at the multiple buying options on the screen. If you closed this menu without clicking anything, what is your most likely reason?',
+        options: [
+          "A) I don't know which option applies to my company's contract.",
+          'B) I need to secure an internal budget/approval first.',
+          'C) I wanted to see transparent pricing without talking to Sales.',
+          "D) I'm afraid of messing up my existing account terms.",
+          'E) I want to buy online through digital commerce options.'
+        ]
+      },
+      {
+        id: '4',
+        type: 'multiple-choice',
+        question: 'What has been your biggest challenge with product trials?',
+        options: [
+          'Limited time or bandwidth to evaluate',
+          'Getting budget or internal approval',
+          'Understanding pricing, packaging, or licensing',
+          'Technical setup or integration complexity',
+          'Unclear what happens when the trial ends',
+          'Other'
+        ],
+        followUpWhen: 'Other',
+        followUpAnswerKey: '4-challenge-other',
+        followUpQuestion: 'Please briefly describe:',
+        followUpFreeText: true
+      },
+      {
+        id: '5',
+        type: 'ranking',
+        question:
+          'We are redesigning this menu to make it easier. Rank these 5 proposed updates from Most Useful (1) to Least Useful (5):',
+        instruction:
+          'Drag rows or use Up/Down to order. 1 = most useful, 5 = least useful among these five.',
+        rows: [
+          {
+            id: 'mt-rank-rename-btn',
+            label:
+              'Rename the button to "View Buying Options" so it\'s clear I\'m not checking out today.'
+          },
+          {
+            id: 'mt-rank-best-for',
+            label:
+              'Add short "Best for…" descriptions under each option to better guide next steps (e.g., Marketplace: Best for AWS budgets).'
+          },
+          {
+            id: 'mt-rank-recommended-path',
+            label:
+              'A Recommended Path badge showing how my company usually buys Red Hat software.'
+          },
+          {
+            id: 'mt-rank-notify-team',
+            label:
+              'A Notify My Account Team button to have my rep reach out with options.'
+          },
+          {
+            id: 'mt-rank-share-summary',
+            label:
+              'A Share Trial Summary button to email my thoughts and next steps to my manager.'
+          }
+        ]
+      }
     ],
     'content-discovery': [
       {
@@ -1052,6 +1231,21 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   const isLastPage = studyPages.length > 0 && currentPageIndex === studyPages.length - 1
   const isFirstPage = currentPageIndex === 0
 
+  const pastSubmittedOrCompleting = showCompletion || isLoadingCompletion
+  const studyHasUnsavedProgress =
+    !pastSubmittedOrCompleting &&
+    (currentPageIndex > 0 || Object.keys(answers).length > 0)
+
+  useEffect(() => {
+    return registerBeforeUnloadIfInProgress(studyHasUnsavedProgress)
+  }, [studyHasUnsavedProgress])
+
+  const confirmBackToStudySelection = () => {
+    if (!studyHasUnsavedProgress || confirmLeaveActiveStudy()) {
+      onBack()
+    }
+  }
+
   const handleAnswerChange = (value: string, rowId?: string) => {
     if (!currentPage) return
     if (rowId) {
@@ -1107,7 +1301,12 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       const opt = page.options[0]
       page.rows.forEach(row => { overrides[`${page.id}:${row.id}`] = opt })
     } else if (page.type === 'multi-select' && page.multiSelectExactCount === false) {
-      overrides[page.id] = '[]'
+      const min = page.multiSelectMinSelections ?? 0
+      if (min > 0 && page.options?.length) {
+        overrides[page.id] = JSON.stringify(page.options.slice(0, Math.min(min, page.options.length)))
+      } else {
+        overrides[page.id] = '[]'
+      }
     } else if (page.type === 'multi-select' && page.options && page.maxSelections) {
       overrides[page.id] = JSON.stringify(page.options.slice(0, page.maxSelections))
     } else if (page.type === 'value-credits' && page.creditCards?.length && page.creditBudget != null) {
@@ -1188,7 +1387,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       <div className="study-pages-screen">
         <div className="study-header">
           <img src={logoImage} alt="Red Hat Logo" className="study-logo" />
-          <button className="back-button" onClick={onBack}>Back to study selection</button>
+          <button type="button" className="back-button" onClick={confirmBackToStudySelection}>
+            Back to study selection
+          </button>
         </div>
         <div className="study-content">
           <p>No study pages available for this focus area.</p>
@@ -1202,7 +1403,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       <div className="study-pages-screen">
         <div className="study-header">
           <img src={logoImage} alt="Red Hat Logo" className="study-logo" />
-          <button className="back-button" onClick={onBack}>Back to study selection</button>
+          <button type="button" className="back-button" onClick={confirmBackToStudySelection}>
+            Back to study selection
+          </button>
         </div>
         <div className="study-content">
           <p>Loading study…</p>
@@ -1217,7 +1420,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     <div className="study-pages-screen">
       <div className="study-header">
         <img src={logoImage} alt="Red Hat Logo" className="study-logo" />
-        <button className="back-button" onClick={onBack}>Back to study selection</button>
+        <button type="button" className="back-button" onClick={confirmBackToStudySelection}>
+          Back to study selection
+        </button>
       </div>
 
       <div className="study-content">
@@ -1228,7 +1433,10 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
           </span>
         </div>
 
-        <div className="page-content">
+        <div
+          className="page-content"
+          key={`study-page-${currentPageIndex}-${currentPage.id}`}
+        >
           {currentPage.imageSrc ? (
             <img
               src={currentPage.imageSrc}
@@ -1278,17 +1486,22 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
           ) : null}
 
           {currentPage.type === 'overview' ? (
-            <div className="study-overview" role="region" aria-label="Study introduction">
-              {currentPage.question
-                .split(/\n\n+/)
-                .map((para) => para.trim())
-                .filter(Boolean)
-                .map((para, i) => (
-                  <p key={i} className="study-overview-paragraph">
-                    {formatOverviewParagraphBody(para)}
-                  </p>
-                ))}
-            </div>
+            <>
+              <div className="study-overview" role="region" aria-label="Study introduction">
+                {currentPage.question
+                  .split(/\n\n+/)
+                  .map((para) => para.trim())
+                  .filter(Boolean)
+                  .map((para, i) => (
+                    <p key={i} className="study-overview-paragraph">
+                      {formatOverviewParagraphBody(para)}
+                    </p>
+                  ))}
+              </div>
+              {currentPage.prototypePlaceholderAfterOverview && (
+                <ReadyToBuyExplorePlaceholder hint={currentPage.prototypePlaceholderHint} />
+              )}
+            </>
           ) : (
             <h2 className="page-question">{displayedQuestion}</h2>
           )}
@@ -1344,9 +1557,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                 <p className="multiple-choice-instruction">{currentPage.instruction}</p>
               )}
               <div className="options-list">
-                {currentPage.options.map((option) => (
+                {currentPage.options.map((option, optIndex) => (
                   <button
-                    key={option}
+                    key={`${currentPage.id}-opt-${optIndex}`}
                     type="button"
                     className={`option-button ${answers[currentPage.id] === option ? 'selected' : ''}`}
                     onClick={() => handleAnswerChange(option)}
@@ -1506,7 +1719,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     try { return (JSON.parse(answers[currentPage.id] || '[]') as string[]).length }
                     catch { return 0 }
                   })()}
-                  {' '}selected — optional
+                  {currentPage.multiSelectMinSelections != null && currentPage.multiSelectMinSelections > 0
+                    ? ` selected — choose at least ${currentPage.multiSelectMinSelections} to continue`
+                    : ' selected — optional'}
                 </p>
               )}
             </div>
