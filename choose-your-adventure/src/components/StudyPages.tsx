@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useRef, type DragEvent, type ReactNode } from 'react'
 import './StudyPages.css'
 import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
+/** Swap for a PNG export of the live Ready to Buy dialog when you have it (keep the same import path or update the extension). */
+import myTrialsReadyToBuyModalImage from '../images/my-trials-ready-to-buy-modal.svg'
 import CompletionScreen from './CompletionScreen'
 import LoadingScreen from './LoadingScreen'
 import {
@@ -44,8 +46,9 @@ type StudyPage = {
   placeholderImage?: boolean
   /** Topic-page style placeholder before the question (e.g. hybrid cloud prototype). */
   prototypePlaceholder?: boolean
-  /** After `overview` paragraphs only: interactive mock (e.g. Ready to Buy) for participants to explore. */
-  prototypePlaceholderAfterOverview?: boolean
+  /** After `overview` paragraphs: static image (e.g. production UI screenshot). */
+  overviewAfterImageSrc?: string
+  overviewAfterImageAlt?: string
   /** Shown in the prototype placeholder box (e.g. numbered resources matching on-screen labels). */
   prototypePlaceholderHint?: string
   /** When set with `figmaEmbedUrl`, render the iframe above the question instead of below. */
@@ -93,74 +96,6 @@ function formatOverviewParagraphBody(trimmed: string): ReactNode {
   const m = /^\*\*(.+)\*\*$/.exec(trimmed)
   if (m) return <strong className="study-overview-headline">{m[1]}</strong>
   return trimmed
-}
-
-/** Stand-in for the real Ready to Buy screen; menu labels are placeholders until final creative ships. */
-function ReadyToBuyExplorePlaceholder({ hint }: { hint?: string }) {
-  const [lastChoice, setLastChoice] = useState<string | null>(null)
-  const [dismissed, setDismissed] = useState(false)
-
-  const menuLabels = [
-    'Buy subscription',
-    'Contact sales',
-    'View pricing and packaging',
-    'Compare editions',
-    'Not now'
-  ]
-
-  return (
-    <div
-      className="ready-to-buy-explore"
-      role="region"
-      aria-label={hint ?? 'Example Ready to Buy screen with menu options to explore'}
-    >
-      <div className="ready-to-buy-explore-modal">
-        <div className="ready-to-buy-explore-chrome">
-          <span className="ready-to-buy-explore-title">Ready to Buy</span>
-          <button
-            type="button"
-            className="ready-to-buy-explore-close"
-            aria-label="Close (example only—does not leave the study)"
-            onClick={() => {
-              setDismissed(true)
-              setLastChoice(null)
-            }}
-          >
-            ×
-          </button>
-        </div>
-        <p className="ready-to-buy-explore-hint">
-          Tap the options below as you would on a real screen. Labels are placeholders for research.
-        </p>
-        <ul className="ready-to-buy-explore-menu">
-          {menuLabels.map((label) => (
-            <li key={label}>
-              <button
-                type="button"
-                className={`ready-to-buy-explore-option${lastChoice === label ? ' ready-to-buy-explore-option--active' : ''}`}
-                onClick={() => {
-                  setDismissed(false)
-                  setLastChoice(label)
-                }}
-              >
-                {label}
-              </button>
-            </li>
-          ))}
-        </ul>
-        {dismissed && (
-          <p className="ready-to-buy-explore-feedback" aria-live="polite">
-            Example only: closing without choosing matches what many people do on the real screen.
-          </p>
-        )}
-        {!dismissed && lastChoice && (
-          <p className="ready-to-buy-explore-feedback" aria-live="polite">
-            Example feedback — you selected: {lastChoice}
-          </p>
-        )}
-      </div>
-    </div>
-  )
 }
 
 function joinCardLabels(cards: CreditCard[]): string {
@@ -937,6 +872,19 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       }
     ],
     'developer-program': [
+      {
+        id: 'intro',
+        type: 'overview',
+        question:
+          "We are updating our developer and trial programs and would love your input to better understand your learning and evaluation needs. As a person interested in trying out a Red Hat product, review the landing page on the next screen and verbally share your thoughts as you visually explore the page. Let us know what you are thinking, questions you have, expectations, things that don't make sense, things that do. Any free flowing thoughts that come to mind as you explore the page."
+      },
+      {
+        id: 'landing-prototype',
+        type: 'prototype',
+        question:
+          'Explore the clickable Figma prototype below (the landing page from the introduction). When you are done exploring, select Next to continue.',
+        figmaEmbedUrl: ''
+      },
       { id: '1', question: 'Which parts of the Red Hat Developer program or tools do you use today?', type: 'multiple-choice', options: ['OpenShift', 'RHEL', 'Ansible', 'Quay', 'Buildah/Podman', 'Developer portal / sandbox', 'Other'] },
       { id: '2', question: 'How do Red Hat developer resources support your work?', type: 'text' },
       { id: '3', question: 'What would make the developer program more valuable for you?', type: 'text' }
@@ -945,11 +893,11 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: 'intro',
         type: 'overview',
-        prototypePlaceholderAfterOverview: true,
-        prototypePlaceholderHint:
-          'Example Ready to Buy dialog with placeholder menu options you can tap to explore',
+        overviewAfterImageSrc: myTrialsReadyToBuyModalImage,
+        overviewAfterImageAlt:
+          'Screenshot of the current Ready to Buy dialog in the product, showing the buying options as they appear today.',
         question:
-          "Right now, when you finish a product trial and click 'Ready to Buy,' you see these exact menu options.\n\nHowever, our data shows the majority of users close this window without clicking anything. Help us understand why."
+          "Right now, when you finish a product trial and click 'Ready to Buy,' you see the dialog below—this is the current experience in the live product.\n\nHowever, our data shows the majority of users close this window without clicking anything. Help us understand why."
       },
       {
         id: '1',
@@ -1498,8 +1446,14 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     </p>
                   ))}
               </div>
-              {currentPage.prototypePlaceholderAfterOverview && (
-                <ReadyToBuyExplorePlaceholder hint={currentPage.prototypePlaceholderHint} />
+              {currentPage.overviewAfterImageSrc && (
+                <figure className="study-overview-after-image-wrap">
+                  <img
+                    src={currentPage.overviewAfterImageSrc}
+                    alt={currentPage.overviewAfterImageAlt ?? ''}
+                    className="study-overview-after-image"
+                  />
+                </figure>
               )}
             </>
           ) : (

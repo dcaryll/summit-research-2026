@@ -86,29 +86,29 @@ interface FocusOption {
 const focusOptions: FocusOption[] = [
   {
     id: 'user-preferences',
-    title: 'User preferences',
-    description: 'Help us improve how Red Hat manages your information for a more personal experience across our sites.',
+    title: 'Personalize your Red Hat',
+    description: 'Tell us how your profile and settings should work across all our sites. (5 mins)',
     detailDescription:
       'This study explores where you expect to manage account-related preferences across Red Hat experiences, what should carry across sites, and how you feel about sharing settings. You will work through short scenarios and questions at your own pace—typically about 10–20 minutes. Your feedback helps us design clearer, more consistent preference experiences.'
   },
   {
     id: 'product-evaluation',
-    title: 'Product evaluation',
-    description: 'Help us make it easier for you to try out and evaluate our products.',
+    title: 'Build your dream trial',
+    description: 'Play the evaluation budget game and show us how you prefer to test software. (5 mins)',
     detailDescription:
       'We want to understand how you evaluate software in real life—what builds trust, how you weigh trials versus installs, and what you need before recommending a product. The session includes a few interactive moments and follow-up questions. Plan for roughly 10–20 minutes; there are no wrong answers.'
   },
   {
     id: 'developer-program',
-    title: 'Developer program',
-    description: 'Tell us how you use Red Hat developer resources and what would make them more valuable.',
+    title: 'Shape the Developer program',
+    description: 'Help us tailor our technical resources and tools to your daily workflow. (5 mins)',
     detailDescription:
       'Share which developer tools and programs you use today, how they fit into your workflow, and what would make Red Hat’s developer offerings more useful. Expect multiple-choice and open-ended questions. Most participants finish in about 10–15 minutes.'
   },
   {
     id: 'my-red-hat',
-    title: 'My Red Hat',
-    description: 'Share how you use the portal, dashboard, and customer experience.',
+    title: 'Refine your intelligent dashboard',
+    description: 'Explore AI-built views and portable tools to build the ultimate My Red Hat. (5 mins)',
     detailDescription:
       'This track focuses on the My Red Hat portal and related experiences—navigation, dashboards, and tasks you perform as a customer. You may see lightweight interactive previews and follow-up questions. Set aside about 15–20 minutes to complete the study comfortably.',
     detailVisualSrc: myRedHatStudyDetailHero,
@@ -117,22 +117,22 @@ const focusOptions: FocusOption[] = [
   },
   {
     id: 'my-trials',
-    title: 'Trying & buying new products',
-    description: 'Tell us how you and your team prefer to purchase after using a product trial.',
+    title: 'From testing to buying',
+    description: 'Tell us your biggest roadblocks when upgrading from a product trial. (5 mins)',
     detailDescription:
       'We are learning how people move from trial to purchase—including what you expect from “buy” flows, what feels unclear, and how we can make post-trial paths easier. You will answer questions about trials, buying options, and proposed improvements. Allow roughly 15–25 minutes.'
   },
   {
     id: 'product-marketing',
-    title: 'Product marketing',
-    description: 'Tell us how you find product information and what supports your buying decisions.',
+    title: 'Improve our product navigation',
+    description: 'Sort and rank menu terms so finding products doesn\'t feel like a guessing game. (5 mins)',
     detailDescription:
       'Help us understand how you scan product menus and information architecture when researching or buying. This study includes sorting, ranking, and preference tasks grounded in realistic examples. Expect about 15–25 minutes depending on how much you explore.'
   },
   {
     id: 'content-discovery',
-    title: 'Content discovery',
-    description: 'Help us improve how you find docs, learning, and technical content.',
+    title: 'How do you learn best?',
+    description: 'Videos, blogs, or podcasts? Tell us what content helps you master new tech. (5 mins)',
     detailDescription:
       'We want to learn how you prefer to discover learning content by topic—what you notice first, how you rank formats, and what would help you go deeper. You will pick a topic, make a few choices, and rank options. Most people finish in about 15–20 minutes.'
   }
