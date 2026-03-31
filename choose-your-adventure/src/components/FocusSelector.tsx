@@ -74,7 +74,10 @@ interface FocusSelectorProps {
 interface FocusOption {
   id: string
   title: string
+  /** Short teaser under the title (time estimate is shown as a card tag, not here). */
   description: string
+  /** Shown as a pill in the top-right of the study card. */
+  durationLabel: string
   /** Richer copy for the detail modal (right column). */
   detailDescription: string
   /** Optional hero image; defaults to a shared placeholder SVG. */
@@ -87,28 +90,32 @@ const focusOptions: FocusOption[] = [
   {
     id: 'user-preferences',
     title: 'Personalize your Red Hat',
-    description: 'Tell us how your profile and settings should work across all our sites. (5 mins)',
+    description: 'Tell us how your profile and settings should work across all our sites.',
+    durationLabel: '5 mins',
     detailDescription:
       'This study explores where you expect to manage account-related preferences across Red Hat experiences, what should carry across sites, and how you feel about sharing settings. You will work through short scenarios and questions at your own pace—typically about 10–20 minutes. Your feedback helps us design clearer, more consistent preference experiences.'
   },
   {
     id: 'product-evaluation',
     title: 'Build your dream trial',
-    description: 'Play the evaluation budget game and show us how you prefer to test software. (5 mins)',
+    description: 'Play the evaluation budget game and show us how you prefer to test software.',
+    durationLabel: '5 mins',
     detailDescription:
       'We want to understand how you evaluate software in real life—what builds trust, how you weigh trials versus installs, and what you need before recommending a product. The session includes a few interactive moments and follow-up questions. Plan for roughly 10–20 minutes; there are no wrong answers.'
   },
   {
     id: 'developer-program',
     title: 'Shape the Developer program',
-    description: 'Help us tailor our technical resources and tools to your daily workflow. (5 mins)',
+    description: 'Help us tailor our technical resources and tools to your daily workflow.',
+    durationLabel: '5 mins',
     detailDescription:
       'Share which developer tools and programs you use today, how they fit into your workflow, and what would make Red Hat’s developer offerings more useful. Expect multiple-choice and open-ended questions. Most participants finish in about 10–15 minutes.'
   },
   {
     id: 'my-red-hat',
     title: 'Refine your intelligent dashboard',
-    description: 'Explore AI-built views and portable tools to build the ultimate My Red Hat. (5 mins)',
+    description: 'Explore AI-built views and portable tools to build the ultimate My Red Hat.',
+    durationLabel: '5 mins',
     detailDescription:
       'This track focuses on the My Red Hat portal and related experiences—navigation, dashboards, and tasks you perform as a customer. You may see lightweight interactive previews and follow-up questions. Set aside about 15–20 minutes to complete the study comfortably.',
     detailVisualSrc: myRedHatStudyDetailHero,
@@ -118,21 +125,24 @@ const focusOptions: FocusOption[] = [
   {
     id: 'my-trials',
     title: 'From testing to buying',
-    description: 'Tell us your biggest roadblocks when upgrading from a product trial. (5 mins)',
+    description: 'Tell us your biggest roadblocks when upgrading from a product trial.',
+    durationLabel: '5 mins',
     detailDescription:
       'We are learning how people move from trial to purchase—including what you expect from “buy” flows, what feels unclear, and how we can make post-trial paths easier. You will answer questions about trials, buying options, and proposed improvements. Allow roughly 15–25 minutes.'
   },
   {
     id: 'product-marketing',
     title: 'Improve our product navigation',
-    description: 'Sort and rank menu terms so finding products doesn\'t feel like a guessing game. (5 mins)',
+    description: "Sort and rank menu terms so finding products doesn't feel like a guessing game.",
+    durationLabel: '5 mins',
     detailDescription:
       'Help us understand how you scan product menus and information architecture when researching or buying. This study includes sorting, ranking, and preference tasks grounded in realistic examples. Expect about 15–25 minutes depending on how much you explore.'
   },
   {
     id: 'content-discovery',
     title: 'How do you learn best?',
-    description: 'Videos, blogs, or podcasts? Tell us what content helps you master new tech. (5 mins)',
+    description: 'Videos, blogs, or podcasts? Tell us what content helps you master new tech.',
+    durationLabel: '5 mins',
     detailDescription:
       'We want to learn how you prefer to discover learning content by topic—what you notice first, how you rank formats, and what would help you go deeper. You will pick a topic, make a few choices, and rank options. Most people finish in about 15–20 minutes.'
   }
@@ -302,9 +312,14 @@ function FocusSelector({
                   }
                 }}
               >
-                <span className="focus-card-icon-wrap">
-                  <StudyTrackIcon focusId={option.id} />
-                </span>
+                <div className="focus-card-header">
+                  <span className="focus-card-icon-wrap">
+                    <StudyTrackIcon focusId={option.id} />
+                  </span>
+                  <span className="focus-card-duration-tag" aria-label={`Estimated time: ${option.durationLabel}`}>
+                    {option.durationLabel}
+                  </span>
+                </div>
                 <h2 className="focus-card-title">{option.title}</h2>
                 <p className="focus-card-description">{option.description}</p>
               </div>

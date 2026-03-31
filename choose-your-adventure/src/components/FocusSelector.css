@@ -261,6 +261,31 @@
   transform: translate(-50%, -50%) scale(1.08);
 }
 
+.focus-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.focus-card-duration-tag {
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 0.1rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  font-family: 'Red Hat Text', sans-serif;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
 .focus-card-icon-wrap {
   display: block;
   line-height: 0;

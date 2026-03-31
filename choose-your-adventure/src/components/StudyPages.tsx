@@ -3,6 +3,8 @@ import './StudyPages.css'
 import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
 /** Swap for a PNG export of the live Ready to Buy dialog when you have it (keep the same import path or update the extension). */
 import myTrialsReadyToBuyModalImage from '../images/my-trials-ready-to-buy-modal.svg'
+import productMarketingContextImage from '../images/study-detail-visual-placeholder.svg'
+import productMarketingQuestion6Visual from '../images/study-detail-visual-placeholder.svg'
 import CompletionScreen from './CompletionScreen'
 import LoadingScreen from './LoadingScreen'
 import {
@@ -96,6 +98,37 @@ function formatOverviewParagraphBody(trimmed: string): ReactNode {
   const m = /^\*\*(.+)\*\*$/.exec(trimmed)
   if (m) return <strong className="study-overview-headline">{m[1]}</strong>
   return trimmed
+}
+
+const OVERVIEW_BULLET_LINE = /^[-•]\s+(.+)$/
+
+/** Paragraphs that are only `- item` / `• item` lines render as a bulleted list. */
+function renderOverviewBlock(para: string, i: number): ReactNode {
+  const trimmed = para.trim()
+  const lines = trimmed.split('\n').map((l) => l.trim()).filter(Boolean)
+  if (
+    lines.length > 0 &&
+    lines.every((line) => OVERVIEW_BULLET_LINE.test(line))
+  ) {
+    const items = lines.map((line) => {
+      const m = OVERVIEW_BULLET_LINE.exec(line)
+      return m ? m[1] : line
+    })
+    return (
+      <ul key={i} className="study-overview-list">
+        {items.map((item, j) => (
+          <li key={j} className="study-overview-list-item">
+            {formatOverviewParagraphBody(item)}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  return (
+    <p key={i} className="study-overview-paragraph">
+      {formatOverviewParagraphBody(trimmed)}
+    </p>
+  )
 }
 
 function joinCardLabels(cards: CreditCard[]): string {
@@ -433,17 +466,17 @@ function computeCanProceed(
 }
 
 const STUDY_DISPLAY_NAME: Record<string, string> = {
-  'product-evaluation': 'Product evaluation',
-  'trying-products': 'Product evaluation',
-  'user-preferences': 'User preferences',
-  'developer-program': 'Developer program',
-  'developer-for-business': 'Developer program',
-  'my-red-hat': 'My Red Hat',
-  dashboard: 'My Red Hat',
-  'my-trials': 'Trying & buying new products',
-  'product-marketing': 'Product marketing',
-  'buying-products': 'Product marketing',
-  'content-discovery': 'Content discovery'
+  'product-evaluation': 'Build your dream trial',
+  'trying-products': 'Build your dream trial',
+  'user-preferences': 'Personalize your Red Hat',
+  'developer-program': 'Shape the Developer program',
+  'developer-for-business': 'Shape the Developer program',
+  'my-red-hat': 'Refine your intelligent dashboard',
+  dashboard: 'Refine your intelligent dashboard',
+  'my-trials': 'From testing to buying',
+  'product-marketing': 'Improve our product navigation',
+  'buying-products': 'Improve our product navigation',
+  'content-discovery': 'How do you learn best?'
 }
 
 /** Pulled out so `type` + `options` cannot be dropped or merged incorrectly inside the big pages map. */
@@ -769,10 +802,19 @@ const getStudyPages = (focusId: string): StudyPage[] => {
     ],
     'product-marketing': [
       {
+        id: 'pm-context',
+        type: 'overview',
+        overviewAfterImageSrc: productMarketingContextImage,
+        overviewAfterImageAlt:
+          'Reference diagram for secondary product navigation labels across OpenShift, RHEL, Ansible, and AI (placeholder).',
+        question:
+          "The Red Hat product experience is a massive ecosystem, but finding your way between products shouldn't feel like learning a new language every time.\n\nWe've noticed our secondary navigation for OpenShift, RHEL, Ansible, and AI use inconsistent menu labels for similar content types that we would like your feedback on.\n\nIn the next 3 minutes, you'll help us standardize our secondary product navigation by picking, sorting and ranking the terms that make the most sense to you. Your feedback will directly influence how we organize our secondary product navigation.\n\nReview the image below. When you are finished, select Next to continue."
+      },
+      {
         id: 'intro',
         type: 'overview',
         question:
-          "In this study, when we say 'product within a portfolio,' we mean:\n\nFor Red Hat OpenShift, think 'Red Hat OpenShift Dedicated.'\n\nFor RHEL, think 'RHEL Server.'\n\nFor Red Hat Ansible Automation, think 'Red Hat Ansible Automation Platform on Microsoft Azure.'\n\nFor Red Hat AI, think 'Red Hat AI Inference Server.'"
+          "In this study, when we say 'product within a portfolio,' we mean:\n\n- For Red Hat OpenShift, think 'Red Hat OpenShift Dedicated.'\n- For RHEL, think 'RHEL Server.'\n- For Red Hat Ansible Automation, think 'Red Hat Ansible Automation Platform on Microsoft Azure.'\n- For Red Hat AI, think 'Red Hat AI Inference Server.'"
       },
       {
         id: '1',
@@ -858,6 +900,9 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: '6',
         type: 'multiple-choice',
+        imageSrc: productMarketingQuestion6Visual,
+        imageAlt:
+          "Red Hat AI secondary navigation example showing Products & documentation as one menu item (replace with final screenshot).",
         question:
           "In the Red Hat AI navigation menu example, it consolidates 'Products & documentation' into one menu item. Would you prefer this consolidation across all product secondary navigation menus? Please explain the reasoning behind your answer.",
         options: ['Yes', 'No'],
@@ -1440,11 +1485,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   .split(/\n\n+/)
                   .map((para) => para.trim())
                   .filter(Boolean)
-                  .map((para, i) => (
-                    <p key={i} className="study-overview-paragraph">
-                      {formatOverviewParagraphBody(para)}
-                    </p>
-                  ))}
+                  .map((para, i) => renderOverviewBlock(para, i))}
               </div>
               {currentPage.overviewAfterImageSrc && (
                 <figure className="study-overview-after-image-wrap">
