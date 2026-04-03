@@ -971,23 +971,6 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       },
       {
         id: '4',
-        type: 'multiple-choice',
-        question: 'What has been your biggest challenge with product trials?',
-        options: [
-          'Limited time or bandwidth to evaluate',
-          'Getting budget or internal approval',
-          'Understanding pricing, packaging, or licensing',
-          'Technical setup or integration complexity',
-          'Unclear what happens when the trial ends',
-          'Other'
-        ],
-        followUpWhen: 'Other',
-        followUpAnswerKey: '4-challenge-other',
-        followUpQuestion: 'Please briefly describe:',
-        followUpFreeText: true
-      },
-      {
-        id: '5',
         type: 'ranking',
         question:
           'We are redesigning this menu to make it easier. Rank these 5 proposed updates from Most Useful (1) to Least Useful (5):',
