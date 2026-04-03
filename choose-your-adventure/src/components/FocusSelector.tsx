@@ -216,9 +216,6 @@ function FocusSelector({
 
   const handleChooseByRole = (focusId: string) => {
     onFocusSelect(focusId)
-    setTimeout(() => {
-      onTakeStudy()
-    }, 100)
   }
 
   return (
@@ -271,7 +268,9 @@ function FocusSelector({
         {showRoleSection && (
         <div className="choose-by-role-section">
           <h2 className="choose-by-role-title">Choose by role</h2>
-          <p className="choose-by-role-subtitle">Pick your role and we’ll assign a matching study</p>
+          <p className="choose-by-role-subtitle">
+            Pick your role to highlight the recommended study below. Open a card when you’re ready to start.
+          </p>
           <div className="role-buttons">
             {roleOptions.map((role) => (
               <button
