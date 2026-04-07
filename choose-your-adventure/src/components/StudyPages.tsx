@@ -31,6 +31,8 @@ type StudyPage = {
   maxSelections?: number
   creditBudget?: number
   creditCards?: CreditCard[]
+  /** `value-credits` only: short label above the card list (e.g. that cards are tappable). */
+  valueCreditsListHeading?: string
   /** When set, `question` must include {{ASSETS}}; filled from prior value-credits page. */
   followUpLargestCreditsFromPageId?: string
   /** When set, `question` must include {{OMITTED_ASSETS}}; highest-cost card(s) not selected on that page. */
@@ -64,6 +66,7 @@ type StudyPage = {
   followUpFreeText?: boolean
   /** With multiple-choice: always show this free-text field below options; both choice and text are required. */
   multiChoiceRequiredFreeTextKey?: string
+  /** Label above the free-text field; use `{{SELECTED_OPTION}}` to insert the participant’s chosen option. */
   multiChoiceRequiredFreeTextLabel?: string
   /** Replace each `{{TOPIC}}` in `question` with the participant's answer from this page id. */
   questionTopicFromPageId?: string
@@ -75,6 +78,8 @@ type StudyPage = {
   multiSelectExactCount?: boolean
   /** With `multi-select` and non-exact count: minimum selections before **Next** is enabled (default 0). */
   multiSelectMinSelections?: number
+  /** `multi-select` only: short label above the option list (e.g. that rows are tappable). */
+  multiSelectListHeading?: string
   /** For `ranking`: first branch where `answers[rankingRowsBranchFromPageId]` includes a `matchAnyOf` substring. */
   rankingRowsBranchFromPageId?: string
   rankingRowBranches?: { matchAnyOf: string[]; rows: { id: string; label: string }[] }[]
@@ -83,6 +88,8 @@ type StudyPage = {
   /** Optional free-text after ranking (e.g. specify what "Other" means). */
   rankingOtherAnswerKey?: string
   rankingOtherQuestion?: string
+  /** `buckets` only: narrow left “Items to place” column; buckets on the right (2-wide row if two options, 2×2 if four). */
+  bucketsSplitSidebar?: boolean
 }
 
 /** Option A on product evaluation trust question — triggers browser-sandbox follow-up. */
@@ -92,6 +99,11 @@ const TRUST_OWN_METAL_OPTION =
 const CREDIT_FOLLOWUP_ASSETS_PLACEHOLDER = '{{ASSETS}}'
 const CREDIT_FOLLOWUP_OMITTED_PLACEHOLDER = '{{OMITTED_ASSETS}}'
 const QUESTION_TOPIC_PLACEHOLDER = '{{TOPIC}}'
+const SELECTED_OPTION_PLACEHOLDER = '{{SELECTED_OPTION}}'
+
+function resolveMultiChoiceFreeTextLabel(label: string, mainAnswer: string | undefined): string {
+  return label.split(SELECTED_OPTION_PLACEHOLDER).join(mainAnswer?.trim() || '…')
+}
 
 /** Wrap a whole overview paragraph in **double asterisks** to render it as a bold headline. */
 function formatOverviewParagraphBody(trimmed: string): ReactNode {
@@ -128,6 +140,126 @@ function renderOverviewBlock(para: string, i: number): ReactNode {
     <p key={i} className="study-overview-paragraph">
       {formatOverviewParagraphBody(trimmed)}
     </p>
+  )
+}
+
+type BucketsBodyProps = {
+  page: StudyPage
+  answers: Record<string, string>
+  splitSidebar: boolean
+  onAssign: (bucket: string, rowId: string) => void
+  onUnplace: (rowId: string) => void
+}
+
+function BucketDraggableItem({ row }: { row: { id: string; label: string } }) {
+  return (
+    <div
+      className="bucket-item"
+      draggable
+      title="Drag into a bucket"
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', row.id)
+        e.dataTransfer.effectAllowed = 'move'
+      }}
+    >
+      <span className="bucket-item-drag-icon" aria-hidden="true">
+        <span className="bucket-item-drag-grip">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </span>
+      </span>
+      <span className="bucket-item-text">{row.label}</span>
+    </div>
+  )
+}
+
+function BucketsBody({ page, answers, splitSidebar, onAssign, onUnplace }: BucketsBodyProps) {
+  if (!page.rows?.length || !page.options?.length) return null
+
+  const bucketNodes = page.options.map((bucket) => {
+    const itemsInBucket = page.rows!.filter((row) => answers[`${page.id}:${row.id}`] === bucket)
+    return (
+      <div
+        key={bucket}
+        className="bucket"
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.currentTarget.classList.add('bucket-drag-over')
+        }}
+        onDragLeave={(e) => {
+          e.currentTarget.classList.remove('bucket-drag-over')
+        }}
+        onDrop={(e) => {
+          e.preventDefault()
+          e.currentTarget.classList.remove('bucket-drag-over')
+          const rowId = e.dataTransfer.getData('text/plain')
+          if (rowId) onAssign(bucket, rowId)
+        }}
+      >
+        <div className="bucket-header">{bucket}</div>
+        <div className="bucket-items">
+          {itemsInBucket.map((row) => (
+            <BucketDraggableItem key={row.id} row={row} />
+          ))}
+        </div>
+      </div>
+    )
+  })
+
+  const unplaced = (
+    <div
+      className={`bucket-unplaced${splitSidebar ? ' bucket-unplaced--sidebar' : ''}`}
+      onDragOver={(e) => {
+        e.preventDefault()
+        e.currentTarget.classList.add('bucket-drag-over')
+      }}
+      onDragLeave={(e) => {
+        e.currentTarget.classList.remove('bucket-drag-over')
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        e.currentTarget.classList.remove('bucket-drag-over')
+        const rowId = e.dataTransfer.getData('text/plain')
+        if (rowId) onUnplace(rowId)
+      }}
+    >
+      <div className="bucket-header">Items to place</div>
+      <div className="bucket-items">
+        {page
+          .rows!.filter((row) => !answers[`${page.id}:${row.id}`])
+          .map((row) => (
+            <BucketDraggableItem key={row.id} row={row} />
+          ))}
+      </div>
+    </div>
+  )
+
+  if (splitSidebar) {
+    const splitGridClass =
+      page.options.length === 4
+        ? 'buckets-container--split-2x2'
+        : page.options.length === 2
+          ? 'buckets-container--split-pair'
+          : 'buckets-container--split-fallback'
+    return (
+      <div className="buckets-split">
+        <div className="buckets-split-sidebar">{unplaced}</div>
+        <div className="buckets-split-main">
+          <div className={`buckets-container ${splitGridClass}`}>{bucketNodes}</div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="buckets-container">{bucketNodes}</div>
+      {unplaced}
+    </>
   )
 }
 
@@ -508,36 +640,17 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         options: ['Less than 1 year', '1–2 years', '3–5 years', '6–10 years', 'More than 10 years']
       },
       {
-        id: '3',
-        type: 'multiple-choice',
-        question:
-          'If you had to choose ONE, which would make you trust a product more?',
-        options: [
-          TRUST_OWN_METAL_OPTION,
-          'The ability to see it working in 5 minutes in a browser (zero-install speed)'
-        ],
-        followUpWhen: TRUST_OWN_METAL_OPTION,
-        followUpAnswerKey: '3-follow-metal',
-        followUpQuestion:
-          'If an AI Assistant could perfectly simulate your \'own metal\' environment in a browser-based sandbox, would you still feel the need to download the binary?',
-        followUpOptions: [
-          'Yes, I would still need the binary',
-          'No, a faithful browser sandbox would be enough',
-          'Not sure'
-        ]
-      },
-      {
         id: '2',
         question: 'When you are tasked with evaluating a new piece of software, which of these sounds more like you?',
         type: 'multiple-choice',
         options: [
-          "The Modernizer: 'I want a browser-based sandbox or API-first environment. I want to see value in 5 minutes without installing anything.'",
-          "The Veteran: 'I want the binary. I want to run it on my own metal or local VM so I can see how it actually performs in a real environment.'"
+          "I want a browser-based sandbox or API-first environment. I want to see value in 5 minutes without installing anything.",
+          "I want the binary. I want to run it on my own metal or local VM so I can see how it actually performs in a real environment."
         ]
       },
       {
         id: '4',
-        question: 'When evaluating new tech, do you prefer starting with a blank slate to build from scratch, or an AI-generated template that has 80% of the configuration already done?',
+        question: 'When evaluating new tech, how do you prefer to get started?',
         type: 'multiple-choice',
         options: [
           'A blank slate — build from scratch',
@@ -547,11 +660,12 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: '5',
         question:
-          "You have 10 Value Credits to spend. If you could design your 'perfect' evaluation experience, which of these cards are non-negotiable for you? You can't buy them all, so choose the ones that move the needle most for your 'Technical Win'.",
+          "You have 10 Value Credits to spend. If you could design your perfect evaluation experience, which of these cards are non-negotiable for you? You can't buy them all, so choose the ones that move the needle most when evaluating the product.",
         type: 'value-credits',
         creditBudget: 10,
+        valueCreditsListHeading: 'Selectable cards',
         instruction:
-          'Select one or more cards. Each card costs credits; your total cannot exceed 10. Remove a card to free credits.',
+          'Tap or click a card to add it to your choices (tap again to remove it and free those credits).\n\nEach card costs credits; your total cannot exceed your budget. When a card is grayed out, adding it would put you over budget — remove another card first.',
         creditCards: [
           {
             id: 'full-product-download',
@@ -620,6 +734,25 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         options: ['I would still try the product', 'I would walk away']
       },
       {
+        id: '3',
+        type: 'multiple-choice',
+        question:
+          'If you had to choose ONE, which would make you trust a product more?',
+        options: [
+          TRUST_OWN_METAL_OPTION,
+          'The ability to see it working in 5 minutes in a browser (zero-install speed)'
+        ],
+        followUpWhen: TRUST_OWN_METAL_OPTION,
+        followUpAnswerKey: '3-follow-metal',
+        followUpQuestion:
+          'If an AI Assistant could perfectly simulate your \'own metal\' environment in a browser-based sandbox, would you still feel the need to download the binary?',
+        followUpOptions: [
+          'Yes, I would still need the binary',
+          'No, a faithful browser sandbox would be enough',
+          'Not sure'
+        ]
+      },
+      {
         id: '8',
         type: 'text',
         question:
@@ -627,6 +760,12 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       }
     ],
     'my-red-hat': [
+      {
+        id: 'study-overview',
+        type: 'overview',
+        question:
+          "**Refine your intelligent dashboard**\n\nThis study has three parts. You will walk through each in order. Every part includes a short introduction and often an interactive preview, plus written follow-up questions (several in Parts 1 and 2, four after the preview in Part 3).\n\n- Part 1 — The portable My Red Hat (tools that follow you across Red Hat sites)\n- Part 2 — Generative and intelligent customization (AI-assisted dashboard layout)\n- Part 3 — Proof of subscription value lookback (renewal-ready proof of value)\n\nSelect Next when you are ready to begin Part 1."
+      },
       {
         id: 'portable-intro',
         type: 'overview',
@@ -655,9 +794,22 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       },
       {
         id: 'portable-notifications',
-        type: 'text',
+        type: 'multiple-choice',
         question:
-          "If this 'sidekick' showed you a notification, would you want it to be a passive alert you check on your own time, or a proactive nudge that interrupts you for something critical? What type of notification content would be valuable (ex: security CVEs)?"
+          "If this 'sidekick' showed you a notification, would you want it to be:",
+        options: [
+          '(a) a passive alert you check on your own time',
+          '(b) a proactive nudge that interrupts you for something critical',
+          '(c) Other'
+        ],
+        multiChoiceRequiredFreeTextKey: 'portable-notifications-explain',
+        multiChoiceRequiredFreeTextLabel:
+          'You indicated you prefer {{SELECTED_OPTION}}. Please explain.'
+      },
+      {
+        id: 'portable-notification-content',
+        type: 'text',
+        question: 'What type of notification content would be valuable (ex: security CVEs)?'
       },
       {
         id: 'gen-ai-intro',
@@ -704,22 +856,31 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         figmaEmbedUrl: ''
       },
       {
-        id: 'proof-followup',
+        id: 'proof-renewal-metrics',
         type: 'text',
         question:
-          "If you could 'prompt' this blank space to show you exactly what you need right now, what would you say? (e.g., 'Show me everything related to my OpenShift upgrade' or 'Build me a security health view'.)"
+          'If you had to prove the value of your Red Hat spend to your boss today to justify a renewal, what top 3 metrics (e.g., security patches applied, support cases resolved) would be critical?'
       },
       {
-        id: 'proof-layout',
+        id: 'proof-pov-surface',
         type: 'text',
         question:
-          'When your needs change—like during an active system breach—do you want to manually drag-and-drop new components into place, or would you prefer the dashboard to automatically shift its layout to prioritize security data?'
+          "Would you expect to find this 'Proof of Value' data directly on your My Red Hat dashboard for daily tracking, or do you see it as a formal report?"
       },
       {
-        id: 'proof-trust',
+        id: 'proof-report-cadence',
+        type: 'multiple-choice',
+        question: 'What is the ideal cadence you would need this type of report?',
+        options: ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annually', 'Other'],
+        multiChoiceRequiredFreeTextKey: 'proof-report-cadence-explain',
+        multiChoiceRequiredFreeTextLabel:
+          'You indicated you prefer {{SELECTED_OPTION}}. Please explain.'
+      },
+      {
+        id: 'proof-year-in-review-value',
         type: 'text',
         question:
-          "If an AI built a custom view for you, how would we earn your trust that the information is accurate? Would you need to see a 'Why was this shown?' explanation, or is the speed of the data more important?"
+          "Does seeing a 'Year in Review' summary help you operate better day-to-day, or is its primary value just for budget/renewal conversations?"
       }
     ],
     'user-preferences': [
@@ -727,6 +888,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         id: '1',
         question: 'We are centralizing how you manage your account data. Where do you expect to go to view or edit the following?',
         type: 'buckets',
+        bucketsSplitSidebar: true,
         options: ['Account', 'Profile', 'Preference or Settings', 'Other'],
         rows: [
           { id: 'job-role', label: 'Job/Role' },
@@ -742,9 +904,10 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       },
       {
         id: '2',
-        question: 'Should [Attribute] be customized for you across all Red Hat digital touchpoints, or should it be application specific?',
+        question: 'Should the following be customized for you across all Red Hat digital touchpoints, or should it be application specific?',
         type: 'buckets',
-        options: ['Customized (across all touchpoints)', 'App-specific'],
+        bucketsSplitSidebar: true,
+        options: ['Customized', 'App-specific'],
         instruction: 'Drag each attribute into the bucket that reflects your preference',
         rows: [
           { id: 'language-preference', label: 'Language preference' },
@@ -764,7 +927,9 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         question: 'If Red Hat could carry over your individual attributes to save you time and provide better experiences, which 5 items would be most valuable to you?',
         type: 'multi-select',
         maxSelections: 5,
-        instruction: 'Select exactly 5 items',
+        multiSelectListHeading: 'Selectable attributes',
+        instruction:
+          'Each row below is selectable — tap or click to add it to your choices, or tap again to remove it.\n\nSelect exactly 5 items, then tap Next to continue.',
         options: [
           'Job/Role',
           'Experience level with Red Hat',
@@ -1550,7 +1715,13 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                 currentPage.multiChoiceRequiredFreeTextLabel && (
                   <div className="multiple-choice-other-follow">
                     <p className="multiple-choice-other-follow-label">
-                      {currentPage.multiChoiceRequiredFreeTextLabel}
+                      {currentPage.multiChoiceRequiredFreeTextLabel.includes(SELECTED_OPTION_PLACEHOLDER) &&
+                      !answers[currentPage.id]?.trim()
+                        ? 'Select an option above, then explain your reasoning below.'
+                        : resolveMultiChoiceFreeTextLabel(
+                            currentPage.multiChoiceRequiredFreeTextLabel,
+                            answers[currentPage.id]
+                          )}
                     </p>
                     <textarea
                       className="text-input"
@@ -1563,7 +1734,15 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                       }
                       placeholder="Type your explanation here..."
                       rows={4}
-                      aria-label={currentPage.multiChoiceRequiredFreeTextLabel}
+                      aria-label={
+                        currentPage.multiChoiceRequiredFreeTextLabel.includes(SELECTED_OPTION_PLACEHOLDER) &&
+                        answers[currentPage.id]?.trim()
+                          ? resolveMultiChoiceFreeTextLabel(
+                              currentPage.multiChoiceRequiredFreeTextLabel,
+                              answers[currentPage.id]
+                            )
+                          : currentPage.multiChoiceRequiredFreeTextLabel
+                      }
                     />
                   </div>
                 )}
@@ -1638,9 +1817,31 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
               return (
             <div className="multi-select-question">
               {currentPage.instruction && (
-                <p className="multi-select-instruction">{currentPage.instruction}</p>
+                <div className="multi-select-instruction-block">
+                  {currentPage.instruction
+                    .split(/\n\n+/)
+                    .map((para) => para.trim())
+                    .filter(Boolean)
+                    .map((para, i) => (
+                      <p key={i} className="multi-select-instruction">
+                        {para}
+                      </p>
+                    ))}
+                </div>
               )}
-              <div className="multi-select-options">
+              {currentPage.multiSelectListHeading ? (
+                <p className="multi-select-options-heading" id={`multi-select-list-h-${currentPage.id}`}>
+                  {currentPage.multiSelectListHeading}
+                </p>
+              ) : null}
+              <div
+                className="multi-select-options"
+                role="group"
+                aria-labelledby={
+                  currentPage.multiSelectListHeading ? `multi-select-list-h-${currentPage.id}` : undefined
+                }
+                aria-label={currentPage.multiSelectListHeading ? undefined : 'Multi-select options'}
+              >
                 {opts.map((option) => {
                   const selected = (() => {
                     try {
@@ -1659,6 +1860,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                       key={option}
                       type="button"
                       className={`multi-select-option ${selected ? 'selected' : ''} ${!canSelect ? 'disabled' : ''}`}
+                      aria-pressed={selected}
                       onClick={() => {
                         if (!canSelect) return
                         try {
@@ -1709,7 +1911,17 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
           {currentPage.type === 'value-credits' && currentPage.creditCards && currentPage.creditBudget != null && (
             <div className="value-credits-question">
               {currentPage.instruction && (
-                <p className="value-credits-instruction">{currentPage.instruction}</p>
+                <div className="value-credits-instruction-block">
+                  {currentPage.instruction
+                    .split(/\n\n+/)
+                    .map((para) => para.trim())
+                    .filter(Boolean)
+                    .map((para, i) => (
+                      <p key={i} className="value-credits-instruction">
+                        {para}
+                      </p>
+                    ))}
+                </div>
               )}
               <p className="value-credits-budget" aria-live="polite">
                 <span className="value-credits-budget-spent">
@@ -1727,7 +1939,19 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                 <span>{currentPage.creditBudget}</span>
                 <span className="value-credits-budget-label"> credits spent</span>
               </p>
-              <div className="value-credits-cards">
+              {currentPage.valueCreditsListHeading ? (
+                <p className="value-credits-cards-heading" id={`value-credits-list-h-${currentPage.id}`}>
+                  {currentPage.valueCreditsListHeading}
+                </p>
+              ) : null}
+              <div
+                className="value-credits-cards"
+                role="group"
+                aria-labelledby={
+                  currentPage.valueCreditsListHeading ? `value-credits-list-h-${currentPage.id}` : undefined
+                }
+                aria-label={currentPage.valueCreditsListHeading ? undefined : 'Value credit cards'}
+              >
                 {currentPage.creditCards.map((card) => {
                   const selected = (() => {
                     try {
@@ -1754,6 +1978,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                       type="button"
                       className={`value-credits-card ${selected ? 'selected' : ''} ${overBudget ? 'disabled' : ''}`}
                       disabled={overBudget}
+                      aria-pressed={selected}
                       onClick={() => {
                         if (overBudget) return
                         try {
@@ -1898,86 +2123,17 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
           )}
 
           {currentPage.type === 'buckets' && currentPage.rows && currentPage.options && (
-            <div className="buckets-question">
+            <div
+              className={`buckets-question${currentPage.bucketsSplitSidebar ? ' buckets-question--split' : ''}`}
+            >
               <p className="buckets-instruction">{currentPage.instruction || 'Drag each term into the bucket where you expect to find it'}</p>
-              <div className="buckets-container">
-                {currentPage.options.map((bucket) => {
-                  const itemsInBucket = currentPage.rows!.filter(
-                    row => answers[`${currentPage.id}:${row.id}`] === bucket
-                  )
-                  return (
-                    <div
-                      key={bucket}
-                      className="bucket"
-                      onDragOver={(e) => {
-                        e.preventDefault()
-                        e.currentTarget.classList.add('bucket-drag-over')
-                      }}
-                      onDragLeave={(e) => {
-                        e.currentTarget.classList.remove('bucket-drag-over')
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault()
-                        e.currentTarget.classList.remove('bucket-drag-over')
-                        const rowId = e.dataTransfer.getData('text/plain')
-                        if (rowId) handleAnswerChange(bucket, rowId)
-                      }}
-                    >
-                      <div className="bucket-header">{bucket}</div>
-                      <div className="bucket-items">
-                        {itemsInBucket.map((row) => (
-                          <div
-                            key={row.id}
-                            className="bucket-item"
-                            draggable
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData('text/plain', row.id)
-                              e.dataTransfer.effectAllowed = 'move'
-                            }}
-                          >
-                            {row.label}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-              <div
-                className="bucket-unplaced"
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  e.currentTarget.classList.add('bucket-drag-over')
-                }}
-                onDragLeave={(e) => {
-                  e.currentTarget.classList.remove('bucket-drag-over')
-                }}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  e.currentTarget.classList.remove('bucket-drag-over')
-                  const rowId = e.dataTransfer.getData('text/plain')
-                  if (rowId) handleAnswerChange('', rowId)
-                }}
-              >
-                <div className="bucket-header">Items to place</div>
-                <div className="bucket-items">
-                  {currentPage.rows!
-                    .filter(row => !answers[`${currentPage.id}:${row.id}`])
-                    .map((row) => (
-                      <div
-                        key={row.id}
-                        className="bucket-item"
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData('text/plain', row.id)
-                          e.dataTransfer.effectAllowed = 'move'
-                        }}
-                      >
-                        {row.label}
-                      </div>
-                    ))}
-                </div>
-              </div>
+              <BucketsBody
+                page={currentPage}
+                answers={answers}
+                splitSidebar={!!currentPage.bucketsSplitSidebar}
+                onAssign={(bucket, rowId) => handleAnswerChange(bucket, rowId)}
+                onUnplace={(rowId) => handleAnswerChange('', rowId)}
+              />
             </div>
           )}
         </div>
