@@ -924,7 +924,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       },
       {
         id: '3',
-        question: 'If Red Hat could carry over your individual attributes to save you time and provide better experiences, which 5 items would be most valuable to you?',
+        question: 'Help us make your experience better. Which 5 things should Red Hat remember about you?',
         type: 'multi-select',
         maxSelections: 5,
         multiSelectListHeading: 'Selectable attributes',
