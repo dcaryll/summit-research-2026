@@ -489,6 +489,20 @@
   box-shadow: 0 0 0 3px rgba(var(--accent-blue-rgb), 0.1);
 }
 
+/* Notetaker-entered notes: keep placeholder prominent; soften body text once there is content */
+.text-input.text-input--note-filled {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.9375rem;
+  background: rgba(0, 0, 0, 0.22);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.text-input.text-input--note-filled:focus {
+  color: rgba(255, 255, 255, 0.72);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+
 .options-list {
   display: flex;
   flex-direction: column;

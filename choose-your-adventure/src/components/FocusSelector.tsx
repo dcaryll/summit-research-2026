@@ -90,7 +90,7 @@ const focusOptions: FocusOption[] = [
   {
     id: 'user-preferences',
     title: 'Personalize your Red Hat',
-    description: 'Tell us how your profile and settings should work across all our sites.',
+    description: 'Tell us how your profile and settings should work across all our sites to make your experience better.',
     durationLabel: '12–18 min',
     detailDescription:
       'This study explores where you expect to manage account-related preferences across Red Hat experiences, what should carry across sites, and how you feel about sharing settings. You will work through drag-and-drop placement, multi-select, and sliders at your own pace—most people need about 12–18 minutes. Your feedback helps us design clearer, more consistent preference experiences.'

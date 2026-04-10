@@ -80,6 +80,12 @@ type StudyPage = {
   multiSelectMinSelections?: number
   /** `multi-select` only: short label above the option list (e.g. that rows are tappable). */
   multiSelectListHeading?: string
+  /** `multi-select` only: must match one entry in `options`; when selected, `multiSelectOtherFreeTextKey` is required. */
+  multiSelectOtherOptionLabel?: string
+  /** `multi-select` only: required write-in when `multiSelectOtherOptionLabel` is among the selections. */
+  multiSelectOtherFreeTextKey?: string
+  /** `multi-select` only: label above the Other write-in field. */
+  multiSelectOtherFreeTextLabel?: string
   /** For `ranking`: first branch where `answers[rankingRowsBranchFromPageId]` includes a `matchAnyOf` substring. */
   rankingRowsBranchFromPageId?: string
   rankingRowBranches?: { matchAnyOf: string[]; rows: { id: string; label: string }[] }[]
@@ -100,6 +106,14 @@ const CREDIT_FOLLOWUP_ASSETS_PLACEHOLDER = '{{ASSETS}}'
 const CREDIT_FOLLOWUP_OMITTED_PLACEHOLDER = '{{OMITTED_ASSETS}}'
 const QUESTION_TOPIC_PLACEHOLDER = '{{TOPIC}}'
 const SELECTED_OPTION_PLACEHOLDER = '{{SELECTED_OPTION}}'
+
+/** Open text is captured by a notetaker during moderated sessions (participant speaks aloud). */
+const MODERATOR_OPEN_TEXT_PLACEHOLDER =
+  'Please share your thoughts with the moderator — the notetaker can enter notes here.'
+
+function textInputNoteFilledClass(value: string): string {
+  return value.trim() ? ' text-input--note-filled' : ''
+}
 
 function resolveMultiChoiceFreeTextLabel(label: string, mainAnswer: string | undefined): string {
   return label.split(SELECTED_OPTION_PLACEHOLDER).join(mainAnswer?.trim() || '…')
@@ -521,6 +535,13 @@ function getDerivedMultiSelectOptions(
   return base.filter((o) => o !== chosen)
 }
 
+/** Midpoint of the slider range — used as the initial value so scales start at “neutral”. */
+function getSliderNeutralValue(page: Pick<StudyPage, 'sliderMin' | 'sliderMax'>): number {
+  const lo = page.sliderMin ?? 1
+  const hi = page.sliderMax ?? 5
+  return Math.round((lo + hi) / 2)
+}
+
 function computeCanProceed(
   page: StudyPage | undefined,
   ans: Record<string, string>,
@@ -556,12 +577,30 @@ function computeCanProceed(
       if (!selected.every((s) => typeof s === 'string' && (options as string[]).includes(s))) return false
       if (exact) {
         if (page.maxSelections == null) return false
-        return selected.length === page.maxSelections
+        if (selected.length !== page.maxSelections) return false
+        if (
+          page.multiSelectOtherOptionLabel &&
+          page.multiSelectOtherFreeTextKey &&
+          selected.includes(page.multiSelectOtherOptionLabel) &&
+          !ans[page.multiSelectOtherFreeTextKey]?.trim()
+        ) {
+          return false
+        }
+        return true
       }
       const minSel = page.multiSelectMinSelections ?? 0
       if (selected.length < minSel) return false
       const cap = page.maxSelections ?? options.length
-      return selected.length <= cap
+      if (selected.length > cap) return false
+      if (
+        page.multiSelectOtherOptionLabel &&
+        page.multiSelectOtherFreeTextKey &&
+        selected.includes(page.multiSelectOtherOptionLabel) &&
+        !ans[page.multiSelectOtherFreeTextKey]?.trim()
+      ) {
+        return false
+      }
+      return true
     } catch {
       return false
     }
@@ -886,7 +925,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
     'user-preferences': [
       {
         id: '1',
-        question: 'We are centralizing how you manage your account data. Where do you expect to go to view or edit the following?',
+        question: 'We are simplifying how you manage your account data. Where do you expect to go to review and update the following?',
         type: 'buckets',
         bucketsSplitSidebar: true,
         options: ['Account', 'Profile', 'Preference or Settings', 'Other'],
@@ -907,7 +946,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         question: 'Should the following be customized for you across all Red Hat digital touchpoints, or should it be application specific?',
         type: 'buckets',
         bucketsSplitSidebar: true,
-        options: ['Customized', 'App-specific'],
+        options: ['Across Red Hat sites', 'App-specific'],
         instruction: 'Drag each attribute into the bucket that reflects your preference',
         rows: [
           { id: 'language-preference', label: 'Language preference' },
@@ -929,7 +968,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         maxSelections: 5,
         multiSelectListHeading: 'Selectable attributes',
         instruction:
-          'Each row below is selectable — tap or click to add it to your choices, or tap again to remove it.\n\nSelect exactly 5 items, then tap Next to continue.',
+          'Each row below is selectable — tap or click to add it to your choices, or tap again to remove it.\n\nSelect exactly 5 items, then tap Next to continue. If one of your choices is Other, use the write-in field to describe it.',
         options: [
           'Job/Role',
           'Experience level with Red Hat',
@@ -945,8 +984,12 @@ const getStudyPages = (focusId: string): StudyPage[] => {
           'Event interests',
           'My saved resources or bookmarks',
           'Notification and email preferences',
-          'Accessibility or display preferences'
-        ]
+          'Accessibility or display preferences',
+          'Other'
+        ],
+        multiSelectOtherOptionLabel: 'Other',
+        multiSelectOtherFreeTextKey: '3-other-specify',
+        multiSelectOtherFreeTextLabel: 'Please describe what else Red Hat should remember about you.'
       },
       {
         id: '4',
@@ -962,7 +1005,13 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         type: 'slider',
         sliderMin: 1,
         sliderMax: 5,
-        sliderLabels: ['Very satisfied', 'Satisfied', 'Neutral', 'Dissatisfied', 'Very dissatisfied']
+        sliderLabels: ['Very dissatisfied', 'Dissatisfied', 'Neutral', 'Satisfied', 'Very satisfied']
+      },
+      {
+        id: '6',
+        type: 'text',
+        question:
+          "Is there anything else you want to share about how you'd like us to personalize your experience?"
       }
     ],
     'product-marketing': [
@@ -1323,10 +1372,13 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     }
   }, [studyPages.length, currentPageIndex])
 
-  // Initialize slider with min value when landing on a slider page
+  // Initialize slider at scale midpoint (neutral) when landing on a slider page
   useEffect(() => {
     if (currentPage?.type === 'slider' && answers[currentPage.id] === undefined) {
-      setAnswers(prev => ({ ...prev, [currentPage.id]: String(currentPage.sliderMin ?? 1) }))
+      setAnswers((prev) => ({
+        ...prev,
+        [currentPage.id]: String(getSliderNeutralValue(currentPage))
+      }))
     }
   }, [currentPage?.id, currentPage?.type])
 
@@ -1409,6 +1461,20 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
         ) {
           if (value !== currentPage.followUpWhen) delete next[currentPage.followUpAnswerKey]
         }
+        if (
+          currentPage.type === 'multi-select' &&
+          currentPage.multiSelectOtherOptionLabel &&
+          currentPage.multiSelectOtherFreeTextKey
+        ) {
+          try {
+            const sel = JSON.parse(value || '[]') as unknown
+            if (Array.isArray(sel) && !sel.includes(currentPage.multiSelectOtherOptionLabel)) {
+              delete next[currentPage.multiSelectOtherFreeTextKey]
+            }
+          } catch {
+            /* leave other write-in unchanged if selection JSON is invalid */
+          }
+        }
         return next
       })
     }
@@ -1449,7 +1515,15 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
         overrides[page.id] = '[]'
       }
     } else if (page.type === 'multi-select' && page.options && page.maxSelections) {
-      overrides[page.id] = JSON.stringify(page.options.slice(0, page.maxSelections))
+      const picked = page.options.slice(0, page.maxSelections)
+      overrides[page.id] = JSON.stringify(picked)
+      if (
+        page.multiSelectOtherOptionLabel &&
+        page.multiSelectOtherFreeTextKey &&
+        picked.includes(page.multiSelectOtherOptionLabel)
+      ) {
+        overrides[page.multiSelectOtherFreeTextKey] = '[skipped]'
+      }
     } else if (page.type === 'value-credits' && page.creditCards?.length && page.creditBudget != null) {
       const ids: string[] = []
       let spent = 0
@@ -1461,7 +1535,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       }
       overrides[page.id] = JSON.stringify(ids.length ? ids : [page.creditCards[0].id])
     } else if (page.type === 'slider') {
-      overrides[page.id] = String(page.sliderMin ?? 3)
+      overrides[page.id] = String(getSliderNeutralValue(page))
     } else if (page.type === 'ranking') {
       const rows = getBranchedRankingRows(page, answers) ?? page.rows
       if (rows?.length) {
@@ -1686,10 +1760,10 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
 
           {currentPage.type === 'text' && (
             <textarea
-              className="text-input"
+              className={`text-input${textInputNoteFilledClass(answers[currentPage.id] || '')}`}
               value={answers[currentPage.id] || ''}
               onChange={(e) => handleAnswerChange(e.target.value)}
-              placeholder="Type your answer here..."
+              placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
               rows={6}
             />
           )}
@@ -1724,7 +1798,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                           )}
                     </p>
                     <textarea
-                      className="text-input"
+                      className={`text-input${textInputNoteFilledClass(
+                        answers[currentPage.multiChoiceRequiredFreeTextKey] || ''
+                      )}`}
                       value={answers[currentPage.multiChoiceRequiredFreeTextKey] || ''}
                       onChange={(e) =>
                         setAnswers((prev) => ({
@@ -1732,7 +1808,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                           [currentPage.multiChoiceRequiredFreeTextKey!]: e.target.value
                         }))
                       }
-                      placeholder="Type your explanation here..."
+                      placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
                       rows={4}
                       aria-label={
                         currentPage.multiChoiceRequiredFreeTextLabel.includes(SELECTED_OPTION_PLACEHOLDER) &&
@@ -1755,7 +1831,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                       <p className="multiple-choice-other-follow-label">{currentPage.followUpQuestion}</p>
                     ) : null}
                     <textarea
-                      className="text-input"
+                      className={`text-input${textInputNoteFilledClass(
+                        answers[currentPage.followUpAnswerKey] || ''
+                      )}`}
                       value={answers[currentPage.followUpAnswerKey] || ''}
                       onChange={(e) =>
                         setAnswers((prev) => ({
@@ -1763,7 +1841,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                           [currentPage.followUpAnswerKey!]: e.target.value
                         }))
                       }
-                      placeholder="Type your answer here..."
+                      placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
                       rows={4}
                       aria-label={currentPage.followUpQuestion || 'Other — please specify'}
                     />
@@ -1904,6 +1982,38 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     : ' selected — optional'}
                 </p>
               )}
+              {currentPage.multiSelectOtherOptionLabel &&
+                currentPage.multiSelectOtherFreeTextKey &&
+                currentPage.multiSelectOtherFreeTextLabel &&
+                (() => {
+                  try {
+                    const sel = JSON.parse(answers[currentPage.id] || '[]') as string[]
+                    return Array.isArray(sel) && sel.includes(currentPage.multiSelectOtherOptionLabel)
+                  } catch {
+                    return false
+                  }
+                })() && (
+                  <div className="multiple-choice-other-follow">
+                    <p className="multiple-choice-other-follow-label">
+                      {currentPage.multiSelectOtherFreeTextLabel}
+                    </p>
+                    <textarea
+                      className={`text-input${textInputNoteFilledClass(
+                        answers[currentPage.multiSelectOtherFreeTextKey] || ''
+                      )}`}
+                      value={answers[currentPage.multiSelectOtherFreeTextKey] || ''}
+                      onChange={(e) =>
+                        setAnswers((prev) => ({
+                          ...prev,
+                          [currentPage.multiSelectOtherFreeTextKey!]: e.target.value
+                        }))
+                      }
+                      placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
+                      rows={4}
+                      aria-label={currentPage.multiSelectOtherFreeTextLabel}
+                    />
+                  </div>
+                )}
             </div>
               )
             })()}
@@ -2021,20 +2131,27 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
 
           {currentPage.type === 'slider' && (
             <div className="slider-question">
+              <p className="slider-value" aria-live="polite">
+                {currentPage.sliderLabels
+                  ? `${answers[currentPage.id] ?? getSliderNeutralValue(currentPage)} – ${currentPage.sliderLabels[Number(answers[currentPage.id] ?? getSliderNeutralValue(currentPage)) - (currentPage.sliderMin ?? 1)] ?? ''}`
+                  : (answers[currentPage.id] ?? getSliderNeutralValue(currentPage))}
+              </p>
               <div className="slider-track-wrap">
                 <input
                   type="range"
                   className="slider-input"
                   min={currentPage.sliderMin ?? 1}
                   max={currentPage.sliderMax ?? 5}
-                  value={answers[currentPage.id] ?? String(currentPage.sliderMin ?? 1)}
+                  value={answers[currentPage.id] ?? String(getSliderNeutralValue(currentPage))}
                   onChange={(e) => handleAnswerChange(e.target.value)}
                 />
                 {currentPage.sliderLabels ? (
                   <div className="slider-labels-full">
                     {currentPage.sliderLabels.map((label, i) => {
                       const num = (currentPage.sliderMin ?? 1) + i
-                      const isActive = Number(answers[currentPage.id] ?? currentPage.sliderMin ?? 1) === num
+                      const neutral = getSliderNeutralValue(currentPage)
+                      const isActive =
+                        Number(answers[currentPage.id] ?? neutral) === num
                       return (
                         <button
                           key={num}
@@ -2056,11 +2173,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   </div>
                 )}
               </div>
-              <p className="slider-value">
-                {currentPage.sliderLabels
-                  ? `${answers[currentPage.id] ?? currentPage.sliderMin ?? 1} – ${currentPage.sliderLabels[Number(answers[currentPage.id] ?? currentPage.sliderMin ?? 1) - (currentPage.sliderMin ?? 1)] ?? ''}`
-                  : (answers[currentPage.id] ?? currentPage.sliderMin ?? 1)}
-              </p>
             </div>
           )}
 
@@ -2081,9 +2193,11 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   </label>
                   <textarea
                     id={`ranking-other-${currentPage.id}`}
-                    className="text-input study-ranking-other-textarea"
+                    className={`text-input study-ranking-other-textarea${textInputNoteFilledClass(
+                      answers[currentPage.rankingOtherAnswerKey] ?? ''
+                    )}`}
                     rows={3}
-                    placeholder="Type here if relevant…"
+                    placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
                     value={answers[currentPage.rankingOtherAnswerKey] ?? ''}
                     onChange={(e) =>
                       setAnswers((prev) => ({
