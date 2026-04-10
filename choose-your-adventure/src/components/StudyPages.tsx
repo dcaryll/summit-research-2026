@@ -5,12 +5,43 @@ import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
 import myTrialsReadyToBuyModalImage from '../images/my-trials-ready-to-buy-modal.svg'
 import productMarketingContextImage from '../images/study-detail-visual-placeholder.svg'
 import productMarketingQuestion6Visual from '../images/study-detail-visual-placeholder.svg'
+import contentDiscoveryQ1TopicCards from '../images/content-discovery-q1-topic-cards.png'
+import contentDiscoveryQ2Ai from '../images/content-discovery-q2-ai.png'
+import contentDiscoveryQ2AppPlatforms from '../images/content-discovery-q2-app-platforms.png'
+import contentDiscoveryQ2Automation from '../images/content-discovery-q2-automation.png'
+import contentDiscoveryQ2LinuxStandardization from '../images/content-discovery-q2-linux-standardization.png'
+import contentDiscoveryQ2Virtualization from '../images/content-discovery-q2-virtualization.png'
 import CompletionScreen from './CompletionScreen'
 import LoadingScreen from './LoadingScreen'
 import {
   confirmLeaveActiveStudy,
   registerBeforeUnloadIfInProgress
 } from '../studyExitPrompt'
+
+/** Content discovery Q2/Q4: topic-page screenshot keyed by exact answer from question 1. */
+const CONTENT_DISCOVERY_Q2_HERO_BY_TOPIC: Record<string, string> = {
+  AI: contentDiscoveryQ2Ai,
+  Virtualization: contentDiscoveryQ2Virtualization,
+  /** Matches Q1 option label; legacy alias for older sessions / copy */
+  'Application development': contentDiscoveryQ2AppPlatforms,
+  'App platforms': contentDiscoveryQ2AppPlatforms,
+  Automation: contentDiscoveryQ2Automation,
+  'Linux standardization': contentDiscoveryQ2LinuxStandardization
+}
+
+const CONTENT_DISCOVERY_Q2_HERO_ALT_BY_TOPIC: Record<string, string> = {
+  AI: 'Artificial intelligence topic page: Resources section with five numbered learning content cards (podcast, blog, e-book, event, use case).',
+  Virtualization:
+    'Virtualization topic page: Resources section with five numbered learning content cards (podcast, blog, e-book, event, use case).',
+  'Application development':
+    'Application development topic page: Resources section with five numbered learning content cards (podcast, blog, e-book, event, use case).',
+  'App platforms':
+    'Application development topic page: Resources section with five numbered learning content cards (podcast, blog, e-book, event, use case).',
+  Automation:
+    'Automation topic page: Resources section with five numbered learning content cards (podcast, blog, e-book, event, use case).',
+  'Linux standardization':
+    'Linux standardization topic page: Resources section with five numbered learning content cards (podcast, blog, e-book, event, use case).'
+}
 
 interface StudyPagesProps {
   focusId: string
@@ -46,6 +77,10 @@ type StudyPage = {
   /** Shown above the question; use with `imageAlt` for accessibility. */
   imageSrc?: string
   imageAlt?: string
+  /** Prior single-choice page id; hero image URL is `questionHeroImagesByPriorOption[answers[fromPageId]]`. */
+  questionHeroImageFromPageId?: string
+  questionHeroImagesByPriorOption?: Record<string, string>
+  questionHeroImageAltsByPriorOption?: Record<string, string>
   /** Gray placeholder block when the final image is not ready yet. */
   placeholderImage?: boolean
   /** Topic-page style placeholder before the question (e.g. hybrid cloud prototype). */
@@ -98,6 +133,23 @@ type StudyPage = {
   bucketsSplitSidebar?: boolean
 }
 
+function resolveQuestionHeroImage(
+  page: StudyPage,
+  ans: Record<string, string>
+): { src: string; alt: string } | null {
+  const fromId = page.questionHeroImageFromPageId
+  const map = page.questionHeroImagesByPriorOption
+  if (!fromId || !map) return null
+  const prior = ans[fromId]?.trim()
+  if (!prior) return null
+  const src = map[prior]
+  if (!src) return null
+  const alt =
+    page.questionHeroImageAltsByPriorOption?.[prior] ??
+    `${prior} topic page with numbered resource cards.`
+  return { src, alt }
+}
+
 /** Option A on product evaluation trust question — triggers browser-sandbox follow-up. */
 const TRUST_OWN_METAL_OPTION =
   'The ability to run it on my own metal (complete control)'
@@ -109,7 +161,7 @@ const SELECTED_OPTION_PLACEHOLDER = '{{SELECTED_OPTION}}'
 
 /** Open text is captured by a notetaker during moderated sessions (participant speaks aloud). */
 const MODERATOR_OPEN_TEXT_PLACEHOLDER =
-  'Please share your thoughts with the moderator — the notetaker can enter notes here.'
+  'Please share your thoughts with the moderator — the notetaker will enter notes here.'
 
 function textInputNoteFilledClass(value: string): string {
   return value.trim() ? ' text-input--note-filled' : ''
@@ -1229,27 +1281,30 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: '1',
         type: 'multiple-choice',
-        placeholderImage: true,
+        imageSrc: contentDiscoveryQ1TopicCards,
+        imageAlt:
+          'Topic cards for Virtualization, AI, Linux standardization, Application development, and Automation, each with a summary and call to action.',
         question:
           'These topics are examples of areas people come to learn about. Which one are you most interested in exploring right now?',
-        options: ['AI', 'Virtualization', 'App platforms', 'Automation', 'Linux standardization']
+        options: ['AI', 'Virtualization', 'Application development', 'Automation', 'Linux standardization']
       },
       {
         id: '2',
         type: 'multiple-choice',
-        prototypePlaceholder: true,
-        prototypePlaceholderHint:
-          'On screen, resources are numbered: 1 Video · 2 Blog article · 3 E-book · 4 Event · 5 Technical use case · 6 Whitepaper',
+        instruction:
+          'On screen, resources are numbered: (1) Podcast · (2) Blog article · (3) E-book · (4) Event · (5) Technical use case',
+        questionHeroImageFromPageId: '1',
+        questionHeroImagesByPriorOption: CONTENT_DISCOVERY_Q2_HERO_BY_TOPIC,
+        questionHeroImageAltsByPriorOption: CONTENT_DISCOVERY_Q2_HERO_ALT_BY_TOPIC,
         questionTopicFromPageId: '1',
         question:
           'Great! So you want to learn more about {{TOPIC}}. Which additional resource are you most likely to choose next to learn more? Select the corresponding number of the resource on the screen.',
         options: [
-          '1. Video',
+          '1. Podcast',
           '2. Blog article',
           '3. E-book',
           '4. Event',
-          '5. Technical Use Case',
-          '6. Whitepaper'
+          '5. Technical use case'
         ]
       },
       {
@@ -1260,10 +1315,13 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: '4',
         type: 'multi-select',
-        placeholderImage: true,
+        instruction:
+          'Optional — choose any other numbered resources that interest you, or select none and continue.\n\nOn screen, resources are numbered: 1 Podcast · 2 Blog article · 3 E-book · 4 Event · 5 Technical use case',
+        questionHeroImageFromPageId: '1',
+        questionHeroImagesByPriorOption: CONTENT_DISCOVERY_Q2_HERO_BY_TOPIC,
+        questionHeroImageAltsByPriorOption: CONTENT_DISCOVERY_Q2_HERO_ALT_BY_TOPIC,
         question:
           'Are you also interested in any of the other offerings? If so, select all the other ones you would be interested in. Select the corresponding number of the resource on the screen.',
-        instruction: 'Optional — choose any other numbered resources that interest you, or select none and continue.',
         multiSelectOptionsFromPageId: '2',
         multiSelectExcludeAnswerFromPageId: '2',
         multiSelectExactCount: false
@@ -1354,11 +1412,43 @@ const getStudyPages = (focusId: string): StudyPage[] => {
   return pages[resolved] || []
 }
 
+function StudyImageLightbox({
+  image,
+  onClose
+}: {
+  image: { src: string; alt: string }
+  onClose: () => void
+}) {
+  const label =
+    image.alt?.trim() ? `Enlarged image: ${image.alt}` : 'Enlarged reference image'
+  return (
+    <div
+      className="study-image-lightbox-backdrop"
+      role="presentation"
+      onClick={onClose}
+    >
+      <div
+        className="study-image-lightbox-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label={label}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button type="button" className="study-image-lightbox-close" onClick={onClose} aria-label="Close">
+          ×
+        </button>
+        <img src={image.src} alt={image.alt} className="study-image-lightbox-img" />
+      </div>
+    </div>
+  )
+}
+
 function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProps) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [showCompletion, setShowCompletion] = useState(false)
   const [isLoadingCompletion, setIsLoadingCompletion] = useState(false)
+  const [expandedStudyImage, setExpandedStudyImage] = useState<{ src: string; alt: string } | null>(null)
   const studyPages = useMemo(() => getStudyPages(focusId), [focusId])
   const pageNavigationRef = useRef<HTMLDivElement>(null)
   const prevCanProceedRef = useRef<boolean | null>(null)
@@ -1381,6 +1471,24 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       }))
     }
   }, [currentPage?.id, currentPage?.type])
+
+  useEffect(() => {
+    setExpandedStudyImage(null)
+  }, [currentPageIndex])
+
+  useEffect(() => {
+    if (!expandedStudyImage) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setExpandedStudyImage(null)
+    }
+    window.addEventListener('keydown', onKey)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [expandedStudyImage])
 
   const rankingBranchSourceAnswer =
     currentPage?.type === 'ranking' && currentPage.rankingRowsBranchFromPageId
@@ -1631,6 +1739,11 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
 
   const studyTitle = STUDY_DISPLAY_NAME[focusId] ?? focusId.replace(/-/g, ' ')
 
+  const questionHero: { src: string; alt: string } | null =
+    currentPage.imageSrc != null && currentPage.imageSrc !== ''
+      ? { src: currentPage.imageSrc, alt: currentPage.imageAlt ?? '' }
+      : resolveQuestionHeroImage(currentPage, answers)
+
   return (
     <div className="study-pages-screen">
       <div className="study-header">
@@ -1652,12 +1765,21 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
           className="page-content"
           key={`study-page-${currentPageIndex}-${currentPage.id}`}
         >
-          {currentPage.imageSrc ? (
-            <img
-              src={currentPage.imageSrc}
-              alt={currentPage.imageAlt ?? ''}
-              className="study-page-hero-image"
-            />
+          {questionHero ? (
+            <div className="study-expandable-image-block study-expandable-image-block--hero">
+              <button
+                type="button"
+                className="study-expandable-image-btn study-expandable-image-btn--hero"
+                onClick={() => setExpandedStudyImage({ src: questionHero.src, alt: questionHero.alt })}
+                aria-haspopup="dialog"
+                aria-label={
+                  questionHero.alt.trim() ? `View larger: ${questionHero.alt}` : 'View larger image'
+                }
+              >
+                <img src={questionHero.src} alt="" className="study-page-hero-image" />
+              </button>
+              <p className="study-expandable-image-hint">Click image to enlarge</p>
+            </div>
           ) : currentPage.placeholderImage ? (
             <div
               className="study-page-image-placeholder"
@@ -1711,11 +1833,31 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
               </div>
               {currentPage.overviewAfterImageSrc && (
                 <figure className="study-overview-after-image-wrap">
-                  <img
-                    src={currentPage.overviewAfterImageSrc}
-                    alt={currentPage.overviewAfterImageAlt ?? ''}
-                    className="study-overview-after-image"
-                  />
+                  <button
+                    type="button"
+                    className="study-expandable-image-btn study-expandable-image-btn--overview"
+                    onClick={() =>
+                      setExpandedStudyImage({
+                        src: currentPage.overviewAfterImageSrc!,
+                        alt: currentPage.overviewAfterImageAlt ?? ''
+                      })
+                    }
+                    aria-haspopup="dialog"
+                    aria-label={
+                      currentPage.overviewAfterImageAlt?.trim()
+                        ? `View larger: ${currentPage.overviewAfterImageAlt}`
+                        : 'View larger image'
+                    }
+                  >
+                    <img
+                      src={currentPage.overviewAfterImageSrc}
+                      alt=""
+                      className="study-overview-after-image"
+                    />
+                  </button>
+                  <figcaption className="study-expandable-image-hint study-expandable-image-hint--in-figure">
+                    Click image to enlarge
+                  </figcaption>
                 </figure>
               )}
             </>
@@ -2281,6 +2423,10 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
           </div>
         </div>
       </div>
+
+      {expandedStudyImage ? (
+        <StudyImageLightbox image={expandedStudyImage} onClose={() => setExpandedStudyImage(null)} />
+      ) : null}
     </div>
   )
 }

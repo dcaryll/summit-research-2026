@@ -44,8 +44,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-start;
   padding: 3rem;
   max-width: 800px;
   margin: 0 auto;
@@ -63,24 +63,24 @@
 .page-indicator {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.35rem;
   color: rgba(255, 255, 255, 0.6);
   font-size: 0.9rem;
   font-family: 'Red Hat Text', sans-serif;
-  text-align: center;
+  text-align: left;
 }
 
 .study-track-name {
   display: inline-flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: baseline;
   gap: 0.2rem;
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  text-align: center;
+  text-align: left;
   color: var(--accent-blue);
 }
 
@@ -101,46 +101,172 @@
   font-size: 24px;
   font-weight: 700;
   font-family: 'Red Hat Display', sans-serif;
-  text-align: center;
+  text-align: left;
   margin: 0;
   line-height: 1.4;
-  max-width: 700px;
-  margin: 0 auto;
+  max-width: min(700px, 100%);
+  align-self: flex-start;
+  width: 100%;
+}
+
+.study-expandable-image-block {
+  width: 100%;
+  max-width: 44rem;
+  margin: 0;
+  align-self: flex-start;
+}
+
+.study-expandable-image-block--hero {
+  margin-bottom: 0.25rem;
+}
+
+.study-expandable-image-btn {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.study-expandable-image-btn:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 3px;
+}
+
+.study-expandable-image-btn--hero {
+  width: 100%;
+  max-width: 44rem;
+  margin: 0;
+}
+
+.study-expandable-image-btn--overview {
+  width: 100%;
+}
+
+.study-expandable-image-hint {
+  margin: 0.35rem 0 0;
+  text-align: left;
+  font-size: 0.8125rem;
+  font-family: 'Red Hat Text', sans-serif;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.study-expandable-image-hint--in-figure {
+  margin-top: 0.4rem;
 }
 
 .study-page-hero-image {
   display: block;
   width: 100%;
-  max-width: 36rem;
-  margin: 0 auto;
+  max-width: 44rem;
+  margin: 0;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.study-image-lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 1rem 2.5rem;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.88);
+  cursor: zoom-out;
+}
+
+.study-image-lightbox-dialog {
+  position: relative;
+  max-width: min(96vw, 1400px);
+  max-height: min(92vh, 1200px);
+  margin: 0;
+  cursor: default;
+}
+
+.study-image-lightbox-img {
+  display: block;
+  max-width: 100%;
+  max-height: min(92vh, 1200px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.study-image-lightbox-close {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  z-index: 1;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  font-family: 'Red Hat Display', sans-serif;
+  transition: background 0.15s ease;
+}
+
+.study-image-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.study-image-lightbox-close:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+@media (min-width: 640px) {
+  .study-image-lightbox-close {
+    top: -2.75rem;
+    right: 0;
+  }
 }
 
 .study-page-image-placeholder {
   width: 100%;
   max-width: 36rem;
-  margin: 0 auto;
+  margin: 0;
+  align-self: flex-start;
   min-height: 12rem;
   border-radius: 10px;
   border: 2px dashed rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.04);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding: 1.25rem;
   box-sizing: border-box;
+  text-align: left;
 }
 
 .study-page-image-placeholder-label {
   font-family: 'Red Hat Text', sans-serif;
   font-size: 0.95rem;
   color: rgba(255, 255, 255, 0.45);
+  text-align: left;
 }
 
 .study-page-prototype-placeholder {
   width: 100%;
   max-width: 42rem;
-  margin: 0 auto;
+  margin: 0;
+  align-self: flex-start;
   min-height: 18rem;
   padding: 1.5rem;
   border-radius: 10px;
@@ -148,9 +274,9 @@
   background: rgba(255, 255, 255, 0.04);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   box-sizing: border-box;
-  text-align: center;
+  text-align: left;
 }
 
 .study-page-prototype-placeholder-label {
@@ -159,6 +285,7 @@
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.55);
   max-width: 28rem;
+  text-align: left;
 }
 
 .multiple-choice-instruction {
@@ -166,7 +293,7 @@
   font-size: 1rem;
   margin: 0 0 0.75rem;
   font-family: 'Red Hat Text', sans-serif;
-  text-align: center;
+  text-align: left;
   line-height: 1.45;
 }
 
@@ -186,13 +313,14 @@
   font-size: 1rem;
   font-weight: 600;
   font-family: 'Red Hat Text', sans-serif;
-  text-align: center;
+  text-align: left;
 }
 
 .ranking-question {
   width: 100%;
   max-width: 36rem;
-  margin: 0 auto;
+  margin: 0;
+  align-self: flex-start;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -204,7 +332,7 @@
   font-size: 1rem;
   line-height: 1.5;
   font-family: 'Red Hat Text', sans-serif;
-  text-align: center;
+  text-align: left;
 }
 
 .ranking-list {
@@ -341,7 +469,8 @@
 .study-ranking-other-followup {
   width: 100%;
   max-width: 36rem;
-  margin: 1.5rem auto 0;
+  margin: 1.5rem 0 0;
+  align-self: flex-start;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
@@ -352,6 +481,7 @@
   color: rgba(255, 255, 255, 0.88);
   font-size: 1rem;
   font-family: 'Red Hat Text', sans-serif;
+  text-align: left;
 }
 
 .study-ranking-other-textarea {
@@ -360,14 +490,15 @@
 }
 
 .figma-embed-wrap--above {
-  margin-left: auto;
+  margin-left: 0;
   margin-right: auto;
 }
 
 .study-overview {
   width: 100%;
   max-width: 40rem;
-  margin: 0 auto;
+  margin: 0;
+  align-self: flex-start;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -411,8 +542,9 @@
 .study-overview-after-image-wrap {
   width: 100%;
   max-width: min(28rem, 100%);
-  margin: 0.5rem auto 0;
+  margin: 0.5rem 0 0;
   padding: 0;
+  align-self: flex-start;
 }
 
 .study-overview-after-image {
@@ -448,13 +580,14 @@
   font-weight: 600;
   font-family: 'Red Hat Text', sans-serif;
   line-height: 1.45;
-  text-align: center;
+  text-align: left;
 }
 
 .figma-embed-wrap {
   width: 1200px;
-  max-width: calc(100vw - 2rem);
-  margin-left: calc(50% - min(600px, 50vw - 1rem));
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: auto;
   border-radius: 8px;
   overflow: hidden;
   border: 2px solid rgba(255, 255, 255, 0.15);
@@ -583,6 +716,7 @@
   margin: 0;
   font-family: 'Red Hat Text', sans-serif;
   line-height: 1.5;
+  text-align: left;
 }
 
 .multi-select-options-heading {
@@ -667,6 +801,7 @@
   font-size: 0.95rem;
   margin: 0;
   font-family: 'Red Hat Text', sans-serif;
+  text-align: left;
 }
 
 .value-credits-question {
@@ -688,6 +823,7 @@
   margin: 0;
   font-family: 'Red Hat Text', sans-serif;
   line-height: 1.5;
+  text-align: left;
 }
 
 .value-credits-cards-heading {
@@ -912,12 +1048,13 @@
 }
 
 .slider-value {
-  text-align: center;
+  text-align: left;
   color: var(--accent-blue);
   font-size: 1.25rem;
   font-weight: 600;
   font-family: 'Red Hat Display', sans-serif;
   margin: 0;
+  width: 100%;
 }
 
 .matrix-question {
@@ -932,6 +1069,7 @@
   font-size: 1rem;
   margin: 0;
   font-family: 'Red Hat Text', sans-serif;
+  text-align: left;
 }
 
 .matrix-table {
@@ -1097,9 +1235,8 @@
   font-size: 1rem;
   margin: 0;
   font-family: 'Red Hat Text', sans-serif;
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto;
+  text-align: left;
+  max-width: min(700px, 100%);
 }
 
 .buckets-container {
