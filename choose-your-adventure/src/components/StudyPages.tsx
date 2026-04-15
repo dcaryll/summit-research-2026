@@ -942,7 +942,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         id: '3',
         type: 'multiple-choice',
         question:
-          'If you had to choose ONE, which would make you trust a product more?',
+          'If you’re evaluating an enterprise product for purchase, which infrastructure would you prefer?',
         options: [
           TRUST_OWN_METAL_OPTION,
           'The ability to see it working in 5 minutes in a browser (zero-install speed)'
@@ -1481,6 +1481,9 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: '3',
         type: 'multiple-choice',
+        imageSrc: myTrialsReadyToBuyDialogThreeOptions,
+        imageAlt:
+          'Ready to Buy modal in the live product: three columns—Red Hat Sales, Marketplace, and Connect with partners—with Contact sales, Buy online, and Find a partner links.',
         question:
           'Look at the multiple buying options on the screen. If you closed this menu without clicking anything, what is your most likely reason?',
         options: [
