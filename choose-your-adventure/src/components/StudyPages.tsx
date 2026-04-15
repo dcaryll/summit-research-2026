@@ -1322,7 +1322,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         type: 'text',
         figmaEmbedSourcePageId: 'landing-prototype',
         question:
-          'Based on your needs, click on the first thing you would interact with on this page.'
+          'Based on your needs, what is the first thing you would interact with on this page.'
       },
       {
         id: 'b2-q3',
