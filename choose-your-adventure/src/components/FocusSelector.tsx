@@ -61,6 +61,28 @@ function shuffleArray<T>(array: T[]): T[] {
   return copy
 }
 
+function DiceIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="4" y="4" width="16" height="16" rx="2" ry="2" />
+      <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+      <circle cx="16" cy="16" r="1.5" fill="currentColor" />
+      <circle cx="8" cy="16" r="1.5" fill="currentColor" />
+      <circle cx="16" cy="8" r="1.5" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+    </svg>
+  )
+}
+
 interface FocusSelectorProps {
   onFocusSelect: (focus: string) => void
   /** Called when the study detail modal is dismissed without starting the study. */
@@ -232,14 +254,7 @@ function FocusSelector({
               onClick={handleRandomize}
             >
               <span className="randomize-button-icon" aria-hidden>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="4" y="4" width="16" height="16" rx="2" ry="2" />
-                  <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-                  <circle cx="16" cy="16" r="1.5" fill="currentColor" />
-                  <circle cx="8" cy="16" r="1.5" fill="currentColor" />
-                  <circle cx="16" cy="8" r="1.5" fill="currentColor" />
-                  <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                </svg>
+                <DiceIcon />
               </span>
               Random study
             </button>
@@ -324,6 +339,29 @@ function FocusSelector({
               </div>
             )
           })}
+          <div
+            role="button"
+            tabIndex={0}
+            className={`focus-card focus-card--surprise ${isShowingRandomResult ? 'focus-card--random-dismiss' : ''}`}
+            onClick={() => {
+              if (isShowingRandomResult) return
+              handleRandomize()
+            }}
+            onKeyDown={(e) => {
+              if (isShowingRandomResult) return
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleRandomize()
+              }
+            }}
+          >
+            <div className="focus-card-surprise-inner">
+              <h2 className="focus-card-title focus-card-surprise-title">Surprise me!</h2>
+              <span className="focus-card-surprise-dice-wrap" aria-hidden>
+                <DiceIcon className="focus-card-surprise-dice" />
+              </span>
+            </div>
+          </div>
         </div>
       </div>
       {onExportCsv && (

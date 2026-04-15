@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef, type DragEvent, type ReactNode } from 'react'
 import './StudyPages.css'
 import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
-/** Swap for a PNG export of the live Ready to Buy dialog when you have it (keep the same import path or update the extension). */
-import myTrialsReadyToBuyModalImage from '../images/my-trials-ready-to-buy-modal.svg'
+import myTrialsReadyToBuyDialogSingle from '../images/my-trials-ready-to-buy-dialog-single-option.png'
+import myTrialsReadyToBuyDialogThreeOptions from '../images/my-trials-ready-to-buy-dialog-three-options.png'
 import productMarketingContextImage from '../images/study-detail-visual-placeholder.svg'
 import productMarketingQuestion6Visual from '../images/study-detail-visual-placeholder.svg'
 import contentDiscoveryQ1TopicCards from '../images/content-discovery-q1-topic-cards.png'
@@ -11,12 +11,44 @@ import contentDiscoveryQ2AppPlatforms from '../images/content-discovery-q2-app-p
 import contentDiscoveryQ2Automation from '../images/content-discovery-q2-automation.png'
 import contentDiscoveryQ2LinuxStandardization from '../images/content-discovery-q2-linux-standardization.png'
 import contentDiscoveryQ2Virtualization from '../images/content-discovery-q2-virtualization.png'
+import contentDiscoveryOverviewLearningFormats from '../images/content-discovery-overview-learning-formats.png'
+import developerProgramTierProgramsImage from '../images/developer-program-tier-programs.png'
+import developerProgramSignupFlowIndividuals from '../images/developer-program-signup-flow-individuals.png'
+import developerProgramSignupFlowBusinesses from '../images/developer-program-signup-flow-businesses.png'
+import developerProgramPostLoginIndividuals from '../images/developer-program-post-login-individuals.png'
+import developerProgramPostLoginBusinesses from '../images/developer-program-post-login-businesses.png'
 import CompletionScreen from './CompletionScreen'
 import LoadingScreen from './LoadingScreen'
 import {
   confirmLeaveActiveStudy,
   registerBeforeUnloadIfInProgress
 } from '../studyExitPrompt'
+
+/** Developer program post–tier choice: signup UI keyed by answer on `b3-q1`. Replace PNGs when final art is ready. */
+const DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM: Record<string, string> = {
+  'Developer for Individuals': developerProgramSignupFlowIndividuals,
+  'Developer for Businesses': developerProgramSignupFlowBusinesses
+}
+
+const DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_ALT: Record<string, string> = {
+  'Developer for Individuals':
+    'Register for a Red Hat account: privacy notice, organization account callout, and required fields including Red Hat login, password rules, first and last name.',
+  'Developer for Businesses':
+    'Sign-up experience for Developer for Businesses: steps and information required on screen.'
+}
+
+/** Post-login / logged-in view keyed by `b3-q1`. Replace PNGs when final art is ready. */
+const DEVELOPER_PROGRAM_POST_LOGIN_HERO_BY_PROGRAM: Record<string, string> = {
+  'Developer for Individuals': developerProgramPostLoginIndividuals,
+  'Developer for Businesses': developerProgramPostLoginBusinesses
+}
+
+const DEVELOPER_PROGRAM_POST_LOGIN_HERO_ALT: Record<string, string> = {
+  'Developer for Individuals':
+    'Logged-in developer experience for Individuals: home or dashboard after account creation.',
+  'Developer for Businesses':
+    'Logged-in developer experience for Businesses: home or dashboard after account creation.'
+}
 
 /** Content discovery Q2/Q4: topic-page screenshot keyed by exact answer from question 1. */
 const CONTENT_DISCOVERY_Q2_HERO_BY_TOPIC: Record<string, string> = {
@@ -74,13 +106,35 @@ type StudyPage = {
   sliderMaxLabel?: string
   sliderLabels?: string[]
   figmaEmbedUrl?: string
+  /** When set, reuse `figmaEmbedUrl` from the page with this id in the same study (keeps the prototype visible on follow-up steps). */
+  figmaEmbedSourcePageId?: string
+  /** On `prototype`: required open-text answer stored under this key. */
+  prototypeOpenTextKey?: string
+  /** Label above the prototype open-text field; use with `prototypeOpenTextKey`. */
+  prototypeOpenTextLabel?: string
   /** Shown above the question; use with `imageAlt` for accessibility. */
   imageSrc?: string
   imageAlt?: string
+  /** Reuse `imageSrc` / `imageAlt` from the page with this id in the same study. */
+  imageSourcePageId?: string
   /** Prior single-choice page id; hero image URL is `questionHeroImagesByPriorOption[answers[fromPageId]]`. */
   questionHeroImageFromPageId?: string
   questionHeroImagesByPriorOption?: Record<string, string>
   questionHeroImageAltsByPriorOption?: Record<string, string>
+  /**
+   * When a question hero is shown (direct, sourced, or branched): render the question and optional
+   * `questionSubtext` above the image instead of below. Ignored for `overview` pages.
+   */
+  questionAboveHeroImage?: boolean
+  /** Extra line under the question when `questionAboveHeroImage` is true (e.g. scroll instructions). */
+  questionSubtext?: string
+  /**
+   * On `slider` with `questionAboveHeroImage`: render the slider (Likert) between the question/subtext
+   * and the hero image instead of below the image.
+   */
+  sliderAboveHeroImage?: boolean
+  /** Include this page in the flow only when `answers[priorPageId]` exactly equals `equals`. */
+  visibleWhen?: { priorPageId: string; equals: string }
   /** Gray placeholder block when the final image is not ready yet. */
   placeholderImage?: boolean
   /** Topic-page style placeholder before the question (e.g. hybrid cloud prototype). */
@@ -88,10 +142,14 @@ type StudyPage = {
   /** After `overview` paragraphs: static image (e.g. production UI screenshot). */
   overviewAfterImageSrc?: string
   overviewAfterImageAlt?: string
+  /** After `overview` paragraphs: multiple images in a row; each opens the same lightbox as `overviewAfterImageSrc`. When non-empty, takes precedence over `overviewAfterImageSrc` for that page. */
+  overviewAfterImageGallery?: { src: string; alt: string }[]
   /** Shown in the prototype placeholder box (e.g. numbered resources matching on-screen labels). */
   prototypePlaceholderHint?: string
   /** When set with `figmaEmbedUrl`, render the iframe above the question instead of below. */
   figmaEmbedAboveQuestion?: boolean
+  /** On `multiple-choice` with a Figma embed: render the option list above the iframe. */
+  multipleChoiceOptionsAboveEmbed?: boolean
   /** On `multiple-choice`: show follow-up when main answer equals this. */
   followUpWhen?: string
   followUpAnswerKey?: string
@@ -105,6 +163,11 @@ type StudyPage = {
   multiChoiceRequiredFreeTextLabel?: string
   /** Replace each `{{TOPIC}}` in `question` with the participant's answer from this page id. */
   questionTopicFromPageId?: string
+  /**
+   * Replace `{{CHOSEN}}` and `{{NOT_CHOSEN}}` in `question` using the participant's answer on that page
+   * (expected: a prior `multiple-choice` with two options).
+   */
+  questionBinaryChoiceFromPageId?: string
   /** For multi-select: build options from another page's `options`, excluding `answers[excludePageId]` from that pick. */
   multiSelectOptionsFromPageId?: string
   /** Page id storing the single-choice answer to remove from the list. Defaults to `multiSelectOptionsFromPageId`. */
@@ -133,6 +196,28 @@ type StudyPage = {
   bucketsSplitSidebar?: boolean
 }
 
+function resolveFigmaEmbedUrl(page: StudyPage, allPages: StudyPage[]): string | undefined {
+  const sourceId = page.figmaEmbedSourcePageId
+  if (sourceId) {
+    return allPages.find((p) => p.id === sourceId)?.figmaEmbedUrl
+  }
+  return page.figmaEmbedUrl
+}
+
+function resolveImageHero(page: StudyPage, allPages: StudyPage[]): { src: string; alt: string } | null {
+  const sid = page.imageSourcePageId
+  if (sid) {
+    const srcPage = allPages.find((p) => p.id === sid)
+    if (srcPage?.imageSrc) {
+      return { src: srcPage.imageSrc, alt: srcPage.imageAlt ?? '' }
+    }
+  }
+  if (page.imageSrc != null && page.imageSrc !== '') {
+    return { src: page.imageSrc, alt: page.imageAlt ?? '' }
+  }
+  return null
+}
+
 function resolveQuestionHeroImage(
   page: StudyPage,
   ans: Record<string, string>
@@ -157,6 +242,8 @@ const TRUST_OWN_METAL_OPTION =
 const CREDIT_FOLLOWUP_ASSETS_PLACEHOLDER = '{{ASSETS}}'
 const CREDIT_FOLLOWUP_OMITTED_PLACEHOLDER = '{{OMITTED_ASSETS}}'
 const QUESTION_TOPIC_PLACEHOLDER = '{{TOPIC}}'
+const QUESTION_CHOSEN_PLACEHOLDER = '{{CHOSEN}}'
+const QUESTION_NOT_CHOSEN_PLACEHOLDER = '{{NOT_CHOSEN}}'
 const SELECTED_OPTION_PLACEHOLDER = '{{SELECTED_OPTION}}'
 
 /** Open text is captured by a notetaker during moderated sessions (participant speaks aloud). */
@@ -393,6 +480,21 @@ function resolveStudyQuestion(page: StudyPage, allPages: StudyPage[], answers: R
     const topic = answers[refId]?.trim()
     q = q.split(QUESTION_TOPIC_PLACEHOLDER).join(topic || 'your chosen topic')
   }
+  if (page.questionBinaryChoiceFromPageId) {
+    const refId = page.questionBinaryChoiceFromPageId
+    const refPage = allPages.find((p) => p.id === refId)
+    const opts = refPage?.options
+    const choice = answers[refId]?.trim()
+    const chosen = choice || 'your chosen option'
+    let notChosen = 'the other option'
+    if (opts?.length && choice && opts.includes(choice)) {
+      const others = opts.filter((o) => o !== choice)
+      if (others.length === 1) notChosen = others[0]!
+      else if (others.length > 1) notChosen = others.join(' or ')
+    }
+    q = q.split(QUESTION_CHOSEN_PLACEHOLDER).join(chosen)
+    q = q.split(QUESTION_NOT_CHOSEN_PLACEHOLDER).join(notChosen)
+  }
   return q
 }
 
@@ -600,7 +702,13 @@ function computeCanProceed(
   allPages: StudyPage[]
 ): boolean {
   if (!page) return false
-  if (page.type === 'overview' || page.type === 'prototype') return true
+  if (page.type === 'overview') return true
+  if (page.type === 'prototype') {
+    if (page.prototypeOpenTextKey) {
+      return !!ans[page.prototypeOpenTextKey]?.trim()
+    }
+    return true
+  }
   if (page.type === 'ranking') {
     const rows = getBranchedRankingRows(page, ans) ?? page.rows
     if (!rows?.length) return false
@@ -718,6 +826,12 @@ const MY_TRIALS_PAGE_READY_TO_BUY_EXPECT: StudyPage = {
   multiSelectExactCount: false,
   maxSelections: 3,
   multiSelectMinSelections: 1
+}
+
+function pagePassesVisibilityFilter(page: StudyPage, answers: Record<string, string>): boolean {
+  const v = page.visibleWhen
+  if (!v) return true
+  return (answers[v.priorPageId]?.trim() ?? '') === v.equals
 }
 
 // Mock study pages/questions - this will be customized based on focusId
@@ -1187,26 +1301,168 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         id: 'intro',
         type: 'overview',
         question:
-          "We are updating our developer and trial programs and would love your input to better understand your learning and evaluation needs. As a person interested in trying out a Red Hat product, review the landing page on the next screen and verbally share your thoughts as you visually explore the page. Let us know what you are thinking, questions you have, expectations, things that don't make sense, things that do. Any free flowing thoughts that come to mind as you explore the page."
+          "Imagine you are interested in trying out a Red Hat product. You will first explore an interactive prototype of the main developer landing page (Choose your program — tiers for Individuals and Businesses), then answer questions about a cropped view focused on those two tiers."
       },
       {
         id: 'landing-prototype',
         type: 'prototype',
         question:
-          'Explore the clickable Figma prototype below (the landing page from the introduction). When you are done exploring, select Next to continue.',
-        figmaEmbedUrl: ''
+          'Please take a moment to visually explore the page. What do you feel is the main goal of this page? What information or elements draw your eye first?',
+        figmaEmbedUrl:
+          'https://embed.figma.com/proto/nvnxEvej7639b0fdSUdqOj/Tiered-Offering-and-Dev-Program-Experience-Summit-Research?node-id=1-2214&page-id=0%3A1&starting-point-node-id=1%3A2214&t=10v1lLZjY8ApVN4c-1&embed-host=summit-research&scaling=scale-down-width&content-scaling=fixed',
+        prototypeOpenTextKey: 'landing-prototype-response',
+        prototypeOpenTextLabel: 'Your response'
       },
-      { id: '1', question: 'Which parts of the Red Hat Developer program or tools do you use today?', type: 'multiple-choice', options: ['OpenShift', 'RHEL', 'Ansible', 'Quay', 'Buildah/Podman', 'Developer portal / sandbox', 'Other'] },
-      { id: '2', question: 'How do Red Hat developer resources support your work?', type: 'text' },
-      { id: '3', question: 'What would make the developer program more valuable for you?', type: 'text' }
+      {
+        id: 'b2-q2',
+        type: 'text',
+        figmaEmbedSourcePageId: 'landing-prototype',
+        question:
+          'Based on your needs, click on the first thing you would interact with on this page.'
+      },
+      {
+        id: 'b2-q3',
+        type: 'text',
+        figmaEmbedSourcePageId: 'landing-prototype',
+        question:
+          'Why did you choose that specific action, and what would you expect to happen next?'
+      },
+      {
+        id: 'b2-q4',
+        type: 'multiple-choice',
+        figmaEmbedSourcePageId: 'landing-prototype',
+        multipleChoiceOptionsAboveEmbed: true,
+        question:
+          'Based on the information presented, is the difference between the two tiers clear to you?',
+        options: ['Yes', 'No', 'Unsure']
+      },
+      {
+        id: 'b3-q1',
+        type: 'multiple-choice',
+        question: 'If you wanted to sign up for one of the two programs, which would you choose?',
+        imageSrc: developerProgramTierProgramsImage,
+        imageAlt:
+          'Choose your program: two cards comparing Developer for Individuals (personal non-business use) and Developer for Businesses (team non-production use), each with What you get bullet lists.',
+        options: ['Developer for Individuals', 'Developer for Businesses']
+      },
+      {
+        id: 'b3-q2',
+        type: 'text',
+        imageSourcePageId: 'b3-q1',
+        questionBinaryChoiceFromPageId: 'b3-q1',
+        question:
+          'Why did you choose {{CHOSEN}}, and why did you not choose {{NOT_CHOSEN}}?'
+      },
+      {
+        id: 'b3-q3',
+        type: 'text',
+        imageSourcePageId: 'b3-q1',
+        question:
+          'What additional information is missing from the overview of these tiers that would help you make a more informed choice?'
+      },
+      {
+        id: 'b4-q1',
+        type: 'slider',
+        questionAboveHeroImage: true,
+        sliderAboveHeroImage: true,
+        questionSubtext:
+          'Scroll to see the full sign-up screen, or tap the image to open a larger view.',
+        questionHeroImageFromPageId: 'b3-q1',
+        questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM,
+        questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_ALT,
+        question:
+          'How do you feel about the steps and information required to sign up?',
+        sliderMin: 1,
+        sliderMax: 5,
+        sliderLabels: [
+          'Extremely Overwhelming',
+          'Overwhelming',
+          'Neutral',
+          'Easy',
+          'Extremely Easy'
+        ]
+      },
+      {
+        id: 'b4-q2',
+        type: 'multiple-choice',
+        questionHeroImageFromPageId: 'b3-q1',
+        questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM,
+        questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_ALT,
+        question:
+          'Given the information requested on this form, would you complete the registration or leave the page?',
+        options: ['I would complete the registration', 'I would leave the page']
+      },
+      {
+        id: 'b4-q3',
+        type: 'text',
+        visibleWhen: { priorPageId: 'b4-q2', equals: 'I would leave the page' },
+        questionHeroImageFromPageId: 'b3-q1',
+        questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM,
+        questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_ALT,
+        question: 'What is the key issue keeping you from completing the registration?'
+      },
+      {
+        id: 'b5-q1',
+        type: 'text',
+        questionHeroImageFromPageId: 'b3-q1',
+        questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_BY_PROGRAM,
+        questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_ALT,
+        question:
+          'You have successfully created your account and are now logged in. What content would you click on to explore first?'
+      },
+      {
+        id: 'b5-q2',
+        type: 'text',
+        questionHeroImageFromPageId: 'b3-q1',
+        questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_BY_PROGRAM,
+        questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_ALT,
+        question:
+          'Does the content and prioritization on this page meet your expectations? Why or why not?'
+      },
+      {
+        id: 'b5-q3',
+        type: 'text',
+        questionHeroImageFromPageId: 'b3-q1',
+        questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_BY_PROGRAM,
+        questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_ALT,
+        question: 'What kind of content did you expect to see on this page that might be missing?'
+      },
+      {
+        id: 'b6-q1',
+        type: 'multiple-choice',
+        question:
+          'Overall, do you feel you were given a clear understanding of what the Developer program is and its offerings?',
+        options: ['Yes', 'No']
+      },
+      {
+        id: 'b6-q2',
+        type: 'text',
+        question:
+          'Thinking back through this overall experience, would you sign up for this program in real life? What specifically helped you make that decision?'
+      },
+      {
+        id: 'b6-q3',
+        type: 'text',
+        question:
+          'If you could give Red Hat one piece of advice to improve this overall experience, what would it be?'
+      }
     ],
     'my-trials': [
       {
         id: 'intro',
         type: 'overview',
-        overviewAfterImageSrc: myTrialsReadyToBuyModalImage,
-        overviewAfterImageAlt:
-          'Screenshot of the current Ready to Buy dialog in the product, showing the buying options as they appear today.',
+        overviewAfterImageGallery: [
+          {
+            src: myTrialsReadyToBuyDialogSingle,
+            alt:
+              'Ready to Buy modal in the live product: single centered card for Red Hat Sales with a Contact sales button.'
+          },
+          {
+            src: myTrialsReadyToBuyDialogThreeOptions,
+            alt:
+              'Ready to Buy modal in the live product: three columns—Red Hat Sales, Marketplace, and Connect with partners—with Contact sales, Buy online, and Find a partner links.'
+          }
+        ],
         question:
           "Right now, when you finish a product trial and click 'Ready to Buy,' you see the dialog below—this is the current experience in the live product.\n\nHowever, our data shows the majority of users close this window without clicking anything. Help us understand why."
       },
@@ -1275,6 +1531,9 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: 'intro',
         type: 'overview',
+        overviewAfterImageSrc: contentDiscoveryOverviewLearningFormats,
+        overviewAfterImageAlt:
+          'Illustration of three learning content cards on a red background: an original podcast, a blog post, and an e-book, overlapping in a staggered layout.',
         question:
           "**Thanks for taking part.**\n\nWe want to understand how you prefer to learn about technology topics you care about—which formats you notice first, and what drives those choices.\n\nOver the next few screens you'll pick a topic, choose and rank different types of learning content, and share a bit of context in your own words. Your answers help us make topical learning more useful on our sites."
       },
@@ -1449,12 +1708,16 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   const [showCompletion, setShowCompletion] = useState(false)
   const [isLoadingCompletion, setIsLoadingCompletion] = useState(false)
   const [expandedStudyImage, setExpandedStudyImage] = useState<{ src: string; alt: string } | null>(null)
-  const studyPages = useMemo(() => getStudyPages(focusId), [focusId])
+  const allStudyPages = useMemo(() => getStudyPages(focusId), [focusId])
+  const studyPages = useMemo(
+    () => allStudyPages.filter((p) => pagePassesVisibilityFilter(p, answers)),
+    [allStudyPages, answers]
+  )
   const pageNavigationRef = useRef<HTMLDivElement>(null)
   const prevCanProceedRef = useRef<boolean | null>(null)
 
   const currentPage = studyPages[currentPageIndex]
-  const displayedQuestion = currentPage ? resolveStudyQuestion(currentPage, studyPages, answers) : ''
+  const displayedQuestion = currentPage ? resolveStudyQuestion(currentPage, allStudyPages, answers) : ''
 
   useEffect(() => {
     if (studyPages.length > 0 && currentPageIndex >= studyPages.length) {
@@ -1520,8 +1783,8 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   const derivedMultiSelectOptions = useMemo(() => {
     const p = studyPages[currentPageIndex]
     if (p?.type !== 'multi-select') return undefined
-    return getDerivedMultiSelectOptions(p, studyPages, answers) ?? []
-  }, [currentPageIndex, studyPages, answers])
+    return getDerivedMultiSelectOptions(p, allStudyPages, answers) ?? []
+  }, [currentPageIndex, allStudyPages, answers])
 
   const rankingRowsResolved = useMemo(() => {
     const p = studyPages[currentPageIndex]
@@ -1583,6 +1846,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             /* leave other write-in unchanged if selection JSON is invalid */
           }
         }
+        if (currentPage.id === 'b4-q2' && value !== 'I would leave the page') {
+          delete next['b4-q3']
+        }
         return next
       })
     }
@@ -1590,7 +1856,13 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
 
   const getPlaceholderAnswers = (page: StudyPage): Record<string, string> => {
     const overrides: Record<string, string> = {}
-    if (page.type === 'overview' || page.type === 'prototype') {
+    if (page.type === 'overview') {
+      return overrides
+    }
+    if (page.type === 'prototype') {
+      if (page.prototypeOpenTextKey) {
+        overrides[page.prototypeOpenTextKey] = '[skipped]'
+      }
       return overrides
     }
     if (page.type === 'text') {
@@ -1676,7 +1948,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     if (currentPageIndex > 0) setCurrentPageIndex((i) => i - 1)
   }
 
-  const canProceed = () => computeCanProceed(currentPage, answers, studyPages)
+  const canProceed = () => computeCanProceed(currentPage, answers, allStudyPages)
 
   useEffect(() => {
     prevCanProceedRef.current = null
@@ -1685,7 +1957,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   useEffect(() => {
     const page = studyPages[currentPageIndex]
     if (!page) return
-    const ok = computeCanProceed(page, answers, studyPages)
+    const ok = computeCanProceed(page, answers, allStudyPages)
     const prev = prevCanProceedRef.current
     if (prev === false && ok) {
       pageNavigationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
@@ -1695,7 +1967,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       return
     }
     prevCanProceedRef.current = ok
-  }, [answers, currentPageIndex, studyPages])
+  }, [answers, currentPageIndex, studyPages, allStudyPages])
 
   if (isLoadingCompletion) {
     return <LoadingScreen message="Preparing" />
@@ -1740,9 +2012,65 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   const studyTitle = STUDY_DISPLAY_NAME[focusId] ?? focusId.replace(/-/g, ' ')
 
   const questionHero: { src: string; alt: string } | null =
-    currentPage.imageSrc != null && currentPage.imageSrc !== ''
-      ? { src: currentPage.imageSrc, alt: currentPage.imageAlt ?? '' }
-      : resolveQuestionHeroImage(currentPage, answers)
+    resolveImageHero(currentPage, allStudyPages) ?? resolveQuestionHeroImage(currentPage, answers)
+
+  const deferHeroBelowQuestion = Boolean(
+    currentPage.questionAboveHeroImage && questionHero && currentPage.type !== 'overview'
+  )
+
+  const resolvedFigmaUrl = resolveFigmaEmbedUrl(currentPage, allStudyPages)
+
+  const showSliderAboveDeferredHero =
+    deferHeroBelowQuestion &&
+    currentPage.type === 'slider' &&
+    Boolean(currentPage.sliderAboveHeroImage)
+
+  const sliderQuestionEl =
+    currentPage.type === 'slider' ? (
+      <div className="slider-question">
+        <p className="slider-value" aria-live="polite">
+          {currentPage.sliderLabels
+            ? `${answers[currentPage.id] ?? getSliderNeutralValue(currentPage)} – ${currentPage.sliderLabels[Number(answers[currentPage.id] ?? getSliderNeutralValue(currentPage)) - (currentPage.sliderMin ?? 1)] ?? ''}`
+            : (answers[currentPage.id] ?? getSliderNeutralValue(currentPage))}
+        </p>
+        <div className="slider-track-wrap">
+          <input
+            type="range"
+            className="slider-input"
+            min={currentPage.sliderMin ?? 1}
+            max={currentPage.sliderMax ?? 5}
+            value={answers[currentPage.id] ?? String(getSliderNeutralValue(currentPage))}
+            onChange={(e) => handleAnswerChange(e.target.value)}
+          />
+          {currentPage.sliderLabels ? (
+            <div className="slider-labels-full">
+              {currentPage.sliderLabels.map((label, i) => {
+                const num = (currentPage.sliderMin ?? 1) + i
+                const neutral = getSliderNeutralValue(currentPage)
+                const isActive = Number(answers[currentPage.id] ?? neutral) === num
+                return (
+                  <button
+                    key={num}
+                    type="button"
+                    className={`slider-label-point ${isActive ? 'active' : ''}`}
+                    style={{ left: `${(i / (currentPage.sliderLabels!.length - 1)) * 100}%` }}
+                    onClick={() => handleAnswerChange(String(num))}
+                  >
+                    <span className="slider-label-num">{num}</span>
+                    <span className="slider-label-text">{label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="slider-labels">
+              <span>{currentPage.sliderMinLabel ?? '1'}</span>
+              <span>{currentPage.sliderMaxLabel ?? '5'}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    ) : null
 
   return (
     <div className="study-pages-screen">
@@ -1765,7 +2093,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
           className="page-content"
           key={`study-page-${currentPageIndex}-${currentPage.id}`}
         >
-          {questionHero ? (
+          {questionHero && !deferHeroBelowQuestion ? (
             <div className="study-expandable-image-block study-expandable-image-block--hero">
               <button
                 type="button"
@@ -1788,10 +2116,10 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             >
               <span className="study-page-image-placeholder-label">Image placeholder</span>
             </div>
-          ) : currentPage.figmaEmbedAboveQuestion && currentPage.figmaEmbedUrl ? (
+          ) : currentPage.figmaEmbedAboveQuestion && resolvedFigmaUrl ? (
             <div className="figma-embed-wrap figma-embed-wrap--above">
               <iframe
-                src={currentPage.figmaEmbedUrl}
+                src={resolvedFigmaUrl}
                 className="figma-embed"
                 allowFullScreen
                 title="Topic page prototype"
@@ -1831,7 +2159,37 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   .filter(Boolean)
                   .map((para, i) => renderOverviewBlock(para, i))}
               </div>
-              {currentPage.overviewAfterImageSrc && (
+              {currentPage.overviewAfterImageGallery &&
+              currentPage.overviewAfterImageGallery.length > 0 ? (
+                <div
+                  className="study-overview-after-gallery"
+                  role="group"
+                  aria-label="Screenshots of the current Ready to Buy experience"
+                >
+                  {currentPage.overviewAfterImageGallery.map((item, idx) => (
+                    <figure key={idx} className="study-overview-after-gallery-item">
+                      <button
+                        type="button"
+                        className="study-expandable-image-btn study-expandable-image-btn--overview"
+                        onClick={() =>
+                          setExpandedStudyImage({ src: item.src, alt: item.alt })
+                        }
+                        aria-haspopup="dialog"
+                        aria-label={
+                          item.alt?.trim()
+                            ? `View larger: ${item.alt}`
+                            : `View larger screenshot ${idx + 1}`
+                        }
+                      >
+                        <img src={item.src} alt="" className="study-overview-after-image" />
+                      </button>
+                      <figcaption className="study-expandable-image-hint study-expandable-image-hint--in-figure">
+                        Click image to enlarge
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              ) : currentPage.overviewAfterImageSrc ? (
                 <figure className="study-overview-after-image-wrap">
                   <button
                     type="button"
@@ -1859,39 +2217,91 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     Click image to enlarge
                   </figcaption>
                 </figure>
-              )}
+              ) : null}
             </>
-          ) : (
+          ) : deferHeroBelowQuestion ? null : (
             <h2 className="page-question">{displayedQuestion}</h2>
           )}
 
+          {deferHeroBelowQuestion && questionHero ? (
+            <>
+              <div className="page-question-heading-group">
+                <h2 className="page-question">{displayedQuestion}</h2>
+                {currentPage.questionSubtext?.trim() ? (
+                  <p className="page-question-subtext">{currentPage.questionSubtext}</p>
+                ) : null}
+              </div>
+              {showSliderAboveDeferredHero ? sliderQuestionEl : null}
+              <div className="study-expandable-image-block study-expandable-image-block--hero study-expandable-image-block--hero-after-question">
+                <button
+                  type="button"
+                  className="study-expandable-image-btn study-expandable-image-btn--hero"
+                  onClick={() => setExpandedStudyImage({ src: questionHero.src, alt: questionHero.alt })}
+                  aria-haspopup="dialog"
+                  aria-label={
+                    questionHero.alt.trim() ? `View larger: ${questionHero.alt}` : 'View larger image'
+                  }
+                >
+                  <img src={questionHero.src} alt="" className="study-page-hero-image" />
+                </button>
+                <p className="study-expandable-image-hint">Click image to enlarge</p>
+              </div>
+            </>
+          ) : null}
+
           {currentPage.type === 'prototype' ? (
-            currentPage.figmaEmbedUrl ? (
-              <div className="figma-embed-wrap">
-                <iframe
-                  src={currentPage.figmaEmbedUrl}
-                  className="figma-embed"
-                  allowFullScreen
-                  title="Clickable prototype"
-                />
-              </div>
-            ) : (
-              <div
-                className="study-page-prototype-placeholder"
-                role="region"
-                aria-label="Prototype embed not configured yet"
-              >
-                <span className="study-page-prototype-placeholder-label">
-                  Figma prototype — add the embed URL for this page when the embed is ready.
-                </span>
-              </div>
-            )
+            <>
+              {resolvedFigmaUrl ? (
+                <div className="figma-embed-wrap">
+                  <iframe
+                    src={resolvedFigmaUrl}
+                    className="figma-embed"
+                    allowFullScreen
+                    title="Clickable prototype"
+                  />
+                </div>
+              ) : (
+                <div
+                  className="study-page-prototype-placeholder"
+                  role="region"
+                  aria-label="Prototype embed not configured yet"
+                >
+                  <span className="study-page-prototype-placeholder-label">
+                    Figma prototype — add the embed URL for this page when the embed is ready.
+                  </span>
+                </div>
+              )}
+              {currentPage.prototypeOpenTextKey && currentPage.prototypeOpenTextLabel && (
+                <div className="multiple-choice-other-follow">
+                  <p className="multiple-choice-other-follow-label">{currentPage.prototypeOpenTextLabel}</p>
+                  <textarea
+                    className={`text-input${textInputNoteFilledClass(
+                      answers[currentPage.prototypeOpenTextKey] || ''
+                    )}`}
+                    value={answers[currentPage.prototypeOpenTextKey] || ''}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [currentPage.prototypeOpenTextKey!]: e.target.value
+                      }))
+                    }
+                    placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
+                    rows={6}
+                    aria-label={currentPage.prototypeOpenTextLabel}
+                  />
+                </div>
+              )}
+            </>
           ) : (
-            currentPage.figmaEmbedUrl &&
-            !currentPage.figmaEmbedAboveQuestion && (
+            resolvedFigmaUrl &&
+            !currentPage.figmaEmbedAboveQuestion &&
+            !(
+              currentPage.type === 'multiple-choice' &&
+              currentPage.multipleChoiceOptionsAboveEmbed
+            ) && (
               <div className="figma-embed-wrap">
                 <iframe
-                  src={currentPage.figmaEmbedUrl}
+                  src={resolvedFigmaUrl}
                   className="figma-embed"
                   allowFullScreen
                   title="Figma prototype"
@@ -1927,6 +2337,18 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   </button>
                 ))}
               </div>
+              {currentPage.multipleChoiceOptionsAboveEmbed &&
+                resolvedFigmaUrl &&
+                !currentPage.figmaEmbedAboveQuestion && (
+                  <div className="figma-embed-wrap figma-embed-wrap--after-mc-options">
+                    <iframe
+                      src={resolvedFigmaUrl}
+                      className="figma-embed"
+                      allowFullScreen
+                      title="Figma prototype"
+                    />
+                  </div>
+                )}
               {currentPage.multiChoiceRequiredFreeTextKey &&
                 currentPage.multiChoiceRequiredFreeTextLabel && (
                   <div className="multiple-choice-other-follow">
@@ -2271,52 +2693,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             </div>
           )}
 
-          {currentPage.type === 'slider' && (
-            <div className="slider-question">
-              <p className="slider-value" aria-live="polite">
-                {currentPage.sliderLabels
-                  ? `${answers[currentPage.id] ?? getSliderNeutralValue(currentPage)} – ${currentPage.sliderLabels[Number(answers[currentPage.id] ?? getSliderNeutralValue(currentPage)) - (currentPage.sliderMin ?? 1)] ?? ''}`
-                  : (answers[currentPage.id] ?? getSliderNeutralValue(currentPage))}
-              </p>
-              <div className="slider-track-wrap">
-                <input
-                  type="range"
-                  className="slider-input"
-                  min={currentPage.sliderMin ?? 1}
-                  max={currentPage.sliderMax ?? 5}
-                  value={answers[currentPage.id] ?? String(getSliderNeutralValue(currentPage))}
-                  onChange={(e) => handleAnswerChange(e.target.value)}
-                />
-                {currentPage.sliderLabels ? (
-                  <div className="slider-labels-full">
-                    {currentPage.sliderLabels.map((label, i) => {
-                      const num = (currentPage.sliderMin ?? 1) + i
-                      const neutral = getSliderNeutralValue(currentPage)
-                      const isActive =
-                        Number(answers[currentPage.id] ?? neutral) === num
-                      return (
-                        <button
-                          key={num}
-                          type="button"
-                          className={`slider-label-point ${isActive ? 'active' : ''}`}
-                          style={{ left: `${(i / (currentPage.sliderLabels!.length - 1)) * 100}%` }}
-                          onClick={() => handleAnswerChange(String(num))}
-                        >
-                          <span className="slider-label-num">{num}</span>
-                          <span className="slider-label-text">{label}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <div className="slider-labels">
-                    <span>{currentPage.sliderMinLabel ?? '1'}</span>
-                    <span>{currentPage.sliderMaxLabel ?? '5'}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {currentPage.type === 'slider' && !showSliderAboveDeferredHero ? sliderQuestionEl : null}
 
           {currentPage.type === 'ranking' &&
             rankingRowsResolved &&

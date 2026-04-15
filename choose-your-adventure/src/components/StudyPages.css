@@ -44,8 +44,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  /* stretch: full-width column for left-aligned copy; center: vertical balance in the viewport */
   align-items: stretch;
-  justify-content: flex-start;
+  justify-content: center;
   padding: 3rem;
   max-width: 800px;
   margin: 0 auto;
@@ -109,6 +110,31 @@
   width: 100%;
 }
 
+.page-question-heading-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-self: flex-start;
+  width: 100%;
+  max-width: min(44rem, 100%);
+}
+
+.page-question-heading-group .page-question {
+  max-width: 100%;
+}
+
+.page-question-subtext {
+  margin: 0;
+  max-width: min(44rem, 100%);
+  align-self: flex-start;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 1rem;
+  font-weight: 400;
+  font-family: 'Red Hat Text', sans-serif;
+  line-height: 1.5;
+  text-align: left;
+}
+
 .study-expandable-image-block {
   width: 100%;
   max-width: 44rem;
@@ -118,6 +144,14 @@
 
 .study-expandable-image-block--hero {
   margin-bottom: 0.25rem;
+}
+
+.study-expandable-image-block--hero-after-question {
+  max-height: min(70vh, 36rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 0.25rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .study-expandable-image-btn {
@@ -318,7 +352,7 @@
 
 .ranking-question {
   width: 100%;
-  max-width: 36rem;
+  max-width: 44rem;
   margin: 0;
   align-self: flex-start;
   display: flex;
@@ -547,6 +581,28 @@
   align-self: flex-start;
 }
 
+.study-overview-after-gallery {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+  max-width: min(56rem, 100%);
+  margin: 0.5rem 0 0;
+  align-self: flex-start;
+}
+
+@media (max-width: 640px) {
+  .study-overview-after-gallery {
+    grid-template-columns: 1fr;
+  }
+}
+
+.study-overview-after-gallery-item {
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
 .study-overview-after-image {
   display: block;
   width: 100%;
@@ -592,6 +648,10 @@
   overflow: hidden;
   border: 2px solid rgba(255, 255, 255, 0.15);
   background: #1f1f1f;
+}
+
+.figma-embed-wrap--after-mc-options {
+  margin-top: 1.25rem;
 }
 
 .figma-embed {

@@ -322,6 +322,50 @@
   font-family: 'Red Hat Text', sans-serif;
 }
 
+/* Last card: random study — same family as focus cards, slightly softer shell */
+.focus-card.focus-card--surprise {
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: rgba(20, 20, 24, 0.2);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.focus-card.focus-card--surprise:hover {
+  border-color: rgba(var(--accent-blue-rgb), 0.55);
+  background: rgba(var(--accent-blue-rgb), 0.1);
+}
+
+.focus-card-surprise-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.focus-card-surprise-title {
+  text-align: center;
+  margin: 0;
+}
+
+.focus-card-surprise-dice-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.focus-card-surprise-dice {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
 .take-study-button {
   background: var(--accent-blue);
   border: 2px solid var(--accent-blue);
