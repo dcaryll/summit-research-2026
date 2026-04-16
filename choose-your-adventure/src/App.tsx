@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import FocusSelector from './components/FocusSelector'
-import QualifyingQuestions from './components/QualifyingQuestions'
 import StudyPages from './components/StudyPages'
 import LoadingScreen from './components/LoadingScreen'
 import './App.css'
@@ -200,7 +199,6 @@ function App() {
   const [selectedFocus, setSelectedFocus] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showStudy, setShowStudy] = useState(false)
-  const [showQualifyingQuestions, setShowQualifyingQuestions] = useState(false)
 
   // Retry pending responses when online
   useEffect(() => {
@@ -270,19 +268,6 @@ function App() {
     setSelectedFocus(null)
   }
 
-  const handleStartQualifying = () => {
-    setShowQualifyingQuestions(true)
-  }
-
-  const handleQualifyingComplete = (recommendedFocusId: string) => {
-    setSelectedFocus(recommendedFocusId)
-    setShowQualifyingQuestions(false)
-  }
-
-  const handleQualifyingBack = () => {
-    setShowQualifyingQuestions(false)
-  }
-
   const handleStudyComplete = async (focusId: string, answers: Record<string, string>) => {
     await saveResponse({
       timestamp: new Date().toISOString(),
@@ -293,15 +278,6 @@ function App() {
 
   if (isLoading) {
     return <LoadingScreen message="Preparing" />
-  }
-
-  if (showQualifyingQuestions) {
-    return (
-      <QualifyingQuestions
-        onBack={handleQualifyingBack}
-        onComplete={handleQualifyingComplete}
-      />
-    )
   }
 
   if (showStudy && selectedFocus) {
@@ -323,7 +299,6 @@ function App() {
         onClearFocusSelection={handleClearFocusSelection}
         selectedFocus={selectedFocus}
         onTakeStudy={handleTakeStudy}
-        onStartQualifying={handleStartQualifying}
         onExportCsv={exportResponsesToCsv}
       />
       {import.meta.env.DEV && (

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './QualifyingQuestions.css'
 import { confirmLeaveQualifyingFlow, registerBeforeUnloadIfInProgress } from '../studyExitPrompt'
-import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
+import { studyLogo } from '../studyBrand'
 
 interface QualifyingQuestionsProps {
   onBack: () => void
@@ -93,7 +93,7 @@ function QualifyingQuestions({ onBack, onComplete }: QualifyingQuestionsProps) {
   return (
     <div className="qualifying-screen">
       <div className="qualifying-header">
-        <img src={logoImage} alt="Red Hat Logo" className="qualifying-logo" />
+        <img src={studyLogo} alt="" className="qualifying-logo" />
         <button type="button" className="qualifying-back-button" onClick={handleLeaveQualifying}>
           Back
         </button>

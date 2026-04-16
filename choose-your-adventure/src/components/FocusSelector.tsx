@@ -7,7 +7,7 @@ import productTrialSource from '@rhds/icons/standard/product-trial.js'
 import megaphoneSource from '@rhds/icons/standard/megaphone.js'
 import magnifyingGlassSource from '@rhds/icons/standard/magnifying-glass.js'
 import './FocusSelector.css'
-import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
+import { studyLogo } from '../studyBrand'
 import studyDetailVisualPlaceholder from '../images/study-detail-visual-placeholder.svg'
 import myRedHatStudyDetailHero from '../images/my-red-hat-study-detail-hero.png'
 import userPreferencesStudyDetailHero from '../images/user-preferences-study-detail-hero.png'
@@ -91,7 +91,6 @@ interface FocusSelectorProps {
   onClearFocusSelection?: () => void
   selectedFocus: string | null
   onTakeStudy: () => void
-  onStartQualifying: () => void
   onExportCsv?: () => void | Promise<void>
 }
 
@@ -180,29 +179,16 @@ const focusOptions: FocusOption[] = [
 
 const RANDOM_RESULT_DURATION_MS = 2500
 
-// Role options: user picks a role and we auto-assign the mapped study
-const roleOptions: { id: string; label: string; focusId: string }[] = [
-  { id: 'developer', label: 'Developer', focusId: 'developer-program' },
-  { id: 'it-ops', label: 'IT Ops / SRE', focusId: 'my-red-hat' },
-  { id: 'security', label: 'Security professional', focusId: 'user-preferences' },
-  { id: 'buyer', label: 'Buyer / Procurement', focusId: 'product-marketing' },
-  { id: 'content', label: 'Learning & content', focusId: 'content-discovery' },
-  { id: 'evaluator', label: 'Technical evaluator', focusId: 'product-evaluation' },
-  { id: 'trials', label: 'Trials & subscriptions', focusId: 'my-trials' }
-]
-
 function FocusSelector({
   onFocusSelect,
   onClearFocusSelection,
   selectedFocus,
   onTakeStudy,
-  onStartQualifying,
   onExportCsv
 }: FocusSelectorProps) {
   const orderedOptions = useMemo(() => shuffleArray(focusOptions), [])
   const [isShowingRandomResult, setIsShowingRandomResult] = useState(false)
   const [randomChosenFocus, setRandomChosenFocus] = useState<string | null>(null)
-  const [showRoleSection, setShowRoleSection] = useState(false)
   const [openDetailId, setOpenDetailId] = useState<string | null>(null)
 
   const detailOption = openDetailId ? focusOptions.find((o) => o.id === openDetailId) : undefined
@@ -244,41 +230,11 @@ function FocusSelector({
     setIsShowingRandomResult(true)
   }
 
-  const handleChooseByRole = (focusId: string) => {
-    onFocusSelect(focusId)
-  }
-
   return (
     <div className="focus-selector-screen">
       <header className="focus-selector-top-bar">
         <div className="logo-container">
-          <img src={logoImage} alt="Red Hat Logo" className="logo-image" />
-        </div>
-        <div className="randomize-section">
-          <h2 className="randomize-title">Not sure which to choose?</h2>
-          <div className="randomize-buttons">
-            <button
-              className="randomize-button"
-              onClick={handleRandomize}
-            >
-              <span className="randomize-button-icon" aria-hidden>
-                <DiceIcon />
-              </span>
-              Random study
-            </button>
-            <button
-              className="randomize-button qualifying-button"
-              onClick={onStartQualifying}
-            >
-              Help me choose
-            </button>
-            <button
-              className="randomize-button"
-              onClick={() => setShowRoleSection(true)}
-            >
-              Choose by role
-            </button>
-          </div>
+          <img src={studyLogo} alt="" className="logo-image" />
         </div>
       </header>
 
@@ -287,27 +243,6 @@ function FocusSelector({
           <h1 className="selector-title">Select your focus</h1>
           <p className="selector-subtitle">Choose a study track that interests you</p>
         </div>
-
-        {showRoleSection && (
-        <div className="choose-by-role-section">
-          <h2 className="choose-by-role-title">Choose by role</h2>
-          <p className="choose-by-role-subtitle">
-            Pick your role to highlight the recommended study below. Open a card when you’re ready to start.
-          </p>
-          <div className="role-buttons">
-            {roleOptions.map((role) => (
-              <button
-                key={role.id}
-                type="button"
-                className="role-button"
-                onClick={() => handleChooseByRole(role.focusId)}
-              >
-                {role.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        )}
 
         <div className={`focus-cards-grid ${isShowingRandomResult ? 'focus-cards-grid--animating' : ''}`}>
           {orderedOptions.map((option) => {

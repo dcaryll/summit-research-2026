@@ -1,5 +1,5 @@
 import './CompletionScreen.css'
-import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
+import { studyLogo } from '../studyBrand'
 import qrCodeImage from '../images/qr-code.svg'
 
 interface CompletionScreenProps {
@@ -11,7 +11,7 @@ function CompletionScreen({ onBack, onExportCsv }: CompletionScreenProps) {
   return (
     <div className="completion-screen">
       <div className="completion-header">
-        <img src={logoImage} alt="Red Hat Logo" className="completion-logo" />
+        <img src={studyLogo} alt="" className="completion-logo" />
         <button className="back-button" onClick={onBack}>Start over</button>
       </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, type DragEvent, type ReactNode } from 'react'
 import './StudyPages.css'
-import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
+import { studyLogo } from '../studyBrand'
 import myTrialsReadyToBuyDialogSingle from '../images/my-trials-ready-to-buy-dialog-single-option.png'
 import myTrialsReadyToBuyDialogThreeOptions from '../images/my-trials-ready-to-buy-dialog-three-options.png'
 import productMarketingContextImage from '../images/study-detail-visual-placeholder.svg'
@@ -12,6 +12,7 @@ import contentDiscoveryQ2Automation from '../images/content-discovery-q2-automat
 import contentDiscoveryQ2LinuxStandardization from '../images/content-discovery-q2-linux-standardization.png'
 import contentDiscoveryQ2Virtualization from '../images/content-discovery-q2-virtualization.png'
 import contentDiscoveryOverviewLearningFormats from '../images/content-discovery-overview-learning-formats.png'
+import developerProgramOverviewHeroImage from '../images/developer-program-overview-hero.png'
 import developerProgramTierProgramsImage from '../images/developer-program-tier-programs.png'
 import developerProgramSignupFlowIndividuals from '../images/developer-program-signup-flow-individuals.png'
 import developerProgramSignupFlowBusinesses from '../images/developer-program-signup-flow-businesses.png'
@@ -1301,7 +1302,10 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         id: 'intro',
         type: 'overview',
         question:
-          "Imagine you are interested in trying out a Red Hat product. You will first explore an interactive prototype of the main developer landing page (Choose your program — tiers for Individuals and Businesses), then answer questions about a cropped view focused on those two tiers."
+          "Imagine you are interested in trying out a Red Hat product. You will first explore an interactive prototype of the main developer landing page (Choose your program — tiers for Individuals and Businesses), then answer questions about a cropped view focused on those two tiers.",
+        overviewAfterImageSrc: developerProgramOverviewHeroImage,
+        overviewAfterImageAlt:
+          'Illustration of a small robot in a white astronaut helmet and red hoodie typing on a laptop, in a dark purple space-themed scene with geometric shapes and stars.'
       },
       {
         id: 'landing-prototype',
@@ -1984,7 +1988,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     return (
       <div className="study-pages-screen">
         <div className="study-header">
-          <img src={logoImage} alt="Red Hat Logo" className="study-logo" />
+          <img src={studyLogo} alt="" className="study-logo" />
           <button type="button" className="back-button" onClick={confirmBackToStudySelection}>
             Back to study selection
           </button>
@@ -2000,7 +2004,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     return (
       <div className="study-pages-screen">
         <div className="study-header">
-          <img src={logoImage} alt="Red Hat Logo" className="study-logo" />
+          <img src={studyLogo} alt="" className="study-logo" />
           <button type="button" className="back-button" onClick={confirmBackToStudySelection}>
             Back to study selection
           </button>
@@ -2078,7 +2082,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   return (
     <div className="study-pages-screen">
       <div className="study-header">
-        <img src={logoImage} alt="Red Hat Logo" className="study-logo" />
+        <img src={studyLogo} alt="" className="study-logo" />
         <button type="button" className="back-button" onClick={confirmBackToStudySelection}>
           Back to study selection
         </button>
