@@ -10,6 +10,7 @@ import './FocusSelector.css'
 import { studyLogo } from '../studyBrand'
 import studyDetailVisualPlaceholder from '../images/study-detail-visual-placeholder.svg'
 import myRedHatStudyDetailHero from '../images/my-red-hat-study-detail-hero.png'
+import myTrialsStudyDetailHero from '../images/testing-to-buying-overview.png'
 import userPreferencesStudyDetailHero from '../images/user-preferences-study-detail-hero.png'
 import productEvaluationStudyDetailHero from '../images/product-evaluation-study-detail-hero.png'
 import developerProgramStudyDetailHero from '../images/developer-program-overview-hero.png'
@@ -150,9 +151,9 @@ const focusOptions: FocusOption[] = [
     id: 'my-red-hat',
     title: 'Refine your intelligent dashboard',
     description: 'Explore AI-built views and portable tools to build the ultimate My Red Hat.',
-    durationLabel: '20–28 mins',
+    durationLabel: '10–15 mins',
     detailDescription:
-      'This track focuses on the My Red Hat portal and related experiences—navigation, dashboards, and tasks you perform as a customer. It has three sections with interactive previews and several written follow-ups per section. Set aside about 20–28 minutes to complete the study comfortably.',
+      'This track focuses on the My Red Hat portal and related experiences—navigation, dashboards, and tasks you perform as a customer. It has three sections with interactive previews and several written follow-ups per section. Set aside about 10–15 minutes to complete the study comfortably.',
     detailVisualSrc: myRedHatStudyDetailHero,
     detailVisualAlt:
       'Screenshot of the My dashboard page in the Red Hat customer portal, showing trials, subscriptions, support cases, and related widgets.'
@@ -163,15 +164,18 @@ const focusOptions: FocusOption[] = [
     description: 'Tell us your biggest roadblocks when upgrading from a product trial.',
     durationLabel: '10–15 mins',
     detailDescription:
-      'We are learning how people move from trial to purchase—including what you expect from “buy” flows, what feels unclear, and how we can make post-trial paths easier. You will answer questions about trials, buying options, and rank proposed improvements. Allow roughly 10–15 minutes.'
+      'We are learning how people move from trial to purchase—including what you expect from “buy” flows, what feels unclear, and how we can make post-trial paths easier. You will answer questions about trials, buying options, and rank proposed improvements. Allow roughly 10–15 minutes.',
+    detailVisualSrc: myTrialsStudyDetailHero,
+    detailVisualAlt:
+      'Overview graphic for the trial-to-purchase study: trials, buying paths, and next-step options in the product experience.'
   },
   {
     id: 'product-marketing',
     title: 'Improve our product navigation',
     description: "Sort and rank menu terms so finding products doesn't feel like a guessing game.",
-    durationLabel: '15-18 mins',
+    durationLabel: '10–15 mins',
     detailDescription:
-      'Help us understand how you scan product menus and information architecture when researching or buying. This study includes a large sorting task, rankings, and several explain-your-answer prompts. Expect about 15-18 minutes depending on how much you think aloud while you work.',
+      'Help us understand how you scan product menus and information architecture when researching or buying. This study includes a large sorting task, rankings, and several explain-your-answer prompts. Expect about 10–15 minutes depending on how much you think aloud while you work.',
     detailVisualSrc: productMarketingStudyDetailHero,
     detailVisualAlt:
       'Red Hat product page excerpt highlighting the horizontal secondary navigation with menu items such as Explore, Overview, and related product links.'
@@ -180,9 +184,9 @@ const focusOptions: FocusOption[] = [
     id: 'content-discovery',
     title: 'How do you learn best?',
     description: 'Videos, blogs, or podcasts? Tell us what content helps you master new tech.',
-    durationLabel: '12–18 mins',
+    durationLabel: '10–15 mins',
     detailDescription:
-      'We want to learn how you prefer to discover learning content by topic—what you notice first, how you rank formats, and what would help you go deeper. You will pick a topic, make choices, complete two ranking exercises, and answer a short follow-up. Most people finish in about 12–18 minutes.',
+      'We want to learn how you prefer to discover learning content by topic—what you notice first, how you rank formats, and what would help you go deeper. You will pick a topic, make choices, complete two ranking exercises, and answer a short follow-up. Most people finish in about 10–15 minutes.',
     detailVisualSrc: contentDiscoveryStudyDetailHero,
     detailVisualAlt:
       'Illustration introducing topical learning—content formats such as podcasts, articles, and ebooks in a bold, stacked layout.'

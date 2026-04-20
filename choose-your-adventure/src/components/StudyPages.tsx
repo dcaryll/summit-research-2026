@@ -3,15 +3,13 @@ import './StudyPages.css'
 import { studyLogo } from '../studyBrand'
 import myTrialsReadyToBuyDialogSingle from '../images/my-trials-ready-to-buy-dialog-single-option.png'
 import myTrialsReadyToBuyDialogThreeOptions from '../images/my-trials-ready-to-buy-dialog-three-options.png'
-import productMarketingContextImage from '../images/study-detail-visual-placeholder.svg'
-import productMarketingQuestion6Visual from '../images/study-detail-visual-placeholder.svg'
+import productMarketingSecondaryNavImage from '../images/product-secondary-nav.webp'
 import contentDiscoveryQ1TopicCards from '../images/content-discovery-q1-topic-cards.png'
 import contentDiscoveryQ2Ai from '../images/content-discovery-q2-ai.png'
 import contentDiscoveryQ2AppPlatforms from '../images/content-discovery-q2-app-platforms.png'
 import contentDiscoveryQ2Automation from '../images/content-discovery-q2-automation.png'
 import contentDiscoveryQ2LinuxStandardization from '../images/content-discovery-q2-linux-standardization.png'
 import contentDiscoveryQ2Virtualization from '../images/content-discovery-q2-virtualization.png'
-import learnStudyOverviewImage from '../images/learn-study-overview-image.png'
 import developerProgramTierProgramsImage from '../images/developer-program-tier-programs.png'
 import developerProgramSignupFlowIndividuals from '../images/developer-program-signup-flow-individuals.png'
 import developerProgramSignupFlowBusinesses from '../images/developer-program-signup-flow-businesses.png'
@@ -23,6 +21,7 @@ import {
   confirmLeaveActiveStudy,
   registerBeforeUnloadIfInProgress
 } from '../studyExitPrompt'
+import { studyDisplayName } from '../studyDisplayNames'
 
 /** Developer program post–tier choice: signup UI keyed by answer on `b3-q1`. Replace PNGs when final art is ready. */
 const DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM: Record<string, string> = {
@@ -142,6 +141,8 @@ type StudyPage = {
   /** After `overview` paragraphs: static image (e.g. production UI screenshot). */
   overviewAfterImageSrc?: string
   overviewAfterImageAlt?: string
+  /** When true, overview hero uses full width of the study content column (default caps at ~28rem). */
+  overviewAfterImageFullWidth?: boolean
   /** After `overview` paragraphs: multiple images in a row; each opens the same lightbox as `overviewAfterImageSrc`. When non-empty, takes precedence over `overviewAfterImageSrc` for that page. */
   overviewAfterImageGallery?: { src: string; alt: string }[]
   /** Shown in the prototype placeholder box (e.g. numbered resources matching on-screen labels). */
@@ -796,20 +797,6 @@ function computeCanProceed(
   return !!(ans[page.id] && ans[page.id].trim() !== '')
 }
 
-const STUDY_DISPLAY_NAME: Record<string, string> = {
-  'product-evaluation': 'Build your dream trial',
-  'trying-products': 'Build your dream trial',
-  'user-preferences': 'Personalize your Red Hat',
-  'developer-program': 'Shape the Developer program',
-  'developer-for-business': 'Shape the Developer program',
-  'my-red-hat': 'Refine your intelligent dashboard',
-  dashboard: 'Refine your intelligent dashboard',
-  'my-trials': 'From testing to buying',
-  'product-marketing': 'Improve our product navigation',
-  'buying-products': 'Improve our product navigation',
-  'content-discovery': 'How do you learn best?'
-}
-
 /** Pulled out so `type` + `options` cannot be dropped or merged incorrectly inside the big pages map. */
 const MY_TRIALS_PAGE_READY_TO_BUY_EXPECT: StudyPage = {
   id: '2',
@@ -1184,9 +1171,10 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: 'pm-context',
         type: 'overview',
-        overviewAfterImageSrc: productMarketingContextImage,
+        overviewAfterImageFullWidth: true,
+        overviewAfterImageSrc: productMarketingSecondaryNavImage,
         overviewAfterImageAlt:
-          'Reference diagram for secondary product navigation labels across OpenShift, RHEL, Ansible, and AI (placeholder).',
+          'Red Hat product page excerpt highlighting the horizontal secondary navigation with menu items such as Explore, Overview, and related product links.',
         question:
           "The Red Hat product experience is a massive ecosystem, but finding your way between products shouldn't feel like learning a new language every time.\n\nWe've noticed our secondary navigation for OpenShift, RHEL, Ansible, and AI use inconsistent menu labels for similar content types that we would like your feedback on.\n\nIn the next 3 minutes, you'll help us standardize our secondary product navigation by picking, sorting and ranking the terms that make the most sense to you. Your feedback will directly influence how we organize our secondary product navigation.\n\nReview the image below. When you are finished, select Next to continue."
       },
@@ -1210,27 +1198,21 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: '2',
         type: 'buckets',
-        question: 'Drag these items into the menu label where you would expect to find them:',
-        instruction: '',
-        options: ['Learn', 'Explore', 'Overview', 'Get started'],
+        bucketsSplitSidebar: true,
+        question: 'Which menu label would you expect each of these content types to appear under?',
+        instruction: 'Drag these items into the menu label where you would expect to find them.',
+        options: ['Overview', 'Explore', 'Learn', 'Get started'],
         rows: [
-          { id: 'product-news', label: 'Product news' },
           { id: 'relevant-articles-topics-blogs', label: 'Relevant articles, topics and blogs' },
           { id: 'product-use-cases', label: 'Product use cases' },
           { id: 'product-learning-hubs', label: 'Product learning hubs' },
-          { id: 'product-training-certification', label: 'Product training & certification' },
-          { id: 'product-interactive-walkthroughs', label: 'Product interactive walkthroughs' },
           { id: 'product-quickstarts', label: 'Product quickstarts' },
-          { id: 'product-interactive-labs', label: 'Product interactive labs' },
           { id: 'customer-success-stories', label: 'Customer success stories' },
           { id: 'product-learning-paths', label: 'Product learning paths' },
-          { id: 'persona-based-content', label: 'Persona-based content' },
           { id: 'product-trials', label: 'Product trials' },
-          { id: 'product-sandbox-environments', label: 'Product sandbox environments' },
           { id: 'product-pricing', label: 'Product pricing' },
           { id: 'how-to-buy-pricing', label: 'How to buy/pricing' },
           { id: 'product-features', label: 'Product features' },
-          { id: 'product-insights-reviews-testimonials', label: 'Product insights, reviews and testimonials' }
         ]
       },
       {
@@ -1280,9 +1262,9 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: '6',
         type: 'multiple-choice',
-        imageSrc: productMarketingQuestion6Visual,
+        imageSrc: productMarketingSecondaryNavImage,
         imageAlt:
-          "Red Hat AI secondary navigation example showing Products & documentation as one menu item (replace with final screenshot).",
+          'Red Hat product page excerpt highlighting the horizontal secondary navigation with menu items such as Explore, Overview, and related product links.',
         question:
           "In the Red Hat AI navigation menu example, it consolidates 'Products & documentation' into one menu item. Would you prefer this consolidation across all product secondary navigation menus? Please explain the reasoning behind your answer.",
         options: ['Yes', 'No'],
@@ -1534,9 +1516,6 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: 'intro',
         type: 'overview',
-        overviewAfterImageSrc: learnStudyOverviewImage,
-        overviewAfterImageAlt:
-          'Illustration introducing topical learning—content formats such as podcasts, articles, and ebooks in a bold, stacked layout.',
         question:
           "**Thanks for taking part.**\n\nWe want to understand how you prefer to learn about technology topics you care about—which formats you notice first, and what drives those choices.\n\nOver the next few screens you'll pick a topic, choose and rank different types of learning content, and share a bit of context in your own words. Your answers help us make topical learning more useful on our sites."
       },
@@ -2012,7 +1991,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     )
   }
 
-  const studyTitle = STUDY_DISPLAY_NAME[focusId] ?? focusId.replace(/-/g, ' ')
+  const studyTitle = studyDisplayName(focusId)
 
   const questionHero: { src: string; alt: string } | null =
     resolveImageHero(currentPage, allStudyPages) ?? resolveQuestionHeroImage(currentPage, answers)
@@ -2193,7 +2172,13 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   ))}
                 </div>
               ) : currentPage.overviewAfterImageSrc ? (
-                <figure className="study-overview-after-image-wrap">
+                <figure
+                  className={`study-overview-after-image-wrap${
+                    currentPage.overviewAfterImageFullWidth
+                      ? ' study-overview-after-image-wrap--full'
+                      : ''
+                  }`}
+                >
                   <button
                     type="button"
                     className="study-expandable-image-btn study-expandable-image-btn--overview"

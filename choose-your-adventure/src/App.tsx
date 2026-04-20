@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import FocusSelector from './components/FocusSelector'
 import StudyPages from './components/StudyPages'
 import LoadingScreen from './components/LoadingScreen'
+import { studyDisplayName } from './studyDisplayNames'
 import './App.css'
 
 // IndexedDB setup
@@ -26,17 +27,24 @@ const initDB = (): Promise<IDBDatabase> => {
   })
 }
 
-// Backend API configuration
-// Set VITE_API_ENDPOINT in .env file or replace this URL with your actual API endpoint
-const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT || 'https://your-api-endpoint.com/api/responses'
+// Backend: set VITE_API_ENDPOINT in `.env` (e.g. `VITE_API_ENDPOINT=https://api.example.com/responses`).
+// When unset, the app stays local-only (IndexedDB + localStorage) and does not POST or queue retries.
+function getBackendApiEndpoint(): string | null {
+  const url = (import.meta.env.VITE_API_ENDPOINT as string | undefined)?.trim()
+  return url || null
+}
 
 const saveResponseToBackend = async (data: {
   timestamp: string
   focusId: string
   answers: Record<string, string>
 }): Promise<boolean> => {
+  const endpoint = getBackendApiEndpoint()
+  if (!endpoint) {
+    return true
+  }
   try {
-    const response = await fetch(API_ENDPOINT, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -151,6 +159,48 @@ function escapeCsvCell(value: string): string {
   return `"${String(value).replace(/"/g, '""')}"`
 }
 
+type AnswerColumn = { focusId: string; answerKey: string }
+
+function buildAnswerColumns(responses: StoredStudyResponse[]): AnswerColumn[] {
+  const seen = new Set<string>()
+  const out: AnswerColumn[] = []
+  for (const r of responses) {
+    const focusId = (r.focusId || '').trim()
+    const keys = Object.keys(r.answers || {})
+    for (const answerKey of keys) {
+      const id = `${focusId}\u0000${answerKey}`
+      if (seen.has(id)) continue
+      seen.add(id)
+      out.push({ focusId, answerKey })
+    }
+  }
+  out.sort((a, b) => {
+    const fc = a.focusId.localeCompare(b.focusId)
+    if (fc !== 0) return fc
+    return a.answerKey.localeCompare(b.answerKey, undefined, { numeric: true })
+  })
+  return out
+}
+
+function answerColumnHeader(col: AnswerColumn): string {
+  const label = studyDisplayName(col.focusId)
+  return `${label} — ${col.answerKey}`
+}
+
+/** If two studies share the same display title, duplicate headers get a `focusId` suffix. */
+function resolveAnswerColumnHeaders(columns: AnswerColumn[]): string[] {
+  const base = columns.map(answerColumnHeader)
+  const counts = new Map<string, number>()
+  for (const h of base) {
+    counts.set(h, (counts.get(h) ?? 0) + 1)
+  }
+  return columns.map((col, i) => {
+    const h = base[i]!
+    if ((counts.get(h) ?? 0) <= 1) return h
+    return `${studyDisplayName(col.focusId)} (${col.focusId}) — ${col.answerKey}`
+  })
+}
+
 const exportResponsesToCsv = async () => {
   try {
     const all = await getAllResponses()
@@ -163,18 +213,18 @@ const exportResponsesToCsv = async () => {
     const sorted = [...all].sort((a, b) =>
       (a.timestamp || '').localeCompare(b.timestamp || '')
     )
-    const answerKeySet = new Set<string>()
-    sorted.forEach((r) => {
-      Object.keys(r.answers || {}).forEach((k) => answerKeySet.add(k))
-    })
-    const answerKeys = [...answerKeySet].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-    const headers = ['timestamp', 'focusId', ...answerKeys]
+    const answerColumns = buildAnswerColumns(sorted)
+    const answerHeaders = resolveAnswerColumnHeaders(answerColumns)
+    const headers = ['timestamp', 'focusId', ...answerHeaders]
     const rows: string[][] = [headers]
     for (const r of sorted) {
+      const fid = (r.focusId || '').trim()
       rows.push([
         r.timestamp || '',
         r.focusId || '',
-        ...answerKeys.map((k) => r.answers?.[k] ?? '')
+        ...answerColumns.map((col) =>
+          col.focusId === fid ? (r.answers?.[col.answerKey] ?? '') : ''
+        )
       ])
     }
     const csvBody = rows.map((row) => row.map(escapeCsvCell).join(',')).join('\n')
@@ -200,10 +250,12 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [showStudy, setShowStudy] = useState(false)
 
-  // Retry pending responses when online
+  // Retry pending responses when online (only if a real API URL is configured)
   useEffect(() => {
     const retryPendingResponses = async () => {
       try {
+        if (!getBackendApiEndpoint()) return
+
         const pendingKey = 'userStudyPending'
         const pending = localStorage.getItem(pendingKey)
         if (!pending) return

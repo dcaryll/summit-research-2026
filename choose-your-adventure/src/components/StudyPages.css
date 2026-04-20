@@ -581,6 +581,31 @@
   align-self: flex-start;
 }
 
+.study-overview-after-image-wrap--full {
+  max-width: 100%;
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+.study-overview-after-image-wrap--full .study-expandable-image-btn--overview {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.study-overview-after-image-wrap--full .study-overview-after-image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: min(46vh, 26rem);
+  object-fit: contain;
+  object-position: left center;
+  margin: 0;
+}
+
 .study-overview-after-gallery {
   display: grid;
   grid-template-columns: 1fr 1fr;
