@@ -11,8 +11,7 @@ import contentDiscoveryQ2AppPlatforms from '../images/content-discovery-q2-app-p
 import contentDiscoveryQ2Automation from '../images/content-discovery-q2-automation.png'
 import contentDiscoveryQ2LinuxStandardization from '../images/content-discovery-q2-linux-standardization.png'
 import contentDiscoveryQ2Virtualization from '../images/content-discovery-q2-virtualization.png'
-import contentDiscoveryOverviewLearningFormats from '../images/content-discovery-overview-learning-formats.png'
-import developerProgramOverviewHeroImage from '../images/developer-program-overview-hero.png'
+import learnStudyOverviewImage from '../images/learn-study-overview-image.png'
 import developerProgramTierProgramsImage from '../images/developer-program-tier-programs.png'
 import developerProgramSignupFlowIndividuals from '../images/developer-program-signup-flow-individuals.png'
 import developerProgramSignupFlowBusinesses from '../images/developer-program-signup-flow-businesses.png'
@@ -818,7 +817,7 @@ const MY_TRIALS_PAGE_READY_TO_BUY_EXPECT: StudyPage = {
   instruction:
     'Select all that apply — tap each outcome you would reasonably expect might happen next (you can choose more than one).',
   question:
-    "Be honest: When you click a button labeled 'Ready to Buy,' what do you expect to happen next?",
+    "When you click a button labeled 'Ready to buy,' what do you expect to happen next?",
   options: [
     'A) I expect to enter a credit card or PO number immediately.',
     "B) I expect to generate a price quote to get my boss's approval.",
@@ -1302,10 +1301,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         id: 'intro',
         type: 'overview',
         question:
-          "Imagine you are interested in trying out a Red Hat product. You will first explore an interactive prototype of the main developer landing page (Choose your program — tiers for Individuals and Businesses), then answer questions about a cropped view focused on those two tiers.",
-        overviewAfterImageSrc: developerProgramOverviewHeroImage,
-        overviewAfterImageAlt:
-          'Illustration of a small robot in a white astronaut helmet and red hoodie typing on a laptop, in a dark purple space-themed scene with geometric shapes and stars.'
+          "Imagine you are interested in trying out a Red Hat product. You will first explore an interactive prototype of the main developer landing page (Choose your program — tiers for Individuals and Businesses), then answer questions about a cropped view focused on those two tiers."
       },
       {
         id: 'landing-prototype',
@@ -1476,9 +1472,9 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         question:
           'You are nearing the end of a product trial and want to keep using the software. Which button are you more likely to click to figure out your options?',
         options: [
-          'A) Ready to Buy (I know exactly what I want and have the budget).',
-          "B) What's Next? / Explore Next Steps (I need to see my options, talk to my team, or check my contract first).",
-          'C) Contact Sales (I just want to talk to a human to sort it out).'
+          'A) Ready to buy',
+          "B) What's next? / Explore next steps",
+          'C) Contact sales'
         ]
       },
       MY_TRIALS_PAGE_READY_TO_BUY_EXPECT,
@@ -1509,7 +1505,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
           {
             id: 'mt-rank-rename-btn',
             label:
-              'Rename the button to "View Buying Options" so it\'s clear I\'m not checking out today.'
+              'Rename the button to "View buying options" so it\'s clear I\'m not checking out today.'
           },
           {
             id: 'mt-rank-best-for',
@@ -1519,17 +1515,17 @@ const getStudyPages = (focusId: string): StudyPage[] => {
           {
             id: 'mt-rank-recommended-path',
             label:
-              'A Recommended Path badge showing how my company usually buys Red Hat software.'
+              'A "Recommended path" badge showing how my company usually buys Red Hat software.'
           },
           {
             id: 'mt-rank-notify-team',
             label:
-              'A Notify My Account Team button to have my rep reach out with options.'
+              'A "Notify my account team" button to have my rep reach out with options.'
           },
           {
             id: 'mt-rank-share-summary',
             label:
-              'A Share Trial Summary button to email my thoughts and next steps to my manager.'
+              'A "Share trial summary" button to email my thoughts and next steps to my manager.'
           }
         ]
       }
@@ -1538,9 +1534,9 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: 'intro',
         type: 'overview',
-        overviewAfterImageSrc: contentDiscoveryOverviewLearningFormats,
+        overviewAfterImageSrc: learnStudyOverviewImage,
         overviewAfterImageAlt:
-          'Illustration of three learning content cards on a red background: an original podcast, a blog post, and an e-book, overlapping in a staggered layout.',
+          'Illustration introducing topical learning—content formats such as podcasts, articles, and ebooks in a bold, stacked layout.',
         question:
           "**Thanks for taking part.**\n\nWe want to understand how you prefer to learn about technology topics you care about—which formats you notice first, and what drives those choices.\n\nOver the next few screens you'll pick a topic, choose and rank different types of learning content, and share a bit of context in your own words. Your answers help us make topical learning more useful on our sites."
       },

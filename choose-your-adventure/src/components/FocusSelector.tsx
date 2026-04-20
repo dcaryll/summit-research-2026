@@ -12,6 +12,9 @@ import studyDetailVisualPlaceholder from '../images/study-detail-visual-placehol
 import myRedHatStudyDetailHero from '../images/my-red-hat-study-detail-hero.png'
 import userPreferencesStudyDetailHero from '../images/user-preferences-study-detail-hero.png'
 import productEvaluationStudyDetailHero from '../images/product-evaluation-study-detail-hero.png'
+import developerProgramStudyDetailHero from '../images/developer-program-overview-hero.png'
+import productMarketingStudyDetailHero from '../images/product-secondary-nav.webp'
+import contentDiscoveryStudyDetailHero from '../images/learn-study-overview-image.png'
 
 /**
  * Official RHDS SVG assets (same as https://ux.redhat.com/foundations/iconography/).
@@ -138,7 +141,10 @@ const focusOptions: FocusOption[] = [
     description: 'Help us tailor our technical resources and tools to your daily workflow.',
     durationLabel: '8–12 mins',
     detailDescription:
-      'Share which developer tools and programs you use today, how they fit into your workflow, and what would make Red Hat’s developer offerings more useful. Expect a short prototype exploration plus multiple-choice and open-ended questions. Most participants finish in about 8–12 minutes.'
+      'Share which developer tools and programs you use today, how they fit into your workflow, and what would make Red Hat’s developer offerings more useful. Expect a short prototype exploration plus multiple-choice and open-ended questions. Most participants finish in about 8–12 minutes.',
+    detailVisualSrc: developerProgramStudyDetailHero,
+    detailVisualAlt:
+      'Illustration of a small robot in a white astronaut helmet and red hoodie typing on a laptop, in a dark purple space-themed scene with geometric shapes and stars.'
   },
   {
     id: 'my-red-hat',
@@ -165,7 +171,10 @@ const focusOptions: FocusOption[] = [
     description: "Sort and rank menu terms so finding products doesn't feel like a guessing game.",
     durationLabel: '15-18 mins',
     detailDescription:
-      'Help us understand how you scan product menus and information architecture when researching or buying. This study includes a large sorting task, rankings, and several explain-your-answer prompts. Expect about 15-18 minutes depending on how much you think aloud while you work.'
+      'Help us understand how you scan product menus and information architecture when researching or buying. This study includes a large sorting task, rankings, and several explain-your-answer prompts. Expect about 15-18 minutes depending on how much you think aloud while you work.',
+    detailVisualSrc: productMarketingStudyDetailHero,
+    detailVisualAlt:
+      'Red Hat product page excerpt highlighting the horizontal secondary navigation with menu items such as Explore, Overview, and related product links.'
   },
   {
     id: 'content-discovery',
@@ -173,7 +182,10 @@ const focusOptions: FocusOption[] = [
     description: 'Videos, blogs, or podcasts? Tell us what content helps you master new tech.',
     durationLabel: '12–18 mins',
     detailDescription:
-      'We want to learn how you prefer to discover learning content by topic—what you notice first, how you rank formats, and what would help you go deeper. You will pick a topic, make choices, complete two ranking exercises, and answer a short follow-up. Most people finish in about 12–18 minutes.'
+      'We want to learn how you prefer to discover learning content by topic—what you notice first, how you rank formats, and what would help you go deeper. You will pick a topic, make choices, complete two ranking exercises, and answer a short follow-up. Most people finish in about 12–18 minutes.',
+    detailVisualSrc: contentDiscoveryStudyDetailHero,
+    detailVisualAlt:
+      'Illustration introducing topical learning—content formats such as podcasts, articles, and ebooks in a bold, stacked layout.'
   }
 ]
 
