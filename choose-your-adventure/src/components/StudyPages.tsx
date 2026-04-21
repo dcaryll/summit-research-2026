@@ -100,7 +100,10 @@ type StudyPage = {
   /** Shown above the question; use with `imageAlt` for accessibility. */
   imageSrc?: string
   imageAlt?: string
-  /** Reuse `imageSrc` / `imageAlt` from the page with this id in the same study. */
+  /**
+   * Reuse imagery from the page with this id in the same study: `imageSrc` / `imageAlt`, or if
+   * absent, `overviewAfterImageSrc` / `overviewAfterImageAlt`, or the first overview gallery image.
+   */
   imageSourcePageId?: string
   /** Prior single-choice page id; hero image URL is `questionHeroImagesByPriorOption[answers[fromPageId]]`. */
   questionHeroImageFromPageId?: string
@@ -114,7 +117,7 @@ type StudyPage = {
   /** Extra line under the question when `questionAboveHeroImage` is true (e.g. scroll instructions). */
   questionSubtext?: string
   /**
-   * On `slider` with `questionAboveHeroImage`: render the slider (Likert) between the question/subtext
+   * On `slider` (Likert) with `questionAboveHeroImage`: render the scale between the question/subtext
    * and the hero image instead of below the image.
    */
   sliderAboveHeroImage?: boolean
@@ -195,8 +198,17 @@ function resolveImageHero(page: StudyPage, allPages: StudyPage[]): { src: string
   const sid = page.imageSourcePageId
   if (sid) {
     const srcPage = allPages.find((p) => p.id === sid)
-    if (srcPage?.imageSrc) {
-      return { src: srcPage.imageSrc, alt: srcPage.imageAlt ?? '' }
+    if (srcPage) {
+      if (srcPage.imageSrc) {
+        return { src: srcPage.imageSrc, alt: srcPage.imageAlt ?? '' }
+      }
+      if (srcPage.overviewAfterImageSrc) {
+        return { src: srcPage.overviewAfterImageSrc, alt: srcPage.overviewAfterImageAlt ?? '' }
+      }
+      const g = srcPage.overviewAfterImageGallery
+      if (g?.length) {
+        return { src: g[0].src, alt: g[0].alt ?? '' }
+      }
     }
   }
   if (page.imageSrc != null && page.imageSrc !== '') {
@@ -676,11 +688,38 @@ function getDerivedMultiSelectOptions(
   return base.filter((o) => o !== chosen)
 }
 
-/** Midpoint of the slider range — used as the initial value so scales start at “neutral”. */
+/** Midpoint of the slider range — used for skip / dev tooling only (Likert UI has no default selection). */
 function getSliderNeutralValue(page: Pick<StudyPage, 'sliderMin' | 'sliderMax'>): number {
   const lo = page.sliderMin ?? 1
   const hi = page.sliderMax ?? 5
   return Math.round((lo + hi) / 2)
+}
+
+/** Rows for Likert radio UI: numeric `value` stored in answers, human `label` shown beside each radio. */
+function getSliderLikertOptions(
+  page: Pick<StudyPage, 'sliderMin' | 'sliderMax' | 'sliderLabels' | 'sliderMinLabel' | 'sliderMaxLabel'>
+): { value: string; label: string }[] {
+  const lo = page.sliderMin ?? 1
+  const hi = page.sliderMax ?? 5
+  const labels = page.sliderLabels
+  const count = hi - lo + 1
+  const out: { value: string; label: string }[] = []
+  for (let i = 0; i < count; i++) {
+    const n = lo + i
+    const fromList = labels?.[i]
+    let label: string
+    if (fromList != null && fromList !== '') {
+      label = fromList
+    } else if (n === lo && page.sliderMinLabel?.trim()) {
+      label = page.sliderMinLabel.trim()
+    } else if (n === hi && page.sliderMaxLabel?.trim()) {
+      label = page.sliderMaxLabel.trim()
+    } else {
+      label = String(n)
+    }
+    out.push({ value: String(n), label })
+  }
+  return out
 }
 
 function computeCanProceed(
@@ -838,7 +877,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: '5',
         question:
-          "You have 10 Value Credits to spend. If you could design your perfect evaluation experience, which of these cards are non-negotiable for you? You can't buy them all, so choose the ones that move the needle most when evaluating the product.",
+          "You have 10 value credits to spend. If you could design your perfect evaluation experience, which of these cards are non-negotiable for you? You can't buy them all, so choose the ones that move the needle most when evaluating the product.",
         type: 'value-credits',
         creditBudget: 10,
         valueCreditsListHeading: 'Selectable cards',
@@ -847,50 +886,50 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         creditCards: [
           {
             id: 'full-product-download',
-            label: 'Full Product Download',
+            label: 'Full product download',
             cost: 4,
             description: 'Local install, requires your own hardware.'
           },
           {
             id: 'guided-interactive-lab',
-            label: 'Guided Interactive Lab',
+            label: 'Guided interactive lab',
             cost: 4,
             description: 'In-browser, pre-configured environment.'
           },
           {
             id: 'developer-sandbox',
-            label: 'Developer Sandbox',
+            label: 'Developer sandbox',
             cost: 3,
             description: 'Open-ended, API-access, cloud-hosted.'
           },
           {
             id: 'human-in-the-loop',
-            label: 'Human-in-the-Loop',
+            label: 'Human-in-the-loop',
             cost: 3,
             description: 'Access to a SE/Architect during trial.'
           },
           {
             id: 'ai-evaluation-assistant',
-            label: 'AI Evaluation Assistant',
+            label: 'AI evaluation assistant',
             cost: 3,
             description:
               'Specialized LLM trained on Red Hat product docs that can auto-generate configurations or answer "How do I..." questions in real-time after you\'ve downloaded a product or started a trial.'
           },
           {
             id: 'sample-data-code',
-            label: 'Sample Data/Code',
+            label: 'Sample data/code',
             cost: 2,
             description: 'Github-ready snippets and prepopulated data.'
           },
           {
             id: 'self-service-demo',
-            label: 'Self-Service Demo',
+            label: 'Self-service demo',
             cost: 2,
             description: 'Passive video or click-through overview.'
           },
           {
             id: 'tech-docs-api-ref',
-            label: 'Tech Docs/API Ref',
+            label: 'Tech docs/API references',
             cost: 1,
             description: 'Pure text and technical specifications.'
           }
@@ -1140,7 +1179,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       },
       {
         id: '5',
-        question: "On a scale of 1-5, how do you feel when you're asked to re-select or fill in details you've shared before?",
+        question: "How do you feel when you're asked to re-select or fill in details you've shared before?",
         type: 'slider',
         sliderMin: 1,
         sliderMax: 5,
@@ -1263,6 +1302,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: '7',
         type: 'text',
+        imageSourcePageId: 'pm-context',
         question:
           'If you could add a menu item option, which would it be and why? What content types would fall under this menu item label?'
       }
@@ -1308,15 +1348,15 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM,
         questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_ALT,
         question:
-          'How do you feel about the steps and information required to sign up? (1 = Extremely Overwhelming, 5 = Extremely Easy)',
+          'How do you feel about the steps and information required to sign up?',
         sliderMin: 1,
         sliderMax: 5,
         sliderLabels: [
-          'Extremely Overwhelming',
+          'Extremely overwhelming',
           'Overwhelming',
           'Neutral',
           'Easy',
-          'Extremely Easy'
+          'Extremely easy'
         ]
       },
       {
@@ -1434,6 +1474,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: '4',
         type: 'ranking',
+        imageSourcePageId: '3',
         question:
           'We are redesigning this menu to make it easier. Rank these 5 proposed updates from Most Useful (1) to Least Useful (5):',
         instruction:
@@ -1661,16 +1702,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       setCurrentPageIndex(Math.max(0, studyPages.length - 1))
     }
   }, [studyPages.length, currentPageIndex])
-
-  // Initialize slider at scale midpoint (neutral) when landing on a slider page
-  useEffect(() => {
-    if (currentPage?.type === 'slider' && answers[currentPage.id] === undefined) {
-      setAnswers((prev) => ({
-        ...prev,
-        [currentPage.id]: String(getSliderNeutralValue(currentPage))
-      }))
-    }
-  }, [currentPage?.id, currentPage?.type])
 
   useEffect(() => {
     setExpandedStudyImage(null)
@@ -1957,55 +1988,36 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
 
   const resolvedFigmaUrl = resolveFigmaEmbedUrl(currentPage, allStudyPages)
 
-  const showSliderAboveDeferredHero =
+  const showLikertAboveDeferredHero =
     deferHeroBelowQuestion &&
-    currentPage.type === 'slider' &&
-    Boolean(currentPage.sliderAboveHeroImage)
+    currentPage.type === 'slider' && Boolean(currentPage.sliderAboveHeroImage)
 
-  const sliderQuestionEl =
+  const likertScaleEl =
     currentPage.type === 'slider' ? (
-      <div className="slider-question">
-        <p className="slider-value" aria-live="polite">
-          {currentPage.sliderLabels
-            ? `${answers[currentPage.id] ?? getSliderNeutralValue(currentPage)} – ${currentPage.sliderLabels[Number(answers[currentPage.id] ?? getSliderNeutralValue(currentPage)) - (currentPage.sliderMin ?? 1)] ?? ''}`
-            : (answers[currentPage.id] ?? getSliderNeutralValue(currentPage))}
-        </p>
-        <div className="slider-track-wrap">
-          <input
-            type="range"
-            className="slider-input"
-            min={currentPage.sliderMin ?? 1}
-            max={currentPage.sliderMax ?? 5}
-            value={answers[currentPage.id] ?? String(getSliderNeutralValue(currentPage))}
-            onChange={(e) => handleAnswerChange(e.target.value)}
-          />
-          {currentPage.sliderLabels ? (
-            <div className="slider-labels-full">
-              {currentPage.sliderLabels.map((label, i) => {
-                const num = (currentPage.sliderMin ?? 1) + i
-                const neutral = getSliderNeutralValue(currentPage)
-                const isActive = Number(answers[currentPage.id] ?? neutral) === num
-                return (
-                  <button
-                    key={num}
-                    type="button"
-                    className={`slider-label-point ${isActive ? 'active' : ''}`}
-                    style={{ left: `${(i / (currentPage.sliderLabels!.length - 1)) * 100}%` }}
-                    onClick={() => handleAnswerChange(String(num))}
-                  >
-                    <span className="slider-label-num">{num}</span>
-                    <span className="slider-label-text">{label}</span>
-                  </button>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="slider-labels">
-              <span>{currentPage.sliderMinLabel ?? '1'}</span>
-              <span>{currentPage.sliderMaxLabel ?? '5'}</span>
-            </div>
-          )}
-        </div>
+      <div
+        className="options-list survey-radio-group"
+        role="radiogroup"
+        aria-label={displayedQuestion.trim() || 'Rating scale'}
+      >
+        {getSliderLikertOptions(currentPage).map(({ value, label }) => {
+          const selected = answers[currentPage.id] === value
+          return (
+            <label
+              key={value}
+              className={`survey-radio-row${selected ? ' survey-radio-row--selected' : ''}`}
+            >
+              <input
+                type="radio"
+                className="survey-radio-input"
+                name={currentPage.id}
+                value={value}
+                checked={selected}
+                onChange={() => handleAnswerChange(value)}
+              />
+              <span className="survey-radio-label">{label}</span>
+            </label>
+          )
+        })}
       </div>
     ) : null
 
@@ -2174,7 +2186,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   <p className="page-question-subtext">{currentPage.questionSubtext}</p>
                 ) : null}
               </div>
-              {showSliderAboveDeferredHero ? sliderQuestionEl : null}
+              {showLikertAboveDeferredHero ? likertScaleEl : null}
               <div className="study-expandable-image-block study-expandable-image-block--hero study-expandable-image-block--hero-after-question">
                 <button
                   type="button"
@@ -2268,17 +2280,30 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
               {currentPage.instruction && (
                 <p className="multiple-choice-instruction">{currentPage.instruction}</p>
               )}
-              <div className="options-list">
-                {currentPage.options.map((option, optIndex) => (
-                  <button
-                    key={`${currentPage.id}-opt-${optIndex}`}
-                    type="button"
-                    className={`option-button ${answers[currentPage.id] === option ? 'selected' : ''}`}
-                    onClick={() => handleAnswerChange(option)}
-                  >
-                    {option}
-                  </button>
-                ))}
+              <div
+                className="options-list survey-radio-group"
+                role="radiogroup"
+                aria-label={displayedQuestion.trim() || 'Choose one option'}
+              >
+                {currentPage.options.map((option, optIndex) => {
+                  const selected = answers[currentPage.id] === option
+                  return (
+                    <label
+                      key={`${currentPage.id}-opt-${optIndex}`}
+                      className={`survey-radio-row${selected ? ' survey-radio-row--selected' : ''}`}
+                    >
+                      <input
+                        type="radio"
+                        className="survey-radio-input"
+                        name={currentPage.id}
+                        value={option}
+                        checked={selected}
+                        onChange={() => handleAnswerChange(option)}
+                      />
+                      <span className="survey-radio-label">{option}</span>
+                    </label>
+                  )
+                })}
               </div>
               {currentPage.multipleChoiceOptionsAboveEmbed &&
                 resolvedFigmaUrl &&
@@ -2362,22 +2387,38 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                 !currentPage.followUpFreeText && (
                   <div className="evaluation-trust-follow">
                     <p className="evaluation-trust-follow-question">{currentPage.followUpQuestion}</p>
-                    <div className="options-list">
-                      {currentPage.followUpOptions.map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          className={`option-button ${answers[currentPage.followUpAnswerKey!] === option ? 'selected' : ''}`}
-                          onClick={() =>
-                            setAnswers((prev) => ({
-                              ...prev,
-                              [currentPage.followUpAnswerKey!]: option
-                            }))
-                          }
-                        >
-                          {option}
-                        </button>
-                      ))}
+                    <div
+                      className="options-list survey-radio-group"
+                      role="radiogroup"
+                      aria-label={
+                        currentPage.followUpQuestion?.trim() || 'Choose one option'
+                      }
+                    >
+                      {currentPage.followUpOptions.map((option, i) => {
+                        const fk = currentPage.followUpAnswerKey!
+                        const selected = answers[fk] === option
+                        return (
+                          <label
+                            key={`${currentPage.id}-followup-${i}-${option}`}
+                            className={`survey-radio-row${selected ? ' survey-radio-row--selected' : ''}`}
+                          >
+                            <input
+                              type="radio"
+                              className="survey-radio-input"
+                              name={`${currentPage.id}-${fk}-followup`}
+                              value={option}
+                              checked={selected}
+                              onChange={() =>
+                                setAnswers((prev) => ({
+                                  ...prev,
+                                  [fk]: option
+                                }))
+                              }
+                            />
+                            <span className="survey-radio-label">{option}</span>
+                          </label>
+                        )
+                      })}
                     </div>
                   </div>
                 )}
@@ -2636,7 +2677,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             </div>
           )}
 
-          {currentPage.type === 'slider' && !showSliderAboveDeferredHero ? sliderQuestionEl : null}
+          {currentPage.type === 'slider' && !showLikertAboveDeferredHero ? likertScaleEl : null}
 
           {currentPage.type === 'ranking' &&
             rankingRowsResolved &&
@@ -2680,17 +2721,31 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                 {currentPage.rows.map((row) => (
                   <div key={row.id} className="matrix-row">
                     <div className="matrix-row-label">{row.label}</div>
-                    <div className="matrix-row-options">
-                      {currentPage.options!.map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          className={`matrix-option ${answers[`${currentPage.id}:${row.id}`] === option ? 'selected' : ''}`}
-                          onClick={() => handleAnswerChange(option, row.id)}
-                        >
-                          {option}
-                        </button>
-                      ))}
+                    <div
+                      className="matrix-row-options"
+                      role="radiogroup"
+                      aria-label={`${row.label}: choose one`}
+                    >
+                      {currentPage.options!.map((option) => {
+                        const ansKey = `${currentPage.id}:${row.id}`
+                        const selected = answers[ansKey] === option
+                        return (
+                          <label
+                            key={option}
+                            className={`matrix-option ${selected ? 'selected' : ''}`}
+                          >
+                            <input
+                              type="radio"
+                              className="survey-radio-input survey-radio-input--matrix"
+                              name={ansKey}
+                              value={option}
+                              checked={selected}
+                              onChange={() => handleAnswerChange(option, row.id)}
+                            />
+                            <span>{option}</span>
+                          </label>
+                        )
+                      })}
                     </div>
                   </div>
                 ))}

@@ -184,9 +184,9 @@ const focusOptions: FocusOption[] = [
     id: 'content-discovery',
     title: 'How do you learn best?',
     description: 'Videos, blogs, or podcasts? Tell us what content helps you master new tech.',
-    durationLabel: '10–15 mins',
+    durationLabel: '5–8 mins',
     detailDescription:
-      'We want to learn how you prefer to discover learning content by topic—what you notice first, how you rank formats, and what would help you go deeper. You will pick a topic, make choices, complete two ranking exercises, and answer a short follow-up. Most people finish in about 10–15 minutes.',
+      'We want to learn how you prefer to discover learning content by topic—what you notice first, how you rank formats, and what would help you go deeper. You will pick a topic, make choices, complete two ranking exercises, and answer a short follow-up. Most people finish in about 5–8 minutes.',
     detailVisualSrc: contentDiscoveryStudyDetailHero,
     detailVisualAlt:
       'Illustration introducing topical learning—content formats such as podcasts, articles, and ebooks in a bold, stacked layout.'
