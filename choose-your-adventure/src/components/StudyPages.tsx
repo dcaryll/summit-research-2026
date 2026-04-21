@@ -831,9 +831,9 @@ const MY_TRIALS_PAGE_READY_TO_BUY_EXPECT: StudyPage = {
   question:
     "When you click a button labeled 'Ready to buy,' what do you expect to happen next?",
   options: [
-    'A) I expect to enter a credit card or PO number immediately.',
-    "B) I expect to generate a price quote to get my boss's approval.",
-    'C) I expect to notify my Red Hat Rep or Partner.'
+    'I expect to enter a credit card or PO number immediately.',
+    "I expect to generate a price quote to get my boss's approval.",
+    'I expect to notify my Red Hat Rep or Partner.'
   ],
   multiSelectExactCount: false,
   maxSelections: 3,
@@ -1449,9 +1449,9 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         question:
           'You are nearing the end of a product trial and want to keep using the software. Which button are you more likely to click to figure out your options?',
         options: [
-          'A) Ready to buy',
-          "B) What's next? / Explore next steps",
-          'C) Contact sales'
+          'Ready to buy',
+          "What's next? / Explore next steps",
+          'Contact sales'
         ]
       },
       MY_TRIALS_PAGE_READY_TO_BUY_EXPECT,
@@ -1464,11 +1464,11 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         question:
           'Look at the multiple buying options on the screen. If you closed this menu without clicking anything, what is your most likely reason?',
         options: [
-          "A) I don't know which option applies to my company's contract.",
-          'B) I need to secure an internal budget/approval first.',
-          'C) I wanted to see transparent pricing without talking to Sales.',
-          "D) I'm afraid of messing up my existing account terms.",
-          'E) I want to buy online through digital commerce options.'
+          "I don't know which option applies to my company's contract.",
+          'I need to secure an internal budget/approval first.',
+          'I wanted to see transparent pricing without talking to Sales.',
+          "I'm afraid of messing up my existing account terms.",
+          'I want to buy online through digital commerce options.'
         ]
       },
       {

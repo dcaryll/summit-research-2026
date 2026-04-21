@@ -14,6 +14,21 @@ const STORAGE_KEY_SESSION_RESPONSES = 'dashboardSessionResponses'
 // Set VITE_API_ENDPOINT in .env file or replace this URL with your actual API endpoint
 const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT || 'https://your-api-endpoint.com/api/responses'
 
+/** Stored autonomy answers use 1–5; CSV export uses the participant-facing labels (see TerminalScreen autonomyOptions). */
+const AUTONOMY_LABEL_BY_VALUE: Record<string, string> = {
+  '1': 'I need to verify every word',
+  '2': 'Show me a draft first, then I\'ll approve',
+  '3': 'Give me options, I\'ll choose',
+  '4': 'Execute with minimal confirmation',
+  '5': 'Fix it automatically; don\'t even ask me'
+}
+
+function autonomyValueToCsvLabel(value: string | undefined): string {
+  const v = (value ?? '').trim()
+  if (!v) return ''
+  return AUTONOMY_LABEL_BY_VALUE[v] ?? v
+}
+
 const initDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION)
@@ -41,6 +56,7 @@ const saveResponseToBackend = async (data: {
   buyingRole: string
   timeToFind: string
   whereNext: string
+  additionalFeedback: string
 }): Promise<boolean> => {
   try {
     const response = await fetch(API_ENDPOINT, {
@@ -73,6 +89,7 @@ const saveResponse = async (data: {
   buyingRole: string
   timeToFind: string
   whereNext: string
+  additionalFeedback: string
 }) => {
   // Try to save to backend first (primary storage)
   const backendSuccess = await saveResponseToBackend(data)
@@ -170,7 +187,20 @@ function App() {
   const [showDashboard, setShowDashboard] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false)
-  const [sessionResponses, setSessionResponses] = useState<Array<{ timestamp: string; question: string; jobRole: string; format: string; location: string; autonomy: string; buyingRole: string; timeToFind: string; whereNext: string }>>([])
+  const [sessionResponses, setSessionResponses] = useState<
+    Array<{
+      timestamp: string
+      question: string
+      jobRole: string
+      format: string
+      location: string
+      autonomy: string
+      buyingRole: string
+      timeToFind: string
+      whereNext: string
+      additionalFeedback: string
+    }>
+  >([])
 
   // Retry pending responses when online
   useEffect(() => {
@@ -368,7 +398,8 @@ function App() {
         autonomy: answers.autonomy || '',
         buyingRole: answers.buyingRole || '',
         timeToFind: answers.timeToFind || '',
-        whereNext: answers.whereNext || ''
+        whereNext: answers.whereNext || '',
+        additionalFeedback: answers.additionalFeedback?.trim() || ''
       }
       await saveResponse(newResponse)
       console.log('Response saved to IndexedDB')
@@ -383,7 +414,18 @@ function App() {
       const allResponses = await getAllResponses()
       
       // Create CSV headers
-      const headers = ['Timestamp', 'Question', 'Job Role', 'Format Preference', 'Location', 'Autonomy Level', 'Tech Buying Role', 'Time to Find', 'Where Next']
+      const headers = [
+        'Timestamp',
+        'Question',
+        'Job Role',
+        'Format Preference',
+        'Location',
+        'Autonomy Level',
+        'Tech Buying Role',
+        'Time to Find',
+        'Where Next',
+        'Additional feedback'
+      ]
       const rows = [headers]
 
       // Add all responses
@@ -394,10 +436,11 @@ function App() {
           response.jobRole || '',
           response.format || '',
           response.location || '',
-          response.autonomy || '',
+          autonomyValueToCsvLabel(response.autonomy),
           response.buyingRole || '',
           response.timeToFind || '',
-          response.whereNext || ''
+          response.whereNext || '',
+          response.additionalFeedback ?? ''
         ])
       })
 
@@ -437,7 +480,7 @@ function App() {
         setShowQuestions(true)
         setCurrentQuestion(1)
       }, 2000)
-    } else if (currentQuestion < 7) {
+    } else if (currentQuestion < 8) {
       // Move to next question
       setCurrentQuestion(prev => prev + 1)
     } else {
@@ -470,7 +513,7 @@ function App() {
   }
 
   const handleNextQuestion = () => {
-    if (currentQuestion < 7) {
+    if (currentQuestion < 8) {
       setCurrentQuestion(prev => prev + 1)
     }
   }

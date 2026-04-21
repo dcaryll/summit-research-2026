@@ -160,8 +160,14 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
     onInputChange(syntheticEvent)
   }
 
-  const isOtherSelected = answers.format === 'Other' || (answers.format && !formatOptions.slice(0, -1).includes(answers.format))
-  const isOtherSelected2 = answers.location === 'Other' || (answers.location && !locationOptions.slice(0, -1).includes(answers.location))
+  const isOtherSelected = Boolean(
+    answers.format === 'Other' ||
+      (!!answers.format && !formatOptions.slice(0, -1).includes(answers.format))
+  )
+  const isOtherSelected2 = Boolean(
+    answers.location === 'Other' ||
+      (!!answers.location && !locationOptions.slice(0, -1).includes(answers.location))
+  )
 
   const handlePersonaSelect = (value: string) => {
     onAnswerChange('jobRole', value)
@@ -236,6 +242,9 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
     }
     if (currentQuestion === 7) {
       return !!answers.whereNext
+    }
+    if (currentQuestion === 8) {
+      return true
     }
     return false
   }
@@ -466,29 +475,38 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
             </>
           ) : (
             <div className="questions-container">
-              <h2 className="question-title">Question {currentQuestion} of 7</h2>
+              <h2 className="question-title">Question {currentQuestion} of 8</h2>
               
               {currentQuestion === 1 && (
                 <>
-                  <p className="question-text">
+                  <p className="question-text" id="wizard-question-prompt">
                     If we could generate this answer instantly, what format would be most useful?
                   </p>
                   
-                  <div className="question-options">
+                  <div
+                    className="question-options"
+                    role="radiogroup"
+                    aria-labelledby="wizard-question-prompt"
+                  >
                     {formatOptions.map((option, index) => {
                       const isSelected = option === 'Other' 
                         ? isOtherSelected 
                         : answers.format === option
                       return (
-                        <button
+                        <label
                           key={index}
-                          type="button"
-                          className={`question-option ${isSelected ? 'selected' : ''}`}
-                          onClick={() => handleFormatSelect(option)}
+                          className={`wizard-radio-row${isSelected ? ' wizard-radio-row--selected' : ''}`}
                         >
-                          <span>{option}</span>
-                          {isSelected && <span className="checkmark">✓</span>}
-                        </button>
+                          <input
+                            type="radio"
+                            name="wizard-q-format"
+                            className="wizard-radio-input"
+                            value={option}
+                            checked={isSelected}
+                            onChange={() => handleFormatSelect(option)}
+                          />
+                          <span className="wizard-radio-label">{option}</span>
+                        </label>
                       )
                     })}
                   </div>
@@ -510,25 +528,34 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
 
               {currentQuestion === 2 && (
                 <>
-                  <p className="question-text">
-                    Where are you usually sitting when this question comes up?
+                  <p className="question-text" id="wizard-question-prompt">
+                    What mode are you usually in when this question comes up?
                   </p>
                   
-                  <div className="question-options">
+                  <div
+                    className="question-options"
+                    role="radiogroup"
+                    aria-labelledby="wizard-question-prompt"
+                  >
                     {locationOptions.map((option, index) => {
                       const isSelected = option === 'Other' 
                         ? isOtherSelected2 
                         : answers.location === option
                       return (
-                        <button
+                        <label
                           key={index}
-                          type="button"
-                          className={`question-option ${isSelected ? 'selected' : ''}`}
-                          onClick={() => handleLocationSelect(option)}
+                          className={`wizard-radio-row${isSelected ? ' wizard-radio-row--selected' : ''}`}
                         >
-                          <span>{option}</span>
-                          {isSelected && <span className="checkmark">✓</span>}
-                        </button>
+                          <input
+                            type="radio"
+                            name="wizard-q-location"
+                            className="wizard-radio-input"
+                            value={option}
+                            checked={isSelected}
+                            onChange={() => handleLocationSelect(option)}
+                          />
+                          <span className="wizard-radio-label">{option}</span>
+                        </label>
                       )
                     })}
                   </div>
@@ -550,23 +577,32 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
 
               {currentQuestion === 3 && (
                 <>
-                  <p className="question-text">
+                  <p className="question-text" id="wizard-question-prompt">
                     For this specific task, how much autonomy would you give an AI agent?
                   </p>
                   
-                  <div className="question-options">
+                  <div
+                    className="question-options"
+                    role="radiogroup"
+                    aria-labelledby="wizard-question-prompt"
+                  >
                     {autonomyOptions.map((option) => {
                       const isSelected = answers.autonomy === option.value
                       return (
-                        <button
+                        <label
                           key={option.value}
-                          type="button"
-                          className={`question-option ${isSelected ? 'selected' : ''}`}
-                          onClick={() => handleAutonomySelect(option.value)}
+                          className={`wizard-radio-row${isSelected ? ' wizard-radio-row--selected' : ''}`}
                         >
-                          <span>{option.label}</span>
-                          {isSelected && <span className="checkmark">✓</span>}
-                        </button>
+                          <input
+                            type="radio"
+                            name="wizard-q-autonomy"
+                            className="wizard-radio-input"
+                            value={option.value}
+                            checked={isSelected}
+                            onChange={() => handleAutonomySelect(option.value)}
+                          />
+                          <span className="wizard-radio-label">{option.label}</span>
+                        </label>
                       )
                     })}
                   </div>
@@ -575,24 +611,35 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
 
               {currentQuestion === 4 && (
                 <>
-                  <p className="question-text">
+                  <p className="question-text" id="wizard-question-prompt">
                     To customize your future interface, tell us how you spend your day.
                   </p>
                   
-                  <div className="persona-options">
+                  <div
+                    className="persona-options"
+                    role="radiogroup"
+                    aria-labelledby="wizard-question-prompt"
+                  >
                     {personaOptions.map((option, index) => {
                       const isSelected = answers.jobRole === option.value
                       return (
-                        <button
+                        <label
                           key={index}
-                          type="button"
-                          className={`persona-option ${isSelected ? 'selected' : ''}`}
-                          onClick={() => handlePersonaSelect(option.value)}
+                          className={`wizard-radio-row wizard-radio-row--persona${isSelected ? ' wizard-radio-row--selected' : ''}`}
                         >
-                          <span className="persona-icon-wrap">{option.icon}</span>
-                          <span className="persona-label">{option.value}</span>
-                          {isSelected && <span className="checkmark">✓</span>}
-                        </button>
+                          <input
+                            type="radio"
+                            name="wizard-q-jobrole"
+                            className="wizard-radio-input"
+                            value={option.value}
+                            checked={isSelected}
+                            onChange={() => handlePersonaSelect(option.value)}
+                          />
+                          <span className={`persona-icon-wrap${isSelected ? ' persona-icon-wrap--selected' : ''}`}>
+                            {option.icon}
+                          </span>
+                          <span className="wizard-radio-label persona-label">{option.value}</span>
+                        </label>
                       )
                     })}
                   </div>
@@ -601,23 +648,32 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
 
               {currentQuestion === 5 && (
                 <>
-                  <p className="question-text">
+                  <p className="question-text" id="wizard-question-prompt">
                     When it comes to buying new tech, what is your role?
                   </p>
                   
-                  <div className="question-options">
+                  <div
+                    className="question-options"
+                    role="radiogroup"
+                    aria-labelledby="wizard-question-prompt"
+                  >
                     {buyingRoleOptions.map((option, index) => {
                       const isSelected = answers.buyingRole === option
                       return (
-                        <button
+                        <label
                           key={index}
-                          type="button"
-                          className={`question-option ${isSelected ? 'selected' : ''}`}
-                          onClick={() => handleBuyingRoleSelect(option)}
+                          className={`wizard-radio-row${isSelected ? ' wizard-radio-row--selected' : ''}`}
                         >
-                          <span>{option}</span>
-                          {isSelected && <span className="checkmark">✓</span>}
-                        </button>
+                          <input
+                            type="radio"
+                            name="wizard-q-buyingrole"
+                            className="wizard-radio-input"
+                            value={option}
+                            checked={isSelected}
+                            onChange={() => handleBuyingRoleSelect(option)}
+                          />
+                          <span className="wizard-radio-label">{option}</span>
+                        </label>
                       )
                     })}
                   </div>
@@ -626,23 +682,32 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
 
               {currentQuestion === 6 && (
                 <>
-                  <p className="question-text">
-                    Be honest: How long would it take you to find this specific answer on our (or any vendor's) website today?
+                  <p className="question-text" id="wizard-question-prompt">
+                    How long would it take you to find this specific answer on our (or any vendor's) website today?
                   </p>
                   
-                  <div className="question-options">
+                  <div
+                    className="question-options"
+                    role="radiogroup"
+                    aria-labelledby="wizard-question-prompt"
+                  >
                     {timeToFindOptions.map((option, index) => {
                       const isSelected = answers.timeToFind === option
                       return (
-                        <button
+                        <label
                           key={index}
-                          type="button"
-                          className={`question-option ${isSelected ? 'selected' : ''}`}
-                          onClick={() => handleTimeToFindSelect(option)}
+                          className={`wizard-radio-row${isSelected ? ' wizard-radio-row--selected' : ''}`}
                         >
-                          <span>{option}</span>
-                          {isSelected && <span className="checkmark">✓</span>}
-                        </button>
+                          <input
+                            type="radio"
+                            name="wizard-q-timetofind"
+                            className="wizard-radio-input"
+                            value={option}
+                            checked={isSelected}
+                            onChange={() => handleTimeToFindSelect(option)}
+                          />
+                          <span className="wizard-radio-label">{option}</span>
+                        </label>
                       )
                     })}
                   </div>
@@ -651,25 +716,57 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
 
               {currentQuestion === 7 && (
                 <>
-                  <p className="question-text">
+                  <p className="question-text" id="wizard-question-prompt">
                     If you couldn't find this answer on our site in 2 minutes, where would you go next?
                   </p>
                   
-                  <div className="question-options">
+                  <div
+                    className="question-options"
+                    role="radiogroup"
+                    aria-labelledby="wizard-question-prompt"
+                  >
                     {whereNextOptions.map((option, index) => {
                       const isSelected = answers.whereNext === option
                       return (
-                        <button
+                        <label
                           key={index}
-                          type="button"
-                          className={`question-option ${isSelected ? 'selected' : ''}`}
-                          onClick={() => handleWhereNextSelect(option)}
+                          className={`wizard-radio-row${isSelected ? ' wizard-radio-row--selected' : ''}`}
                         >
-                          <span>{option}</span>
-                          {isSelected && <span className="checkmark">✓</span>}
-                        </button>
+                          <input
+                            type="radio"
+                            name="wizard-q-wherenext"
+                            className="wizard-radio-input"
+                            value={option}
+                            checked={isSelected}
+                            onChange={() => handleWhereNextSelect(option)}
+                          />
+                          <span className="wizard-radio-label">{option}</span>
+                        </label>
                       )
                     })}
+                  </div>
+                </>
+              )}
+
+              {currentQuestion === 8 && (
+                <>
+                  <p className="question-text" id="wizard-question-prompt">
+                    {
+                      "Is there anything else you'd like to tell us about your question and how you'd prefer to get that information?"
+                    }
+                  </p>
+                  <div className="wizard-open-response">
+                    <label htmlFor="wizard-additional-feedback" className="wizard-open-response-label">
+                      Your response (optional)
+                    </label>
+                    <textarea
+                      id="wizard-additional-feedback"
+                      className="wizard-open-textarea"
+                      rows={6}
+                      value={answers.additionalFeedback ?? ''}
+                      onChange={(e) => onAnswerChange('additionalFeedback', e.target.value)}
+                      placeholder="Share any extra context…"
+                    />
                   </div>
                 </>
               )}
@@ -687,10 +784,10 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                 {canProceed() && (
                   <button
                     type="button"
-                    onClick={currentQuestion === 7 ? onSubmit : onNextQuestion}
+                    onClick={currentQuestion === 8 ? onSubmit : onNextQuestion}
                     className="go-button"
                   >
-                    {currentQuestion === 7 ? 'Submit' : 'Next'}
+                    {currentQuestion === 8 ? 'Submit' : 'Next'}
                   </button>
                 )}
               </div>

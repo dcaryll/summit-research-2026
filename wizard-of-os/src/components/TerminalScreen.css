@@ -1,6 +1,9 @@
 .terminal-screen {
-  width: 100vw;
+  /* 100vw is wider than the layout when a vertical scrollbar is present — causes horizontal scroll */
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   background: transparent;
   display: flex;
   align-items: center;
@@ -12,7 +15,8 @@
 
 .terminal-content {
   width: 100%;
-  max-width: 1200px;
+  max-width: min(1200px, 100%);
+  min-width: 0;
   padding: 2rem;
   display: flex;
   flex-direction: column;
@@ -92,7 +96,8 @@
 
 .input-section {
   width: 100%;
-  max-width: 1000px;
+  max-width: min(1000px, 100%);
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -322,7 +327,8 @@
 
 .questions-container {
   width: 100%;
-  max-width: 1000px;
+  max-width: min(1000px, 100%);
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -341,67 +347,79 @@
 .question-text {
   color: #ffffff;
   font-size: 1.25rem;
-  font-weight: 400;
+  font-weight: 600;
   text-align: center;
   margin: 0;
   font-family: inherit;
   line-height: 1.6;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 0.25rem;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
 }
 
+/* Single-select question rows (aligned with choose-your-adventure survey radios) */
 .question-options {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
   width: 100%;
-  max-width: 600px;
+  max-width: min(600px, 100%);
+  min-width: 0;
 }
 
-.question-option {
-  background: transparent;
-  border: 1px solid #ffffff;
-  border-radius: 4px;
+.wizard-radio-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin: 0;
+  max-width: 100%;
   padding: 1rem 1.25rem;
+  background: #1f1f1f;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
   color: #ffffff;
   font-size: 1rem;
   font-family: inherit;
+  line-height: 1.4;
   text-align: left;
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
-.question-option .checkmark {
-  color: #000000;
-  font-size: 1.25rem;
-  font-weight: bold;
+.wizard-radio-row:hover {
+  border-color: rgba(0, 255, 43, 0.45);
+  background: rgba(0, 255, 43, 0.08);
+}
+
+.wizard-radio-row:focus-within {
+  border-color: #00ff2b;
+}
+
+.wizard-radio-row--selected {
+  border-color: #00ff2b;
+  background: rgba(0, 255, 43, 0.12);
+}
+
+.wizard-radio-input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0.15rem 0 0;
   flex-shrink: 0;
-  background: #ffffff;
-  border-radius: 50%;
-  width: 1.75rem;
-  height: 1.75rem;
-  display: flex;
+  accent-color: #00ff2b;
+  cursor: pointer;
+}
+
+.wizard-radio-label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: break-word;
+}
+
+.wizard-radio-row--persona {
   align-items: center;
-  justify-content: center;
-  line-height: 1;
-}
-
-.question-option:hover {
-  border-color: #ffffff;
-  color: #ffffff;
-  background: #2a2a2a;
-}
-
-.question-option.selected {
-  border-color: #ffffff;
-  color: #ffffff;
-  background: #3a3a3a;
-}
-
-.question-option:active {
-  background: #4a4a4a;
 }
 
 /* Persona options (Question 4) */
@@ -410,46 +428,8 @@
   flex-direction: column;
   gap: 1rem;
   width: 100%;
-  max-width: 600px;
-}
-
-.persona-option {
-  background: transparent;
-  border: 1px solid #ffffff;
-  border-left: 3px solid #ffffff;
-  border-radius: 8px;
-  padding: 1.25rem 1.5rem;
-  color: #ffffff;
-  font-size: 1rem;
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-}
-
-.persona-option:hover {
-  border-color: #ffffff;
-  color: #ffffff;
-  background: #2a2a2a;
-  border-left-color: #00ff2b;
-}
-
-.persona-option.selected {
-  border-color: #00ff2b;
-  color: #ffffff;
-  background: rgba(0, 255, 43, 0.08);
-  border-left-color: #00ff2b;
-}
-
-.persona-option.selected .persona-icon-wrap {
-  color: #00ff2b;
-}
-
-.persona-option:active {
-  background: #3a3a3a;
+  max-width: min(600px, 100%);
+  min-width: 0;
 }
 
 .persona-icon-wrap {
@@ -459,28 +439,58 @@
   transition: color 0.2s ease;
 }
 
+.persona-icon-wrap--selected {
+  color: #00ff2b;
+}
+
 .persona-icon {
   flex-shrink: 0;
 }
 
 .persona-label {
-  flex: 1;
   line-height: 1.5;
 }
 
-.persona-option .checkmark {
-  color: #000000;
-  font-size: 1.25rem;
-  font-weight: bold;
-  flex-shrink: 0;
-  background: #ffffff;
-  border-radius: 50%;
-  width: 1.75rem;
-  height: 1.75rem;
+.wizard-open-response {
+  width: 100%;
+  max-width: min(600px, 100%);
+  min-width: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-self: center;
+}
+
+.wizard-open-response-label {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.875rem;
+  font-family: inherit;
+  text-align: left;
+}
+
+.wizard-open-textarea {
+  width: 100%;
+  min-height: 8rem;
+  padding: 1rem 1.25rem;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  background: #1f1f1f;
+  color: #ffffff;
+  font-size: 1rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.wizard-open-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.wizard-open-textarea:focus {
+  outline: none;
+  border-color: #00ff2b;
+  box-shadow: 0 0 0 1px rgba(0, 255, 43, 0.25);
 }
 
 .adjust-input-button {
@@ -509,11 +519,14 @@
 
 .question-navigation {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   justify-content: center;
   align-items: center;
   margin-top: 2rem;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .previous-button {
@@ -619,7 +632,7 @@
     font-size: 1.125rem;
   }
   
-  .question-option {
+  .wizard-radio-row {
     font-size: 0.9rem;
     padding: 0.875rem 1rem;
   }
@@ -628,7 +641,8 @@
 /* Dashboard Styles */
 .dashboard-container {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
