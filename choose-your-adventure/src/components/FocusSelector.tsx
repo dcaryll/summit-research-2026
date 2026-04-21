@@ -1,11 +1,11 @@
 import { useMemo, useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import gearSource from '@rhds/icons/standard/gear.js'
-import assessmentSource from '@rhds/icons/ui/assessment.js'
+import backlogSource from '@rhds/icons/standard/backlog.js'
 import developerSource from '@rhds/icons/standard/developer.js'
 import controlPanelSource from '@rhds/icons/standard/control-panel.js'
 import productTrialSource from '@rhds/icons/standard/product-trial.js'
-import megaphoneSource from '@rhds/icons/standard/megaphone.js'
-import magnifyingGlassSource from '@rhds/icons/standard/magnifying-glass.js'
+import architectureSource from '@rhds/icons/standard/architecture.js'
+import bookSource from '@rhds/icons/standard/book.js'
 import './FocusSelector.css'
 import { studyLogo } from '../studyBrand'
 import studyDetailVisualPlaceholder from '../images/study-detail-visual-placeholder.svg'
@@ -23,12 +23,12 @@ import contentDiscoveryStudyDetailHero from '../images/learn-study-overview-imag
  */
 const RHDS_STUDY_ICON_SOURCES: Record<string, Node> = {
   'user-preferences': gearSource,
-  'product-evaluation': assessmentSource,
+  'product-evaluation': backlogSource,
   'developer-program': developerSource,
   'my-red-hat': controlPanelSource,
   'my-trials': productTrialSource,
-  'product-marketing': megaphoneSource,
-  'content-discovery': magnifyingGlassSource
+  'product-marketing': architectureSource,
+  'content-discovery': bookSource
 }
 
 function cloneRhdsStudySvg(source: Node): SVGSVGElement {
@@ -118,9 +118,9 @@ const focusOptions: FocusOption[] = [
     id: 'user-preferences',
     title: 'Personalize your Red Hat',
     description: 'Tell us how you expect your profile and settings to create a unique experience for you.',
-    durationLabel: '~15 min',
+    durationLabel: '10–15 minutes',
     detailDescription:
-      'This study explores where you expect to manage account-related information, which settings should carry across sites, and how you feel about sharing your preferences to enable a more personalized experience. You will work through drag-and-drop placement, multi-select, and sliders at your own pace—most people need about 15 minutes. Your feedback helps us design clearer, more consistent preference experiences.',
+      'This study explores where you expect to manage account-related information, which settings should carry across sites, and how you feel about sharing your preferences to enable a more personalized experience. You will work through drag-and-drop placement, multi-select, and sliders at your own pace—plan for about 10–15 minutes. Your feedback helps us design clearer, more consistent preference experiences.',
     detailVisualSrc: userPreferencesStudyDetailHero,
     detailVisualAlt:
       'Personal information and profile details: greeting, first and last name, bio with public/private toggles, profile image with update/delete, and certifications area.'

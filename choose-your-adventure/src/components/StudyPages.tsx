@@ -4,6 +4,7 @@ import { studyLogo } from '../studyBrand'
 import myTrialsReadyToBuyDialogSingle from '../images/my-trials-ready-to-buy-dialog-single-option.png'
 import myTrialsReadyToBuyDialogThreeOptions from '../images/my-trials-ready-to-buy-dialog-three-options.png'
 import productMarketingSecondaryNavImage from '../images/product-secondary-nav.webp'
+import productMarketingSecondaryNavCommonItems from '../images/product-secondary-nav-common-items.webp'
 import contentDiscoveryQ1TopicCards from '../images/content-discovery-q1-topic-cards.png'
 import contentDiscoveryQ2Ai from '../images/content-discovery-q2-ai.png'
 import contentDiscoveryQ2AppPlatforms from '../images/content-discovery-q2-app-platforms.png'
@@ -1253,6 +1254,9 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: '5',
         type: 'multiple-choice',
+        imageSrc: productMarketingSecondaryNavCommonItems,
+        imageAlt:
+          'Secondary navigation examples showing shared menu item labels such as Explore, Overview, and Documentation across Red Hat product pages.',
         question:
           "Do you expect the menu item labels to be consistent across each product's secondary navigation menu? Please explain the reasoning behind your answer.",
         options: ['Yes', 'No'],
@@ -1283,7 +1287,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         id: 'intro',
         type: 'overview',
         question:
-          "Imagine you are interested in trying out a Red Hat product. You will first explore an interactive prototype of the main developer landing page (Choose your program — tiers for Individuals and Businesses), then answer questions about a cropped view focused on those two tiers."
+          "Imagine you are exploring the Red Hat Developer site and are interested in trying out a Red Hat product. You will be shown a few static images representing program details. Please review the images and answer the questions that follow."
       },
       {
         id: 'landing-prototype',
