@@ -11,11 +11,9 @@ import contentDiscoveryQ2AppPlatforms from '../images/content-discovery-q2-app-p
 import contentDiscoveryQ2Automation from '../images/content-discovery-q2-automation.png'
 import contentDiscoveryQ2LinuxStandardization from '../images/content-discovery-q2-linux-standardization.png'
 import contentDiscoveryQ2Virtualization from '../images/content-discovery-q2-virtualization.png'
-import developerProgramTierProgramsImage from '../images/developer-program-tier-programs.png'
-import developerProgramSignupFlowIndividuals from '../images/developer-program-signup-flow-individuals.png'
-import developerProgramSignupFlowBusinesses from '../images/developer-program-signup-flow-businesses.png'
-import developerProgramPostLoginIndividuals from '../images/developer-program-post-login-individuals.png'
-import developerProgramPostLoginBusinesses from '../images/developer-program-post-login-businesses.png'
+import developerStudyTiersImage from '../images/developer-study-tiers.png'
+import developerStudyRegistrationIndividuals from '../images/developer-study-registration-individuals.png'
+import developerStudyRegistrationBusinesses from '../images/developer-study-registration-businesses.png'
 import CompletionScreen from './CompletionScreen'
 import LoadingScreen from './LoadingScreen'
 import {
@@ -24,30 +22,17 @@ import {
 } from '../studyExitPrompt'
 import { studyDisplayName } from '../studyDisplayNames'
 
-/** Developer program post–tier choice: signup UI keyed by answer on `b3-q1`. Replace PNGs when final art is ready. */
+/** Developer program block 2: registration screenshot from answer on `b1-q1`. */
 const DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM: Record<string, string> = {
-  'Developer for Individuals': developerProgramSignupFlowIndividuals,
-  'Developer for Businesses': developerProgramSignupFlowBusinesses
+  'Developer for Individuals': developerStudyRegistrationIndividuals,
+  'Developer for Businesses': developerStudyRegistrationBusinesses
 }
 
 const DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_ALT: Record<string, string> = {
   'Developer for Individuals':
-    'Register for a Red Hat account: privacy notice, organization account callout, and required fields including Red Hat login, password rules, first and last name.',
+    'Registration form for Developer for Individuals: privacy notice, account fields, and required inputs.',
   'Developer for Businesses':
-    'Sign-up experience for Developer for Businesses: steps and information required on screen.'
-}
-
-/** Post-login / logged-in view keyed by `b3-q1`. Replace PNGs when final art is ready. */
-const DEVELOPER_PROGRAM_POST_LOGIN_HERO_BY_PROGRAM: Record<string, string> = {
-  'Developer for Individuals': developerProgramPostLoginIndividuals,
-  'Developer for Businesses': developerProgramPostLoginBusinesses
-}
-
-const DEVELOPER_PROGRAM_POST_LOGIN_HERO_ALT: Record<string, string> = {
-  'Developer for Individuals':
-    'Logged-in developer experience for Individuals: home or dashboard after account creation.',
-  'Developer for Businesses':
-    'Logged-in developer experience for Businesses: home or dashboard after account creation.'
+    'Registration form for Developer for Businesses: steps and information required on screen.'
 }
 
 /** Content discovery Q2/Q4: topic-page screenshot keyed by exact answer from question 1. */
@@ -1290,74 +1275,40 @@ const getStudyPages = (focusId: string): StudyPage[] => {
           "Imagine you are exploring the Red Hat Developer site and are interested in trying out a Red Hat product. You will be shown a few static images representing program details. Please review the images and answer the questions that follow."
       },
       {
-        id: 'landing-prototype',
-        type: 'prototype',
-        question:
-          'Please take a moment to visually explore the page. What do you feel is the main goal of this page? What information or elements draw your eye first?',
-        figmaEmbedUrl:
-          'https://embed.figma.com/proto/nvnxEvej7639b0fdSUdqOj/Tiered-Offering-and-Dev-Program-Experience-Summit-Research?node-id=1-2214&page-id=0%3A1&starting-point-node-id=1%3A2214&t=10v1lLZjY8ApVN4c-1&embed-host=summit-research&scaling=scale-down-width&content-scaling=fixed',
-        prototypeOpenTextKey: 'landing-prototype-response',
-        prototypeOpenTextLabel: 'Your response'
-      },
-      {
-        id: 'b2-q2',
-        type: 'text',
-        figmaEmbedSourcePageId: 'landing-prototype',
-        question:
-          'Based on your needs, what is the first thing you would interact with on this page.'
-      },
-      {
-        id: 'b2-q3',
-        type: 'text',
-        figmaEmbedSourcePageId: 'landing-prototype',
-        question:
-          'Why did you choose that specific action, and what would you expect to happen next?'
-      },
-      {
-        id: 'b2-q4',
-        type: 'multiple-choice',
-        figmaEmbedSourcePageId: 'landing-prototype',
-        multipleChoiceOptionsAboveEmbed: true,
-        question:
-          'Based on the information presented, is the difference between the two tiers clear to you?',
-        options: ['Yes', 'No', 'Unsure']
-      },
-      {
-        id: 'b3-q1',
+        id: 'b1-q1',
         type: 'multiple-choice',
         question: 'If you wanted to sign up for one of the two programs, which would you choose?',
-        imageSrc: developerProgramTierProgramsImage,
+        imageSrc: developerStudyTiersImage,
         imageAlt:
-          'Choose your program: two cards comparing Developer for Individuals (personal non-business use) and Developer for Businesses (team non-production use), each with What you get bullet lists.',
+          'Developer program tiers overview: Developer for Individuals and Developer for Businesses compared with what you get in each.',
         options: ['Developer for Individuals', 'Developer for Businesses']
       },
       {
-        id: 'b3-q2',
+        id: 'b1-q2',
         type: 'text',
-        imageSourcePageId: 'b3-q1',
-        questionBinaryChoiceFromPageId: 'b3-q1',
+        imageSourcePageId: 'b1-q1',
         question:
-          'Why did you choose {{CHOSEN}}, and why did you not choose {{NOT_CHOSEN}}?'
+          'Why did you make this choice, and why did you not choose the other option?'
       },
       {
-        id: 'b3-q3',
+        id: 'b1-q3',
         type: 'text',
-        imageSourcePageId: 'b3-q1',
+        imageSourcePageId: 'b1-q1',
         question:
           'What additional information is missing from the overview of these tiers that would help you make a more informed choice?'
       },
       {
-        id: 'b4-q1',
+        id: 'b2-q1',
         type: 'slider',
         questionAboveHeroImage: true,
         sliderAboveHeroImage: true,
         questionSubtext:
           'Scroll to see the full sign-up screen, or tap the image to open a larger view.',
-        questionHeroImageFromPageId: 'b3-q1',
+        questionHeroImageFromPageId: 'b1-q1',
         questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM,
         questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_ALT,
         question:
-          'How do you feel about the steps and information required to sign up?',
+          'How do you feel about the steps and information required to sign up? (1 = Extremely Overwhelming, 5 = Extremely Easy)',
         sliderMin: 1,
         sliderMax: 5,
         sliderLabels: [
@@ -1369,9 +1320,18 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         ]
       },
       {
-        id: 'b4-q2',
+        id: 'b2-q2',
+        type: 'text',
+        questionHeroImageFromPageId: 'b1-q1',
+        questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM,
+        questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_ALT,
+        question:
+          'If you could remove two fields from this registration form to improve your experience, which would they be and why?'
+      },
+      {
+        id: 'b2-q3',
         type: 'multiple-choice',
-        questionHeroImageFromPageId: 'b3-q1',
+        questionHeroImageFromPageId: 'b1-q1',
         questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM,
         questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_ALT,
         question:
@@ -1379,56 +1339,47 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         options: ['I would complete the registration', 'I would leave the page']
       },
       {
-        id: 'b4-q3',
+        id: 'b2-q4',
         type: 'text',
-        visibleWhen: { priorPageId: 'b4-q2', equals: 'I would leave the page' },
-        questionHeroImageFromPageId: 'b3-q1',
+        visibleWhen: { priorPageId: 'b2-q3', equals: 'I would leave the page' },
+        questionHeroImageFromPageId: 'b1-q1',
         questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM,
         questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_ALT,
         question: 'What is the key issue keeping you from completing the registration?'
       },
       {
-        id: 'b5-q1',
+        id: 'b3-q1',
         type: 'text',
-        questionHeroImageFromPageId: 'b3-q1',
-        questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_BY_PROGRAM,
-        questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_ALT,
+        imageSourcePageId: 'b1-q1',
         question:
-          'You have successfully created your account and are now logged in. What content would you click on to explore first?'
+          "Once you've successfully gained access to the Developer program, what specific tool, download, or resource would you be most eager to access?"
       },
       {
-        id: 'b5-q2',
+        id: 'b3-q2',
         type: 'text',
-        questionHeroImageFromPageId: 'b3-q1',
-        questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_BY_PROGRAM,
-        questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_ALT,
+        imageSourcePageId: 'b1-q1',
         question:
-          'Does the content and prioritization on this page meet your expectations? Why or why not?'
+          "Thinking about the features promised during registration, are there any access points or benefits you expect to be immediately available that aren't shown?"
       },
       {
-        id: 'b5-q3',
-        type: 'text',
-        questionHeroImageFromPageId: 'b3-q1',
-        questionHeroImagesByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_BY_PROGRAM,
-        questionHeroImageAltsByPriorOption: DEVELOPER_PROGRAM_POST_LOGIN_HERO_ALT,
-        question: 'What kind of content did you expect to see on this page that might be missing?'
-      },
-      {
-        id: 'b6-q1',
+        id: 'b4-q1',
         type: 'multiple-choice',
+        imageSourcePageId: 'b1-q1',
         question:
           'Overall, do you feel you were given a clear understanding of what the Developer program is and its offerings?',
         options: ['Yes', 'No']
       },
       {
-        id: 'b6-q2',
+        id: 'b4-q2',
         type: 'text',
+        imageSourcePageId: 'b1-q1',
         question:
           'Thinking back through this overall experience, would you sign up for this program in real life? What specifically helped you make that decision?'
       },
       {
-        id: 'b6-q3',
+        id: 'b4-q3',
         type: 'text',
+        imageSourcePageId: 'b1-q1',
         question:
           'If you could give Red Hat one piece of advice to improve this overall experience, what would it be?'
       }
@@ -1832,8 +1783,8 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             /* leave other write-in unchanged if selection JSON is invalid */
           }
         }
-        if (currentPage.id === 'b4-q2' && value !== 'I would leave the page') {
-          delete next['b4-q3']
+        if (currentPage.id === 'b2-q3' && value !== 'I would leave the page') {
+          delete next['b2-q4']
         }
         return next
       })
