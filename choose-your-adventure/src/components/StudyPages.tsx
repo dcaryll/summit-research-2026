@@ -904,7 +904,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
           },
           {
             id: 'human-in-the-loop',
-            label: 'Human-in-the-loop',
+            label: 'Human support',
             cost: 3,
             description: 'Access to a SE/Architect during trial.'
           },
@@ -914,12 +914,6 @@ const getStudyPages = (focusId: string): StudyPage[] => {
             cost: 3,
             description:
               'Specialized LLM trained on Red Hat product docs that can auto-generate configurations or answer "How do I..." questions in real-time after you\'ve downloaded a product or started a trial.'
-          },
-          {
-            id: 'sample-data-code',
-            label: 'Sample data/code',
-            cost: 2,
-            description: 'Github-ready snippets and prepopulated data.'
           },
           {
             id: 'self-service-demo',
