@@ -3,6 +3,19 @@ import './TerminalScreen.css'
 import logoImage from '../images/Logo-Red_Hat-A-White-RGB.svg'
 import qrCodeImage from '../images/qr-code.svg'
 
+/** Highest-percentage option in aggregated dashboard stats (percentages are 0–100). */
+function topPercentageEntry(
+  pctByKey: Record<string, number>
+): { key: string; pct: number } | null {
+  const entries = Object.entries(pctByKey)
+  if (entries.length === 0) return null
+  let best = entries[0]
+  for (let i = 1; i < entries.length; i++) {
+    if (entries[i][1] > best[1]) best = entries[i]
+  }
+  return { key: best[0], pct: best[1] }
+}
+
 interface TerminalScreenProps {
   inputValue: string
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -249,6 +262,21 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
     return false
   }
 
+  const dashboardStats = dashboardData?.stats
+  const topFormatStat = dashboardStats ? topPercentageEntry(dashboardStats.formatStats) : null
+  const topLocationStat = dashboardStats ? topPercentageEntry(dashboardStats.locationStats) : null
+  const topAutonomyStat = dashboardStats ? topPercentageEntry(dashboardStats.autonomyStats) : null
+  const topAutonomyLabel =
+    topAutonomyStat != null
+      ? autonomyOptions.find((o) => o.value === topAutonomyStat.key)?.label ??
+        `Level ${topAutonomyStat.key}`
+      : null
+  const hasPeerDistributionStats = !!(
+    topFormatStat ||
+    topLocationStat ||
+    topAutonomyStat
+  )
+
   return (
     <div className="terminal-screen">
       {isLoadingDashboard ? (
@@ -346,22 +374,34 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                 <h2 className="section-title">Common responses</h2>
                 {dashboardData && dashboardData.stats ? (
                   <>
-                    <div className="peer-stats-grid">
-                      <div className="stat-card">
-                        <div className="stat-value">{dashboardData.stats.formatStats['Ready to use code (CLI/api snippet)'] ?? 0}%</div>
-                        <div className="stat-label">of attendees also want CLI snippets</div>
+                    {hasPeerDistributionStats ? (
+                      <div className="peer-stats-grid">
+                        {topFormatStat && (
+                          <div className="stat-card">
+                            <div className="stat-value">{topFormatStat.pct}%</div>
+                            <div className="stat-label">
+                              Most common preferred answer format: {topFormatStat.key}
+                            </div>
+                          </div>
+                        )}
+                        {topLocationStat && (
+                          <div className="stat-card">
+                            <div className="stat-value">{topLocationStat.pct}%</div>
+                            <div className="stat-label">
+                              Most common situation when researching: {topLocationStat.key}
+                            </div>
+                          </div>
+                        )}
+                        {topAutonomyStat && topAutonomyLabel && (
+                          <div className="stat-card">
+                            <div className="stat-value">{topAutonomyStat.pct}%</div>
+                            <div className="stat-label">
+                              Most common AI autonomy choice: {topAutonomyLabel}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="stat-card">
-                        <div className="stat-value">{dashboardData.stats.locationStats['Fixing a critical issue'] ?? 0}%</div>
-                        <div className="stat-label">are fixing critical issues</div>
-                      </div>
-                      <div className="stat-card">
-                        <div className="stat-value">{dashboardData.stats.formatStats['A technical deep dive (whitepaper/docs)'] ?? 0}%</div>
-                        <div className="stat-label">prefer technical deep dives</div>
-                      </div>
-                    </div>
-                    {Object.keys(dashboardData.stats.formatStats).length === 0 && 
-                     Object.keys(dashboardData.stats.locationStats).length === 0 && (
+                    ) : (
                       <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontStyle: 'italic', textAlign: 'center' }}>
                         No peer data yet. More responses needed.
                       </p>
@@ -765,7 +805,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                       rows={6}
                       value={answers.additionalFeedback ?? ''}
                       onChange={(e) => onAnswerChange('additionalFeedback', e.target.value)}
-                      placeholder="Share any extra context…"
+                      placeholder="Please share your thoughts with the moderator — the notetaker will enter notes here."
                     />
                   </div>
                 </>

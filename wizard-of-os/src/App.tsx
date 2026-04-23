@@ -369,7 +369,6 @@ function App() {
 
   const loadDashboardData = async () => {
     try {
-      const responsesForStats = sessionResponses
       let allResponses: any[] = []
       try {
         allResponses = await getAllResponses()
@@ -377,6 +376,10 @@ function App() {
         console.error('Error loading responses for word cloud:', e)
       }
       const wordCloud = allResponses.length > 0 ? calculateWordCloud(allResponses) : []
+      // Match word cloud: use all stored responses when available so "common responses"
+      // reflects the full dataset (session-only stats produced many misleading 0% cards).
+      const responsesForStats =
+        allResponses.length > 0 ? allResponses : sessionResponses
       const stats =
         responsesForStats.length > 0
           ? calculateStats(responsesForStats)
