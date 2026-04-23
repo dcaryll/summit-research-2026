@@ -1315,7 +1315,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         imageSrc: developerStudyTiersImage,
         imageAlt:
           'Developer program tiers overview: Developer for Individuals and Developer for Businesses compared with what you get in each.',
-        options: ['Developer for Individuals', 'Developer for Businesses']
+        options: ['Developer for individuals', 'Developer for businesses']
       },
       {
         id: 'b1-q2',
