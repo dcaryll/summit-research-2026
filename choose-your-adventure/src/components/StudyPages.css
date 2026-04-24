@@ -110,7 +110,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  padding-top: 1.125rem;
+  padding-top: 6rem;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -824,8 +824,8 @@
 
 .text-input:focus {
   outline: none;
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(var(--accent-blue-rgb), 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
 }
 
 /* Notetaker-entered notes: keep placeholder prominent; soften body text once there is content */
@@ -838,8 +838,8 @@
 
 .text-input.text-input--note-filled:focus {
   color: rgba(255, 255, 255, 0.72);
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
 }
 
 .options-list {
@@ -1533,6 +1533,15 @@
     grid-template-columns: 1fr;
     grid-auto-rows: minmax(140px, auto);
   }
+}
+
+/* Dev-only: fixed skip so it stays reachable while scrolling long pages */
+.study-dev-skip-fab {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right, 0px));
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  z-index: 250;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
 .page-navigation {

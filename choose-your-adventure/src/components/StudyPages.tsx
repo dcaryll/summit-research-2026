@@ -967,7 +967,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         creditBudget: 10,
         valueCreditsListHeading: 'Selectable cards',
         instruction:
-          'Tap or click a card to add it to your choices (tap again to remove it and free those credits).\n\nEach card costs credits; your total cannot exceed your budget. When a card is grayed out, adding it would put you over budget — remove another card first.',
+          'Moderator: Tap or click a card to add it to your choices (tap again to remove it and free those credits).\n\nEach card costs credits; your total cannot exceed your budget. When a card is grayed out, adding it would put you over budget — remove another card first.',
         creditCards: [
           {
             id: 'full-product-download',
@@ -1282,7 +1282,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         overviewAfterImageAlt:
           'Red Hat product page excerpt highlighting the horizontal secondary navigation with menu items such as Explore, Overview, and related product links.',
         question:
-          "The Red Hat product experience is a massive ecosystem, but finding your way between products shouldn't feel like learning a new language every time.\n\nWe've noticed our secondary navigation for OpenShift, RHEL, Ansible, and AI use inconsistent menu labels for similar content types that we would like your feedback on.\n\nIn the next 3 minutes, you'll help us standardize our secondary product navigation by picking, sorting and ranking the terms that make the most sense to you. Your feedback will directly influence how we organize our secondary product navigation.\n\nReview the image below. When you are finished, select Next to continue."
+          "The Red Hat product experience is a massive ecosystem, but finding your way between products shouldn't feel like learning a new language every time.\n\nWe've noticed our secondary navigation for OpenShift, RHEL, Ansible, and AI use inconsistent menu labels for similar content types that we would like your feedback on.\n\nIn the next 3 minutes, you'll help us standardize our secondary product navigation by picking, sorting and ranking the terms that make the most sense to you. Your feedback will directly influence how we organize our secondary product navigation.\n\nReview the image below. When you are finished, let the moderator know."
       },
       {
         id: 'intro',
@@ -2149,29 +2149,34 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   const showRankingModeratorDock =
     currentPage.type === 'ranking' &&
     Boolean(rankingRowsResolved && rankingRowsResolved.length >= 2) &&
-    Boolean(currentPage.rankingOtherAnswerKey && currentPage.rankingOtherQuestion)
+    Boolean(currentPage.rankingOtherAnswerKey)
 
   const showModeratorNotesDock =
-    (currentPage.type === 'prototype' &&
-      Boolean(currentPage.prototypeOpenTextKey && currentPage.prototypeOpenTextLabel)) ||
+    (currentPage.type === 'prototype' && Boolean(currentPage.prototypeOpenTextKey)) ||
     currentPage.type === 'text' ||
     (currentPage.type === 'multiple-choice' &&
-      Boolean(
-        currentPage.options &&
-          currentPage.multiChoiceRequiredFreeTextKey &&
-          currentPage.multiChoiceRequiredFreeTextLabel
-      )) ||
+      Boolean(currentPage.options && currentPage.multiChoiceRequiredFreeTextKey)) ||
     (currentPage.type === 'multiple-choice' &&
       currentPage.followUpWhen !== undefined &&
       answers[currentPage.id] === currentPage.followUpWhen &&
       Boolean(currentPage.followUpAnswerKey && currentPage.followUpFreeText)) ||
     (currentPage.type === 'multi-select' &&
       moderatorFocusMsOtherActive &&
-      Boolean(currentPage.multiSelectOtherFreeTextLabel)) ||
+      Boolean(currentPage.multiSelectOtherFreeTextKey)) ||
     showRankingModeratorDock
 
   return (
     <div className="study-pages-screen">
+      {import.meta.env.DEV ? (
+        <button
+          type="button"
+          className="study-dev-skip-fab nav-button skip"
+          onClick={() => handleNext(getPlaceholderAnswers(currentPage))}
+          aria-label="Dev only: skip page with placeholder answers"
+        >
+          Skip
+        </button>
+      ) : null}
       <div className="study-header">
         <img src={studyLogo} alt="" className="study-logo" />
         <button type="button" className="back-button" onClick={confirmBackToStudySelection}>
@@ -2796,15 +2801,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             </button>
           )}
           <div className="page-navigation-right">
-            {import.meta.env.DEV && (
-              <button
-                type="button"
-                className="nav-button skip"
-                onClick={() => handleNext(getPlaceholderAnswers(currentPage))}
-              >
-                Skip
-              </button>
-            )}
             <button
               className="nav-button next"
               onClick={() => handleNext()}
@@ -2817,12 +2813,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
 
         {showModeratorNotesDock ? (
           <div className="study-moderator-notes-dock" aria-label="Moderator notes">
-            {currentPage.type === 'prototype' &&
-              currentPage.prototypeOpenTextKey &&
-              currentPage.prototypeOpenTextLabel && (
+            {currentPage.type === 'prototype' && currentPage.prototypeOpenTextKey && (
                 <div className="multiple-choice-other-follow multiple-choice-other-follow--in-dock">
                   <ModeratorNotesFieldLabel />
-                  <p className="multiple-choice-other-follow-label">{currentPage.prototypeOpenTextLabel}</p>
                   <textarea
                     className={moderatorDockTextareaClass(
                       answers[currentPage.prototypeOpenTextKey] || ''
@@ -2837,7 +2830,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     data-moderator-notes-focus="true"
                     placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
                     rows={MODERATOR_DOCK_TEXTAREA_ROWS.large}
-                    aria-label={currentPage.prototypeOpenTextLabel}
+                    aria-label={
+                      currentPage.prototypeOpenTextLabel?.trim() || 'Moderator notes'
+                    }
                   />
                 </div>
               )}
@@ -2859,19 +2854,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
 
             {currentPage.type === 'multiple-choice' &&
               currentPage.options &&
-              currentPage.multiChoiceRequiredFreeTextKey &&
-              currentPage.multiChoiceRequiredFreeTextLabel && (
+              currentPage.multiChoiceRequiredFreeTextKey && (
                 <div className="multiple-choice-other-follow multiple-choice-other-follow--in-dock">
                   <ModeratorNotesFieldLabel />
-                  <p className="multiple-choice-other-follow-label">
-                    {currentPage.multiChoiceRequiredFreeTextLabel.includes(SELECTED_OPTION_PLACEHOLDER) &&
-                    !answers[currentPage.id]?.trim()
-                      ? 'Select an option above, then explain your reasoning below.'
-                      : resolveMultiChoiceFreeTextLabel(
-                          currentPage.multiChoiceRequiredFreeTextLabel,
-                          answers[currentPage.id]
-                        )}
-                  </p>
                   <textarea
                     className={moderatorDockTextareaClass(
                       answers[currentPage.multiChoiceRequiredFreeTextKey] || ''
@@ -2887,13 +2872,15 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
                     rows={MODERATOR_DOCK_TEXTAREA_ROWS.medium}
                     aria-label={
-                      currentPage.multiChoiceRequiredFreeTextLabel.includes(SELECTED_OPTION_PLACEHOLDER) &&
-                      answers[currentPage.id]?.trim()
+                      currentPage.multiChoiceRequiredFreeTextLabel?.includes(
+                        SELECTED_OPTION_PLACEHOLDER
+                      ) && answers[currentPage.id]?.trim()
                         ? resolveMultiChoiceFreeTextLabel(
                             currentPage.multiChoiceRequiredFreeTextLabel,
                             answers[currentPage.id]
                           )
-                        : currentPage.multiChoiceRequiredFreeTextLabel
+                        : (currentPage.multiChoiceRequiredFreeTextLabel?.trim() ??
+                            'Moderator notes')
                     }
                   />
                 </div>
@@ -2906,9 +2893,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
               currentPage.followUpFreeText && (
                 <div className="multiple-choice-other-follow multiple-choice-other-follow--in-dock">
                   <ModeratorNotesFieldLabel />
-                  {currentPage.followUpQuestion ? (
-                    <p className="multiple-choice-other-follow-label">{currentPage.followUpQuestion}</p>
-                  ) : null}
                   <textarea
                     className={moderatorDockTextareaClass(answers[currentPage.followUpAnswerKey] || '')}
                     value={answers[currentPage.followUpAnswerKey] || ''}
@@ -2921,19 +2905,18 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     data-moderator-notes-focus="true"
                     placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
                     rows={MODERATOR_DOCK_TEXTAREA_ROWS.medium}
-                    aria-label={currentPage.followUpQuestion || 'Other — please specify'}
+                    aria-label={
+                      currentPage.followUpQuestion?.trim() || 'Moderator notes'
+                    }
                   />
                 </div>
               )}
 
             {currentPage.type === 'multi-select' &&
               moderatorFocusMsOtherActive &&
-              currentPage.multiSelectOtherFreeTextLabel && (
+              currentPage.multiSelectOtherFreeTextKey && (
                 <div className="multiple-choice-other-follow multiple-choice-other-follow--in-dock">
                   <ModeratorNotesFieldLabel />
-                  <p className="multiple-choice-other-follow-label">
-                    {currentPage.multiSelectOtherFreeTextLabel}
-                  </p>
                   <textarea
                     className={moderatorDockTextareaClass(
                       answers[currentPage.multiSelectOtherFreeTextKey!] || ''
@@ -2948,16 +2931,15 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     data-moderator-notes-focus="true"
                     placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
                     rows={MODERATOR_DOCK_TEXTAREA_ROWS.medium}
-                    aria-label={currentPage.multiSelectOtherFreeTextLabel}
+                    aria-label={
+                      currentPage.multiSelectOtherFreeTextLabel?.trim() || 'Moderator notes'
+                    }
                   />
                 </div>
               )}
 
             {showRankingModeratorDock ? (
               <div className="study-ranking-other-followup study-ranking-other-followup--in-dock">
-                <label className="study-ranking-other-label" htmlFor={`ranking-other-${currentPage.id}`}>
-                  {currentPage.rankingOtherQuestion}
-                </label>
                 <ModeratorNotesFieldLabel />
                 <textarea
                   id={`ranking-other-${currentPage.id}`}
@@ -2973,6 +2955,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                       ...prev,
                       [currentPage.rankingOtherAnswerKey!]: e.target.value
                     }))
+                  }
+                  aria-label={
+                    currentPage.rankingOtherQuestion?.trim() || 'Moderator notes'
                   }
                 />
               </div>

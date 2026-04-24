@@ -422,11 +422,10 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                 <p className="step-text">Don't forget to retrieve your swag from the front desk!</p>
               </div>
               <div className="step-box">
-                <h3 className="step-title">Community</h3>
+                <h3 className="step-title">Join our research community</h3>
                 <div className="qr-code-container">
                   <img src={qrCodeImage} alt="QR Code" className="qr-code-image" />
                 </div>
-                <p className="step-text">Join our research community</p>
               </div>
               <div className="step-box">
                 <h3 className="step-title">Keep going</h3>

@@ -256,8 +256,8 @@ function FocusSelector({
 
       <div className="selector-content">
         <div className="selector-headline-block">
-          <h1 className="selector-title">Select your focus</h1>
-          <p className="selector-subtitle">Choose a study track that interests you and a moderator will guide you through the activity.</p>
+          <h1 className="selector-title">Choose your study track</h1>
+          <p className="selector-subtitle">Pick a research topic that interests you and a moderator will guide you through the activity.</p>
         </div>
 
         <div className={`focus-cards-grid ${isShowingRandomResult ? 'focus-cards-grid--animating' : ''}`}>
