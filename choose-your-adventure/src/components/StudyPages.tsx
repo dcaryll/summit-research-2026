@@ -1,4 +1,12 @@
-import { useState, useEffect, useMemo, useRef, type DragEvent, type ReactNode } from 'react'
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  type DragEvent,
+  type ReactNode
+} from 'react'
 import './StudyPages.css'
 import { studyLogo } from '../studyBrand'
 import myTrialsReadyToBuyDialogSingle from '../images/my-trials-ready-to-buy-dialog-single-option.png'
@@ -22,13 +30,20 @@ import {
 } from '../studyExitPrompt'
 import { studyDisplayName } from '../studyDisplayNames'
 
-/** Developer program block 2: registration screenshot from answer on `b1-q1`. */
+/** Developer program block 2: registration screenshot from answer on `b1-q1` (keys match option labels). */
 const DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_BY_PROGRAM: Record<string, string> = {
+  'Developer for individuals': developerStudyRegistrationIndividuals,
+  'Developer for businesses': developerStudyRegistrationBusinesses,
+  /** Legacy / alternate casing from older copy */
   'Developer for Individuals': developerStudyRegistrationIndividuals,
   'Developer for Businesses': developerStudyRegistrationBusinesses
 }
 
 const DEVELOPER_PROGRAM_SIGNUP_FLOW_HERO_ALT: Record<string, string> = {
+  'Developer for individuals':
+    'Registration form for Developer for Individuals: privacy notice, account fields, and required inputs.',
+  'Developer for businesses':
+    'Registration form for Developer for Businesses: steps and information required on screen.',
   'Developer for Individuals':
     'Registration form for Developer for Individuals: privacy notice, account fields, and required inputs.',
   'Developer for Businesses':
@@ -110,15 +125,15 @@ type StudyPage = {
   questionHeroImagesByPriorOption?: Record<string, string>
   questionHeroImageAltsByPriorOption?: Record<string, string>
   /**
-   * When a question hero is shown (direct, sourced, or branched): render the question and optional
-   * `questionSubtext` above the image instead of below. Ignored for `overview` pages.
+   * When a question hero is shown (direct, sourced, or branched): use a stacked layout with the
+   * hero image first, then the question and optional `questionSubtext` (not the default image-above-question flow). Ignored for `overview` pages.
    */
   questionAboveHeroImage?: boolean
   /** Extra line under the question when `questionAboveHeroImage` is true (e.g. scroll instructions). */
   questionSubtext?: string
   /**
-   * On `slider` (Likert) with `questionAboveHeroImage`: render the scale between the question/subtext
-   * and the hero image instead of below the image.
+   * On `slider` (Likert) with `questionAboveHeroImage`: render the scale after the question/subtext
+   * (still below the hero image in reading order).
    */
   sliderAboveHeroImage?: boolean
   /** Include this page in the flow only when `answers[priorPageId]` exactly equals `equals`. */
@@ -184,6 +199,61 @@ type StudyPage = {
   rankingOtherQuestion?: string
   /** `buckets` only: narrow left “Items to place” column; buckets on the right (2-wide row if two options, 2×2 if four). */
   bucketsSplitSidebar?: boolean
+  /**
+   * Pill above the question: Discussion (open feedback), Activity (on-screen tasks), Reflection (wrap-up).
+   * When omitted, the tag is derived from page type and position (last study page → Reflection).
+   */
+  questionTag?: 'discussion' | 'activity' | 'reflection'
+}
+
+type QuestionTagKind = 'discussion' | 'activity' | 'reflection'
+
+function pageCollectsOpenFeedback(page: StudyPage, answers: Record<string, string>): boolean {
+  if (page.type === 'text') return true
+  if (page.type === 'prototype' && page.prototypeOpenTextKey) return true
+  if (page.type === 'multiple-choice') {
+    if (page.multiChoiceRequiredFreeTextKey) return true
+    if (
+      page.followUpFreeText &&
+      page.followUpWhen !== undefined &&
+      answers[page.id] === page.followUpWhen
+    ) {
+      return true
+    }
+  }
+  if (
+    page.type === 'multi-select' &&
+    page.multiSelectOtherFreeTextKey &&
+    page.multiSelectOtherOptionLabel
+  ) {
+    try {
+      const sel = JSON.parse(answers[page.id] || '[]') as string[]
+      return Array.isArray(sel) && sel.includes(page.multiSelectOtherOptionLabel)
+    } catch {
+      return false
+    }
+  }
+  if (page.type === 'ranking' && page.rankingOtherAnswerKey) return true
+  return false
+}
+
+/** Overview pages omit the tag; otherwise every question page gets one category. */
+function resolveQuestionTag(
+  page: StudyPage,
+  isLastStudyPage: boolean,
+  answers: Record<string, string>
+): QuestionTagKind | null {
+  if (page.type === 'overview') return null
+  if (page.questionTag) return page.questionTag
+  if (isLastStudyPage) return 'reflection'
+  if (pageCollectsOpenFeedback(page, answers)) return 'discussion'
+  return 'activity'
+}
+
+function questionTagDisplayLabel(tag: QuestionTagKind): string {
+  if (tag === 'discussion') return 'Discussion'
+  if (tag === 'activity') return 'Prompt'
+  return 'Reflection'
 }
 
 function resolveFigmaEmbedUrl(page: StudyPage, allPages: StudyPage[]): string | undefined {
@@ -247,10 +317,25 @@ const SELECTED_OPTION_PLACEHOLDER = '{{SELECTED_OPTION}}'
 
 /** Open text is captured by a notetaker during moderated sessions (participant speaks aloud). */
 const MODERATOR_OPEN_TEXT_PLACEHOLDER =
-  'Please share your thoughts with the moderator — the notetaker will enter notes here.'
+  'Notes'
+
+/** ~30% fewer rows than original 6 / 4 / 3 defaults for moderator dock textareas. */
+const MODERATOR_DOCK_TEXTAREA_ROWS = {
+  large: Math.max(2, Math.round(6 * 0.7)),
+  medium: Math.max(2, Math.round(4 * 0.7)),
+  small: Math.max(2, Math.round(3 * 0.7))
+} as const
+
+function ModeratorNotesFieldLabel() {
+  return <p className="moderator-notes-field-label">Moderator notes</p>
+}
 
 function textInputNoteFilledClass(value: string): string {
   return value.trim() ? ' text-input--note-filled' : ''
+}
+
+function moderatorDockTextareaClass(value: string): string {
+  return `text-input text-input--moderator-dock${textInputNoteFilledClass(value)}`
 }
 
 function resolveMultiChoiceFreeTextLabel(label: string, mainAnswer: string | undefined): string {
@@ -1020,6 +1105,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: 'portable-notification-content',
         type: 'text',
+        questionTag: 'reflection',
         question: 'What type of notification content would be valuable (ex: security CVEs)?'
       },
       {
@@ -1050,6 +1136,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: 'gen-ai-trust',
         type: 'text',
+        questionTag: 'reflection',
         question:
           "If an AI built a custom view for you, how would we earn your trust that the information is accurate? Would you need to see a 'Why was this shown?' explanation, or is the speed of the data more important?"
       },
@@ -1119,7 +1206,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         type: 'buckets',
         bucketsSplitSidebar: true,
         options: ['Across Red Hat sites', 'App-specific'],
-        instruction: 'Drag each attribute into the bucket that reflects your preference',
+        instruction: 'Moderator: Drag each attribute into the bucket that reflects the participant\'s preference',
         rows: [
           { id: 'language-preference', label: 'Language preference' },
           { id: 'technical-focus', label: 'Primary technical focus (e.g., Ansible)' },
@@ -1140,7 +1227,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         maxSelections: 5,
         multiSelectListHeading: 'Selectable attributes',
         instruction:
-          'Each row below is selectable — tap or click to add it to your choices, or tap again to remove it.\n\nSelect exactly 5 items, then tap Next to continue. If one of your choices is Other, use the write-in field to describe it.',
+          'Moderator: Select exactly 5 items. If one of the participant\'s choices is Other, describe it to the note taker.',
         options: [
           'Job/Role',
           'Experience level with Red Hat',
@@ -1686,6 +1773,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     [allStudyPages, answers]
   )
   const pageNavigationRef = useRef<HTMLDivElement>(null)
+  const pageContentRef = useRef<HTMLDivElement>(null)
   const prevCanProceedRef = useRef<boolean | null>(null)
 
   const currentPage = studyPages[currentPageIndex]
@@ -1931,6 +2019,47 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     prevCanProceedRef.current = ok
   }, [answers, currentPageIndex, studyPages, allStudyPages])
 
+  const pageForModeratorFocus = studyPages[currentPageIndex]
+  const moderatorFocusPageId = pageForModeratorFocus?.id ?? ''
+  const moderatorFocusMcFollowUpActive = Boolean(
+    pageForModeratorFocus?.type === 'multiple-choice' &&
+      pageForModeratorFocus.followUpFreeText &&
+      pageForModeratorFocus.followUpWhen !== undefined &&
+      answers[pageForModeratorFocus.id] === pageForModeratorFocus.followUpWhen
+  )
+  const moderatorFocusMsOtherActive = Boolean(
+    pageForModeratorFocus?.type === 'multi-select' &&
+      pageForModeratorFocus.multiSelectOtherOptionLabel &&
+      pageForModeratorFocus.multiSelectOtherFreeTextKey &&
+      (() => {
+        try {
+          const sel = JSON.parse(answers[pageForModeratorFocus.id] || '[]') as string[]
+          return (
+            Array.isArray(sel) &&
+            sel.includes(pageForModeratorFocus.multiSelectOtherOptionLabel!)
+          )
+        } catch {
+          return false
+        }
+      })()
+  )
+
+  useLayoutEffect(() => {
+    const root = pageContentRef.current
+    if (!root) return
+    const list = root.querySelectorAll<HTMLTextAreaElement>(
+      'textarea[data-moderator-notes-focus="true"]'
+    )
+    if (list.length === 0) return
+    list[list.length - 1]!.focus({ preventScroll: true })
+  }, [
+    currentPageIndex,
+    moderatorFocusPageId,
+    pageForModeratorFocus?.type,
+    moderatorFocusMcFollowUpActive,
+    moderatorFocusMsOtherActive
+  ])
+
   if (isLoadingCompletion) {
     return <LoadingScreen message="Preparing" />
   }
@@ -2015,6 +2144,32 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       </div>
     ) : null
 
+  const resolvedQuestionTag = resolveQuestionTag(currentPage, isLastPage, answers)
+
+  const showRankingModeratorDock =
+    currentPage.type === 'ranking' &&
+    Boolean(rankingRowsResolved && rankingRowsResolved.length >= 2) &&
+    Boolean(currentPage.rankingOtherAnswerKey && currentPage.rankingOtherQuestion)
+
+  const showModeratorNotesDock =
+    (currentPage.type === 'prototype' &&
+      Boolean(currentPage.prototypeOpenTextKey && currentPage.prototypeOpenTextLabel)) ||
+    currentPage.type === 'text' ||
+    (currentPage.type === 'multiple-choice' &&
+      Boolean(
+        currentPage.options &&
+          currentPage.multiChoiceRequiredFreeTextKey &&
+          currentPage.multiChoiceRequiredFreeTextLabel
+      )) ||
+    (currentPage.type === 'multiple-choice' &&
+      currentPage.followUpWhen !== undefined &&
+      answers[currentPage.id] === currentPage.followUpWhen &&
+      Boolean(currentPage.followUpAnswerKey && currentPage.followUpFreeText)) ||
+    (currentPage.type === 'multi-select' &&
+      moderatorFocusMsOtherActive &&
+      Boolean(currentPage.multiSelectOtherFreeTextLabel)) ||
+    showRankingModeratorDock
+
   return (
     <div className="study-pages-screen">
       <div className="study-header">
@@ -2033,9 +2188,11 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
         </div>
 
         <div
-          className="page-content"
+          ref={pageContentRef}
+          className="study-page-main"
           key={`study-page-${currentPageIndex}-${currentPage.id}`}
         >
+        <div className="page-content">
           {questionHero && !deferHeroBelowQuestion ? (
             <div className="study-expandable-image-block study-expandable-image-block--hero">
               <button
@@ -2169,18 +2326,18 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
               ) : null}
             </>
           ) : deferHeroBelowQuestion ? null : (
-            <h2 className="page-question">{displayedQuestion}</h2>
+            <>
+              {resolvedQuestionTag ? (
+                <p className="page-question-tag" data-tag={resolvedQuestionTag}>
+                  {questionTagDisplayLabel(resolvedQuestionTag)}
+                </p>
+              ) : null}
+              <h2 className="page-question">{displayedQuestion}</h2>
+            </>
           )}
 
           {deferHeroBelowQuestion && questionHero ? (
             <>
-              <div className="page-question-heading-group">
-                <h2 className="page-question">{displayedQuestion}</h2>
-                {currentPage.questionSubtext?.trim() ? (
-                  <p className="page-question-subtext">{currentPage.questionSubtext}</p>
-                ) : null}
-              </div>
-              {showLikertAboveDeferredHero ? likertScaleEl : null}
               <div className="study-expandable-image-block study-expandable-image-block--hero study-expandable-image-block--hero-after-question">
                 <button
                   type="button"
@@ -2195,6 +2352,18 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                 </button>
                 <p className="study-expandable-image-hint">Click image to enlarge</p>
               </div>
+              <div className="page-question-heading-group">
+                {resolvedQuestionTag ? (
+                  <p className="page-question-tag" data-tag={resolvedQuestionTag}>
+                    {questionTagDisplayLabel(resolvedQuestionTag)}
+                  </p>
+                ) : null}
+                <h2 className="page-question">{displayedQuestion}</h2>
+                {currentPage.questionSubtext?.trim() ? (
+                  <p className="page-question-subtext">{currentPage.questionSubtext}</p>
+                ) : null}
+              </div>
+              {showLikertAboveDeferredHero ? likertScaleEl : null}
             </>
           ) : null}
 
@@ -2220,26 +2389,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   </span>
                 </div>
               )}
-              {currentPage.prototypeOpenTextKey && currentPage.prototypeOpenTextLabel && (
-                <div className="multiple-choice-other-follow">
-                  <p className="multiple-choice-other-follow-label">{currentPage.prototypeOpenTextLabel}</p>
-                  <textarea
-                    className={`text-input${textInputNoteFilledClass(
-                      answers[currentPage.prototypeOpenTextKey] || ''
-                    )}`}
-                    value={answers[currentPage.prototypeOpenTextKey] || ''}
-                    onChange={(e) =>
-                      setAnswers((prev) => ({
-                        ...prev,
-                        [currentPage.prototypeOpenTextKey!]: e.target.value
-                      }))
-                    }
-                    placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
-                    rows={6}
-                    aria-label={currentPage.prototypeOpenTextLabel}
-                  />
-                </div>
-              )}
             </>
           ) : (
             resolvedFigmaUrl &&
@@ -2257,16 +2406,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                 />
               </div>
             )
-          )}
-
-          {currentPage.type === 'text' && (
-            <textarea
-              className={`text-input${textInputNoteFilledClass(answers[currentPage.id] || '')}`}
-              value={answers[currentPage.id] || ''}
-              onChange={(e) => handleAnswerChange(e.target.value)}
-              placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
-              rows={6}
-            />
           )}
 
           {currentPage.type === 'multiple-choice' && currentPage.options && (
@@ -2308,68 +2447,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                       className="figma-embed"
                       allowFullScreen
                       title="Figma prototype"
-                    />
-                  </div>
-                )}
-              {currentPage.multiChoiceRequiredFreeTextKey &&
-                currentPage.multiChoiceRequiredFreeTextLabel && (
-                  <div className="multiple-choice-other-follow">
-                    <p className="multiple-choice-other-follow-label">
-                      {currentPage.multiChoiceRequiredFreeTextLabel.includes(SELECTED_OPTION_PLACEHOLDER) &&
-                      !answers[currentPage.id]?.trim()
-                        ? 'Select an option above, then explain your reasoning below.'
-                        : resolveMultiChoiceFreeTextLabel(
-                            currentPage.multiChoiceRequiredFreeTextLabel,
-                            answers[currentPage.id]
-                          )}
-                    </p>
-                    <textarea
-                      className={`text-input${textInputNoteFilledClass(
-                        answers[currentPage.multiChoiceRequiredFreeTextKey] || ''
-                      )}`}
-                      value={answers[currentPage.multiChoiceRequiredFreeTextKey] || ''}
-                      onChange={(e) =>
-                        setAnswers((prev) => ({
-                          ...prev,
-                          [currentPage.multiChoiceRequiredFreeTextKey!]: e.target.value
-                        }))
-                      }
-                      placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
-                      rows={4}
-                      aria-label={
-                        currentPage.multiChoiceRequiredFreeTextLabel.includes(SELECTED_OPTION_PLACEHOLDER) &&
-                        answers[currentPage.id]?.trim()
-                          ? resolveMultiChoiceFreeTextLabel(
-                              currentPage.multiChoiceRequiredFreeTextLabel,
-                              answers[currentPage.id]
-                            )
-                          : currentPage.multiChoiceRequiredFreeTextLabel
-                      }
-                    />
-                  </div>
-                )}
-              {currentPage.followUpWhen !== undefined &&
-                answers[currentPage.id] === currentPage.followUpWhen &&
-                currentPage.followUpAnswerKey &&
-                currentPage.followUpFreeText && (
-                  <div className="multiple-choice-other-follow">
-                    {currentPage.followUpQuestion ? (
-                      <p className="multiple-choice-other-follow-label">{currentPage.followUpQuestion}</p>
-                    ) : null}
-                    <textarea
-                      className={`text-input${textInputNoteFilledClass(
-                        answers[currentPage.followUpAnswerKey] || ''
-                      )}`}
-                      value={answers[currentPage.followUpAnswerKey] || ''}
-                      onChange={(e) =>
-                        setAnswers((prev) => ({
-                          ...prev,
-                          [currentPage.followUpAnswerKey!]: e.target.value
-                        }))
-                      }
-                      placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
-                      rows={4}
-                      aria-label={currentPage.followUpQuestion || 'Other — please specify'}
                     />
                   </div>
                 )}
@@ -2524,38 +2601,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     : ' selected — optional'}
                 </p>
               )}
-              {currentPage.multiSelectOtherOptionLabel &&
-                currentPage.multiSelectOtherFreeTextKey &&
-                currentPage.multiSelectOtherFreeTextLabel &&
-                (() => {
-                  try {
-                    const sel = JSON.parse(answers[currentPage.id] || '[]') as string[]
-                    return Array.isArray(sel) && sel.includes(currentPage.multiSelectOtherOptionLabel)
-                  } catch {
-                    return false
-                  }
-                })() && (
-                  <div className="multiple-choice-other-follow">
-                    <p className="multiple-choice-other-follow-label">
-                      {currentPage.multiSelectOtherFreeTextLabel}
-                    </p>
-                    <textarea
-                      className={`text-input${textInputNoteFilledClass(
-                        answers[currentPage.multiSelectOtherFreeTextKey] || ''
-                      )}`}
-                      value={answers[currentPage.multiSelectOtherFreeTextKey] || ''}
-                      onChange={(e) =>
-                        setAnswers((prev) => ({
-                          ...prev,
-                          [currentPage.multiSelectOtherFreeTextKey!]: e.target.value
-                        }))
-                      }
-                      placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
-                      rows={4}
-                      aria-label={currentPage.multiSelectOtherFreeTextLabel}
-                    />
-                  </div>
-                )}
             </div>
               )
             })()}
@@ -2683,28 +2728,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                 answerRaw={answers[currentPage.id]}
                 onCommit={(ids) => handleAnswerChange(JSON.stringify(ids))}
               />
-              {currentPage.rankingOtherAnswerKey && currentPage.rankingOtherQuestion ? (
-                <div className="study-ranking-other-followup">
-                  <label className="study-ranking-other-label" htmlFor={`ranking-other-${currentPage.id}`}>
-                    {currentPage.rankingOtherQuestion}
-                  </label>
-                  <textarea
-                    id={`ranking-other-${currentPage.id}`}
-                    className={`text-input study-ranking-other-textarea${textInputNoteFilledClass(
-                      answers[currentPage.rankingOtherAnswerKey] ?? ''
-                    )}`}
-                    rows={3}
-                    placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
-                    value={answers[currentPage.rankingOtherAnswerKey] ?? ''}
-                    onChange={(e) =>
-                      setAnswers((prev) => ({
-                        ...prev,
-                        [currentPage.rankingOtherAnswerKey!]: e.target.value
-                      }))
-                    }
-                  />
-                </div>
-              ) : null}
             </>
           )}
 
@@ -2751,7 +2774,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
             <div
               className={`buckets-question${currentPage.bucketsSplitSidebar ? ' buckets-question--split' : ''}`}
             >
-              <p className="buckets-instruction">{currentPage.instruction || 'Drag each term into the bucket where you expect to find it'}</p>
+              <p className="buckets-instruction">{currentPage.instruction || 'Moderator: Drag each term into the bucket where the participant expects to find it'}</p>
               <BucketsBody
                 page={currentPage}
                 answers={answers}
@@ -2787,10 +2810,176 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
               onClick={() => handleNext()}
               disabled={!canProceed()}
             >
-              {isLastPage ? 'Submit' : 'Next'}
+              {isLastPage ? 'Submit' : 'Moderator: advance when ready'}
             </button>
           </div>
         </div>
+
+        {showModeratorNotesDock ? (
+          <div className="study-moderator-notes-dock" aria-label="Moderator notes">
+            {currentPage.type === 'prototype' &&
+              currentPage.prototypeOpenTextKey &&
+              currentPage.prototypeOpenTextLabel && (
+                <div className="multiple-choice-other-follow multiple-choice-other-follow--in-dock">
+                  <ModeratorNotesFieldLabel />
+                  <p className="multiple-choice-other-follow-label">{currentPage.prototypeOpenTextLabel}</p>
+                  <textarea
+                    className={moderatorDockTextareaClass(
+                      answers[currentPage.prototypeOpenTextKey] || ''
+                    )}
+                    value={answers[currentPage.prototypeOpenTextKey] || ''}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [currentPage.prototypeOpenTextKey!]: e.target.value
+                      }))
+                    }
+                    data-moderator-notes-focus="true"
+                    placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
+                    rows={MODERATOR_DOCK_TEXTAREA_ROWS.large}
+                    aria-label={currentPage.prototypeOpenTextLabel}
+                  />
+                </div>
+              )}
+
+            {currentPage.type === 'text' && (
+              <div className="study-moderator-notes-block">
+                <ModeratorNotesFieldLabel />
+                <textarea
+                  className={moderatorDockTextareaClass(answers[currentPage.id] || '')}
+                  value={answers[currentPage.id] || ''}
+                  onChange={(e) => handleAnswerChange(e.target.value)}
+                  data-moderator-notes-focus="true"
+                  placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
+                  rows={MODERATOR_DOCK_TEXTAREA_ROWS.large}
+                  aria-label="Moderator notes"
+                />
+              </div>
+            )}
+
+            {currentPage.type === 'multiple-choice' &&
+              currentPage.options &&
+              currentPage.multiChoiceRequiredFreeTextKey &&
+              currentPage.multiChoiceRequiredFreeTextLabel && (
+                <div className="multiple-choice-other-follow multiple-choice-other-follow--in-dock">
+                  <ModeratorNotesFieldLabel />
+                  <p className="multiple-choice-other-follow-label">
+                    {currentPage.multiChoiceRequiredFreeTextLabel.includes(SELECTED_OPTION_PLACEHOLDER) &&
+                    !answers[currentPage.id]?.trim()
+                      ? 'Select an option above, then explain your reasoning below.'
+                      : resolveMultiChoiceFreeTextLabel(
+                          currentPage.multiChoiceRequiredFreeTextLabel,
+                          answers[currentPage.id]
+                        )}
+                  </p>
+                  <textarea
+                    className={moderatorDockTextareaClass(
+                      answers[currentPage.multiChoiceRequiredFreeTextKey] || ''
+                    )}
+                    value={answers[currentPage.multiChoiceRequiredFreeTextKey] || ''}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [currentPage.multiChoiceRequiredFreeTextKey!]: e.target.value
+                      }))
+                    }
+                    data-moderator-notes-focus="true"
+                    placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
+                    rows={MODERATOR_DOCK_TEXTAREA_ROWS.medium}
+                    aria-label={
+                      currentPage.multiChoiceRequiredFreeTextLabel.includes(SELECTED_OPTION_PLACEHOLDER) &&
+                      answers[currentPage.id]?.trim()
+                        ? resolveMultiChoiceFreeTextLabel(
+                            currentPage.multiChoiceRequiredFreeTextLabel,
+                            answers[currentPage.id]
+                          )
+                        : currentPage.multiChoiceRequiredFreeTextLabel
+                    }
+                  />
+                </div>
+              )}
+
+            {currentPage.type === 'multiple-choice' &&
+              currentPage.followUpWhen !== undefined &&
+              answers[currentPage.id] === currentPage.followUpWhen &&
+              currentPage.followUpAnswerKey &&
+              currentPage.followUpFreeText && (
+                <div className="multiple-choice-other-follow multiple-choice-other-follow--in-dock">
+                  <ModeratorNotesFieldLabel />
+                  {currentPage.followUpQuestion ? (
+                    <p className="multiple-choice-other-follow-label">{currentPage.followUpQuestion}</p>
+                  ) : null}
+                  <textarea
+                    className={moderatorDockTextareaClass(answers[currentPage.followUpAnswerKey] || '')}
+                    value={answers[currentPage.followUpAnswerKey] || ''}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [currentPage.followUpAnswerKey!]: e.target.value
+                      }))
+                    }
+                    data-moderator-notes-focus="true"
+                    placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
+                    rows={MODERATOR_DOCK_TEXTAREA_ROWS.medium}
+                    aria-label={currentPage.followUpQuestion || 'Other — please specify'}
+                  />
+                </div>
+              )}
+
+            {currentPage.type === 'multi-select' &&
+              moderatorFocusMsOtherActive &&
+              currentPage.multiSelectOtherFreeTextLabel && (
+                <div className="multiple-choice-other-follow multiple-choice-other-follow--in-dock">
+                  <ModeratorNotesFieldLabel />
+                  <p className="multiple-choice-other-follow-label">
+                    {currentPage.multiSelectOtherFreeTextLabel}
+                  </p>
+                  <textarea
+                    className={moderatorDockTextareaClass(
+                      answers[currentPage.multiSelectOtherFreeTextKey!] || ''
+                    )}
+                    value={answers[currentPage.multiSelectOtherFreeTextKey!] || ''}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [currentPage.multiSelectOtherFreeTextKey!]: e.target.value
+                      }))
+                    }
+                    data-moderator-notes-focus="true"
+                    placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
+                    rows={MODERATOR_DOCK_TEXTAREA_ROWS.medium}
+                    aria-label={currentPage.multiSelectOtherFreeTextLabel}
+                  />
+                </div>
+              )}
+
+            {showRankingModeratorDock ? (
+              <div className="study-ranking-other-followup study-ranking-other-followup--in-dock">
+                <label className="study-ranking-other-label" htmlFor={`ranking-other-${currentPage.id}`}>
+                  {currentPage.rankingOtherQuestion}
+                </label>
+                <ModeratorNotesFieldLabel />
+                <textarea
+                  id={`ranking-other-${currentPage.id}`}
+                  className={`${moderatorDockTextareaClass(
+                    answers[currentPage.rankingOtherAnswerKey!] ?? ''
+                  )} study-ranking-other-textarea`}
+                  rows={MODERATOR_DOCK_TEXTAREA_ROWS.small}
+                  data-moderator-notes-focus="true"
+                  placeholder={MODERATOR_OPEN_TEXT_PLACEHOLDER}
+                  value={answers[currentPage.rankingOtherAnswerKey!] ?? ''}
+                  onChange={(e) =>
+                    setAnswers((prev) => ({
+                      ...prev,
+                      [currentPage.rankingOtherAnswerKey!]: e.target.value
+                    }))
+                  }
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
       </div>
 
       {expandedStudyImage ? (

@@ -128,7 +128,7 @@ function QualifyingQuestions({ onBack, onComplete }: QualifyingQuestionsProps) {
             onClick={handleNext}
             disabled={!canProceed}
           >
-            {isLastQuestion ? 'See my recommended study' : 'Next'}
+            {isLastQuestion ? 'See my recommended study' : 'Moderator: advance when ready'}
           </button>
         </div>
       </div>

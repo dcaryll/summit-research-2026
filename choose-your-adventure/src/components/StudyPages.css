@@ -90,11 +90,100 @@
   font-size: 0.85rem;
 }
 
+.study-page-main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: stretch;
+}
+
 .page-content {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 2rem;
+}
+
+.study-moderator-notes-dock {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-top: 1.125rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.study-moderator-notes-dock .multiple-choice-other-follow--in-dock {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+  gap: 0.3rem;
+}
+
+.study-moderator-notes-dock .multiple-choice-other-follow--in-dock .text-input {
+  margin-top: 0.45rem;
+}
+
+.study-moderator-notes-dock .study-moderator-notes-block {
+  gap: 0.3rem;
+}
+
+.study-moderator-notes-dock .study-moderator-notes-block .text-input {
+  margin-top: 0.45rem;
+}
+
+.study-moderator-notes-dock .study-ranking-other-followup--in-dock {
+  margin-top: 0;
+  gap: 0.3rem;
+}
+
+.study-moderator-notes-dock .study-ranking-other-followup--in-dock .text-input {
+  margin-top: 0.45rem;
+}
+
+.text-input.text-input--moderator-dock {
+  min-height: calc(150px * 0.7);
+  padding: calc(1.5rem * 0.7);
+}
+
+.page-question-tag {
+  margin: 0 0 0.4rem 0;
+  padding: 0.3rem 0.75rem;
+  display: inline-block;
+  width: fit-content;
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: 'Red Hat Text', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.page-question-tag[data-tag='discussion'] {
+  border-color: rgba(var(--accent-blue-rgb), 0.55);
+  background: rgba(var(--accent-blue-rgb), 0.16);
+  color: #c5e8ff;
+}
+
+.page-question-tag[data-tag='activity'] {
+  border-color: rgba(122, 214, 170, 0.55);
+  background: rgba(72, 180, 130, 0.14);
+  color: #c4f5df;
+}
+
+.page-question-tag[data-tag='reflection'] {
+  border-color: rgba(212, 178, 255, 0.5);
+  background: rgba(160, 120, 220, 0.18);
+  color: #e8ddff;
+}
+
+.page-question-heading-group .page-question-tag {
+  margin-bottom: 0.25rem;
 }
 
 .page-question {
@@ -146,6 +235,7 @@
   margin-bottom: 0.25rem;
 }
 
+/* Long hero (e.g. registration form) in “deferred” stacked layout — image then question */
 .study-expandable-image-block--hero-after-question {
   max-height: min(70vh, 36rem);
   overflow-y: auto;
@@ -348,6 +438,26 @@
   font-weight: 600;
   font-family: 'Red Hat Text', sans-serif;
   text-align: left;
+}
+
+.moderator-notes-field-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+  font-family: 'Red Hat Text', sans-serif;
+  text-align: left;
+}
+
+.study-moderator-notes-block {
+  width: 100%;
+  max-width: min(700px, 100%);
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .ranking-question {
@@ -1490,6 +1600,10 @@
   background: var(--accent-blue);
   border: 2px solid var(--accent-blue);
   color: #ffffff;
+  white-space: normal;
+  line-height: 1.3;
+  text-align: center;
+  max-width: min(100%, 22rem);
 }
 
 .nav-button.next:hover:not(:disabled) {

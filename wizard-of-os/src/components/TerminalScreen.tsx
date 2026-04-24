@@ -805,7 +805,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                       rows={6}
                       value={answers.additionalFeedback ?? ''}
                       onChange={(e) => onAnswerChange('additionalFeedback', e.target.value)}
-                      placeholder="Please share your thoughts with the moderator — the notetaker will enter notes here."
+                      placeholder="Notes"
                     />
                   </div>
                 </>
@@ -827,7 +827,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                     onClick={currentQuestion === 8 ? onSubmit : onNextQuestion}
                     className="go-button"
                   >
-                    {currentQuestion === 8 ? 'Submit' : 'Next'}
+                    {currentQuestion === 8 ? 'Submit' : 'Moderator: advance when ready'}
                   </button>
                 )}
               </div>

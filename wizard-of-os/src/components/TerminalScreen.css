@@ -298,6 +298,10 @@
   min-width: 100px;
   flex-shrink: 0;
   height: fit-content;
+  white-space: normal;
+  line-height: 1.25;
+  text-align: center;
+  max-width: min(100%, 22rem);
 }
 
 .go-button:hover {
