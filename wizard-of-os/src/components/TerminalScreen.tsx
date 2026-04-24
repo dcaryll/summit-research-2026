@@ -302,7 +302,7 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
               left: 0,
               right: 0,
               zIndex: 10,
-              background: '#0f0f0f',
+              background: 'transparent',
               borderBottom: '1px solid rgba(255,255,255,0.2)',
             }}
           >
@@ -788,26 +788,11 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
               )}
 
               {currentQuestion === 8 && (
-                <>
-                  <p className="question-text" id="wizard-question-prompt">
-                    {
-                      "Is there anything else you'd like to tell us about your question and how you'd prefer to get that information?"
-                    }
-                  </p>
-                  <div className="wizard-open-response">
-                    <label htmlFor="wizard-additional-feedback" className="wizard-open-response-label">
-                      Your response (optional)
-                    </label>
-                    <textarea
-                      id="wizard-additional-feedback"
-                      className="wizard-open-textarea"
-                      rows={6}
-                      value={answers.additionalFeedback ?? ''}
-                      onChange={(e) => onAnswerChange('additionalFeedback', e.target.value)}
-                      placeholder="Notes"
-                    />
-                  </div>
-                </>
+                <p className="question-text" id="wizard-question-prompt">
+                  {
+                    "Is there anything else you'd like to tell us about your question and how you'd prefer to get that information?"
+                  }
+                </p>
               )}
 
               <div className="question-navigation">
@@ -830,6 +815,22 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
                   </button>
                 )}
               </div>
+
+              {currentQuestion === 8 && (
+                <div className="wizard-open-response">
+                  <label htmlFor="wizard-additional-feedback" className="wizard-open-response-label">
+                    Moderator notes
+                  </label>
+                  <textarea
+                    id="wizard-additional-feedback"
+                    className="wizard-open-textarea"
+                    rows={6}
+                    value={answers.additionalFeedback ?? ''}
+                    onChange={(e) => onAnswerChange('additionalFeedback', e.target.value)}
+                    placeholder="Notes"
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
