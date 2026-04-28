@@ -386,6 +386,29 @@
   text-align: left;
 }
 
+.study-prototype-placeholder-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  width: 100%;
+  max-width: min(56rem, 100%);
+  margin: 0;
+  align-self: flex-start;
+}
+
+.study-page-image-placeholder--prototype-gallery {
+  max-width: none;
+  margin: 0;
+  min-height: 10rem;
+  align-self: stretch;
+}
+
+@media (max-width: 768px) {
+  .study-prototype-placeholder-gallery {
+    grid-template-columns: 1fr;
+  }
+}
+
 .study-page-prototype-placeholder {
   width: 100%;
   max-width: 42rem;

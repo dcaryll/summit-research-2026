@@ -142,6 +142,11 @@ type StudyPage = {
   placeholderImage?: boolean
   /** Topic-page style placeholder before the question (e.g. hybrid cloud prototype). */
   prototypePlaceholder?: boolean
+  /**
+   * On `prototype` with no usable Figma embed URL: show this many gray placeholder panels in a
+   * gallery instead of the “add embed URL” message.
+   */
+  prototypePlaceholderImageSlots?: number
   /** After `overview` paragraphs: static image (e.g. production UI screenshot). */
   overviewAfterImageSrc?: string
   overviewAfterImageAlt?: string
@@ -166,6 +171,11 @@ type StudyPage = {
   multiChoiceRequiredFreeTextKey?: string
   /** Label above the free-text field; use `{{SELECTED_OPTION}}` to insert the participant’s chosen option. */
   multiChoiceRequiredFreeTextLabel?: string
+  /**
+   * With `multiChoiceRequiredFreeTextKey`: show the explanation field, but only the radio choice is
+   * required to advance (moderator notes optional).
+   */
+  multiChoiceFreeTextOptional?: boolean
   /** Replace each `{{TOPIC}}` in `question` with the participant's answer from this page id. */
   questionTopicFromPageId?: string
   /**
@@ -894,8 +904,12 @@ function computeCanProceed(
   if (page.type === 'multiple-choice') {
     const main = ans[page.id]
     if (!main?.trim()) return false
-    if (page.multiChoiceRequiredFreeTextKey) {
-      if (!ans[page.multiChoiceRequiredFreeTextKey]?.trim()) return false
+    if (
+      page.multiChoiceRequiredFreeTextKey &&
+      !page.multiChoiceFreeTextOptional &&
+      !ans[page.multiChoiceRequiredFreeTextKey]?.trim()
+    ) {
+      return false
     }
     if (page.followUpWhen !== undefined && page.followUpAnswerKey) {
       if (main === page.followUpWhen) {
@@ -1060,7 +1074,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         id: 'study-overview',
         type: 'overview',
         question:
-          "**Refine your intelligent dashboard**\n\nThis study has three parts. You will walk through each in order. Every part includes a short introduction and often an interactive preview, plus written follow-up questions (several in Parts 1 and 2, four after the preview in Part 3).\n\n- Part 1 — The portable My Red Hat (tools that follow you across Red Hat sites)\n- Part 2 — Generative and intelligent customization (AI-assisted dashboard layout)\n- Part 3 — Proof of subscription value lookback (renewal-ready proof of value)\n\nSelect Next when you are ready to begin Part 1."
+          "**Refine your intelligent dashboard**\n\nThis study has three parts. You will walk through each in order. Each part includes a short introduction and often an interactive preview, plus written follow-up questions.\n\nPart 1 — The portable My Red Hat (tools that follow you across Red Hat sites)\n\nPart 2 — Generative and intelligent customization (AI-assisted dashboard layout)\n\nPart 3 — Proof of subscription value lookback (renewal-ready proof of value)"
       },
       {
         id: 'portable-intro',
@@ -1072,21 +1086,17 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         id: 'portable-prototype',
         type: 'prototype',
         question:
-          'Explore the clickable prototype below. When you are ready, continue to the follow-up questions.',
-        figmaEmbedUrl:
-          'https://embed.figma.com/proto/LHgDJjj80waVYdJCskxasF/My-Red-Hat---Dashboard-customization?node-id=1011-90920&embed-host=summit-research&scaling=scale-down-width&content-scaling=fixed'
-      },
-      {
-        id: 'portable-followup',
-        type: 'text',
-        question:
-          'As you move between looking at documentation and managing your systems in the Console, is there one piece of data you find yourself constantly copying/pasting or switching tabs to check? What is it?'
+          'As you move between looking at documentation and managing your systems in the Console, is there one piece of data you find yourself constantly copying/pasting or switching tabs to check? What is it?',
+        prototypePlaceholderImageSlots: 3,
+        prototypeOpenTextKey: 'portable-followup'
       },
       {
         id: 'portable-sidekick',
-        type: 'text',
+        type: 'prototype',
         question:
-          "If we gave you a 'persistent sidekick'—a small panel that stays on your screen everywhere you go on Red Hat sites—which 3 items (like active support cases, security CVEs, or specific product versions) would you pin to it?"
+          "If we gave you a 'persistent sidekick'—a small panel that stays on your screen everywhere you go on Red Hat sites—which 3 items (like active support cases, security CVEs, or specific product versions) would you pin to it?",
+        prototypePlaceholderImageSlots: 3,
+        prototypeOpenTextKey: 'portable-sidekick'
       },
       {
         id: 'portable-notifications',
@@ -1094,51 +1104,65 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         question:
           "If this 'sidekick' showed you a notification, would you want it to be:",
         options: [
-          '(a) a passive alert you check on your own time',
-          '(b) a proactive nudge that interrupts you for something critical',
-          '(c) Other'
+          'a passive alert you check on your own time',
+          'a proactive nudge that interrupts you for something critical',
+          'Other'
         ],
         multiChoiceRequiredFreeTextKey: 'portable-notifications-explain',
         multiChoiceRequiredFreeTextLabel:
-          'You indicated you prefer {{SELECTED_OPTION}}. Please explain.'
-      },
-      {
-        id: 'portable-notification-content',
-        type: 'text',
-        questionTag: 'reflection',
-        question: 'What type of notification content would be valuable (ex: security CVEs)?'
+          'You indicated you prefer {{SELECTED_OPTION}}, please explain why.',
+        multiChoiceFreeTextOptional: true
       },
       {
         id: 'gen-ai-intro',
         type: 'overview',
         question:
-          "**Section 2: Generative and intelligent customization**\n\nTake the wheel or let AI drive?\n\nHelp us design a dashboard that builds itself around your actual workday."
-      },
-      {
-        id: 'gen-ai-prototype',
-        type: 'prototype',
-        question:
-          'Explore the clickable prototype below. When you are ready, continue to the follow-up questions.',
-        figmaEmbedUrl: ''
+          "**Section 2: Generative and intelligent customization**\n\nTake the wheel or let AI drive?\n\nHelp us design the next generation of My Red Hat by choosing whether you want total manual control or a dashboard that intelligently builds itself around your work."
       },
       {
         id: 'gen-ai-followup',
         type: 'text',
+        placeholderImage: true,
         question:
           "If you could 'prompt' this blank space to show you exactly what you need right now, what would you say? (e.g., 'Show me everything related to my OpenShift upgrade' or 'Build me a security health view'.)"
       },
       {
         id: 'gen-ai-layout',
-        type: 'text',
+        type: 'multiple-choice',
         question:
-          'When your needs change—like during an active system breach—do you want to manually drag-and-drop new components into place, or would you prefer the dashboard to automatically shift its layout to prioritize security data?'
+          'When your needs change—like during an active system breach—do you want:',
+        options: [
+          'To manually drag-and-drop new dashboard components into place',
+          'The dashboard uses AI to automatically shift its layout to prioritize security data',
+          'Combination of both',
+          'Other'
+        ]
+      },
+      {
+        id: 'gen-ai-layout-followup',
+        type: 'text',
+        questionTopicFromPageId: 'gen-ai-layout',
+        question:
+          'You indicated you prefer {{TOPIC}}. Why is that your preference?'
       },
       {
         id: 'gen-ai-trust',
-        type: 'text',
+        type: 'multiple-choice',
         questionTag: 'reflection',
         question:
-          "If an AI built a custom view for you, how would we earn your trust that the information is accurate? Would you need to see a 'Why was this shown?' explanation, or is the speed of the data more important?"
+          'If AI built a custom view for you, which factor is most important when deciding to use this AI feature:',
+        options: [
+          'Transparency (knowing why it was shown and/or citations)',
+          'Speed of the data',
+          'Other'
+        ]
+      },
+      {
+        id: 'gen-ai-trust-followup',
+        type: 'text',
+        questionTag: 'reflection',
+        questionTopicFromPageId: 'gen-ai-trust',
+        question: 'You indicated you prefer {{TOPIC}}. Please explain.'
       },
       {
         id: 'proof-intro',
@@ -1147,15 +1171,9 @@ const getStudyPages = (focusId: string): StudyPage[] => {
           "**Section 3: Proof of subscription value lookback**\n\nMake your next renewal a breeze.\n\nHelp us design the ultimate 'Proof of Value' report that shows your boss exactly how much your team has achieved with Red Hat this year."
       },
       {
-        id: 'proof-prototype',
-        type: 'prototype',
-        question:
-          'Explore the clickable prototype below. When you are ready, continue to the follow-up questions.',
-        figmaEmbedUrl: ''
-      },
-      {
         id: 'proof-renewal-metrics',
         type: 'text',
+        placeholderImage: true,
         question:
           'If you had to prove the value of your Red Hat spend to your boss today to justify a renewal, what top 3 metrics (e.g., security patches applied, support cases resolved) would be critical?'
       },
@@ -1169,16 +1187,26 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         id: 'proof-report-cadence',
         type: 'multiple-choice',
         question: 'What is the ideal cadence you would need this type of report?',
-        options: ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annually', 'Other'],
-        multiChoiceRequiredFreeTextKey: 'proof-report-cadence-explain',
-        multiChoiceRequiredFreeTextLabel:
-          'You indicated you prefer {{SELECTED_OPTION}}. Please explain.'
+        options: ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annually', 'Other']
+      },
+      {
+        id: 'proof-report-cadence-followup',
+        type: 'text',
+        questionTopicFromPageId: 'proof-report-cadence',
+        question: 'You indicated you prefer {{TOPIC}}. Please explain.'
       },
       {
         id: 'proof-year-in-review-value',
         type: 'text',
         question:
           "Does seeing a 'Year in Review' summary help you operate better day-to-day, or is its primary value just for budget/renewal conversations?"
+      },
+      {
+        id: 'my-red-hat-closing',
+        type: 'text',
+        questionTag: 'reflection',
+        question:
+          "Is there anything else you'd like to share with the My Red Hat team?"
       }
     ],
     'user-preferences': [
@@ -2253,6 +2281,29 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   'topic page preview (selectable learning content)'}
               </span>
             </div>
+          ) : currentPage.type === 'prototype' &&
+            !resolvedFigmaUrl &&
+            currentPage.prototypePlaceholderImageSlots != null &&
+            currentPage.prototypePlaceholderImageSlots > 0 ? (
+            <div
+              className="study-prototype-placeholder-gallery"
+              role="group"
+              aria-label="Reference image placeholders"
+            >
+              {Array.from(
+                { length: currentPage.prototypePlaceholderImageSlots },
+                (_, i) => (
+                  <div
+                    key={i}
+                    className="study-page-image-placeholder study-page-image-placeholder--prototype-gallery"
+                    role="img"
+                    aria-label={`Placeholder image ${i + 1} of ${currentPage.prototypePlaceholderImageSlots}`}
+                  >
+                    <span className="study-page-image-placeholder-label">Image placeholder</span>
+                  </div>
+                )
+              )}
+            </div>
           ) : null}
 
           {currentPage.type === 'overview' ? (
@@ -2337,7 +2388,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   {questionTagDisplayLabel(resolvedQuestionTag)}
                 </p>
               ) : null}
-              <h2 className="page-question">{displayedQuestion}</h2>
+              {displayedQuestion.trim() ? (
+                <h2 className="page-question">{displayedQuestion}</h2>
+              ) : null}
             </>
           )}
 
@@ -2363,7 +2416,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     {questionTagDisplayLabel(resolvedQuestionTag)}
                   </p>
                 ) : null}
-                <h2 className="page-question">{displayedQuestion}</h2>
+                {displayedQuestion.trim() ? (
+                  <h2 className="page-question">{displayedQuestion}</h2>
+                ) : null}
                 {currentPage.questionSubtext?.trim() ? (
                   <p className="page-question-subtext">{currentPage.questionSubtext}</p>
                 ) : null}
@@ -2383,7 +2438,8 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     title="Clickable prototype"
                   />
                 </div>
-              ) : (
+              ) : currentPage.prototypePlaceholderImageSlots != null &&
+                currentPage.prototypePlaceholderImageSlots > 0 ? null : (
                 <div
                   className="study-page-prototype-placeholder"
                   role="region"
