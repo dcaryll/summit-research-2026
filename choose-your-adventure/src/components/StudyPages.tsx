@@ -22,6 +22,16 @@ import contentDiscoveryQ2Virtualization from '../images/content-discovery-q2-vir
 import developerStudyTiersImage from '../images/developer-study-tiers.png'
 import developerStudyRegistrationIndividuals from '../images/developer-study-registration-individuals.png'
 import developerStudyRegistrationBusinesses from '../images/developer-study-registration-businesses.png'
+import mrhGallery1Image1 from '../images/mrh-gallery1-image1.png'
+import mrhGallery1Image2 from '../images/mrh-gallery1-image2.png'
+import mrhGallery1Image3 from '../images/mrh-gallery1-image3.png'
+import mrhGallery2Image1 from '../images/mrh-gallery2-image1.png'
+import mrhGallery2Image2 from '../images/mrh-gallery2-image2.png'
+import mrhGallery2Image3 from '../images/mrh-gallery2-image3.png'
+import mrhDashboardBuildMode from '../images/mrh-dashboard-build-mode.png'
+import mrhSection3Image from '../images/mrh-section3-image.png'
+import mrhDashboardGallery1 from '../images/mrh-dashboard-gallery1.png'
+import mrhDashboardGallery2 from '../images/mrh-dashboard-gallery2.png'
 import CompletionScreen from './CompletionScreen'
 import LoadingScreen from './LoadingScreen'
 import {
@@ -147,6 +157,12 @@ type StudyPage = {
    * gallery instead of the “add embed URL” message.
    */
   prototypePlaceholderImageSlots?: number
+  /**
+   * On `prototype` with no Figma embed: real screenshots; click the image to cycle to the next
+   * (wraps). Takes precedence over gray `prototypePlaceholderImageSlots` panels. Uses the same
+   * carousel UI as `questionAboveCarouselGallery` on other page types.
+   */
+  prototypeGalleryImages?: { src: string; alt: string }[]
   /** After `overview` paragraphs: static image (e.g. production UI screenshot). */
   overviewAfterImageSrc?: string
   overviewAfterImageAlt?: string
@@ -154,6 +170,17 @@ type StudyPage = {
   overviewAfterImageFullWidth?: boolean
   /** After `overview` paragraphs: multiple images in a row; each opens the same lightbox as `overviewAfterImageSrc`. When non-empty, takes precedence over `overviewAfterImageSrc` for that page. */
   overviewAfterImageGallery?: { src: string; alt: string }[]
+  /**
+   * Non-overview pages: row gallery above the question (same layout/lightbox as `overviewAfterImageGallery`).
+   * When non-empty, takes precedence over a single `imageSrc` hero in the top slot.
+   */
+  questionAboveImageGallery?: { src: string; alt: string }[]
+  /**
+   * Non-overview pages: single-image carousel above the question (click to advance, same behavior as
+   * `prototypeGalleryImages`). When non-empty, takes precedence over `questionAboveImageGallery` and
+   * the single `imageSrc` hero in the top slot.
+   */
+  questionAboveCarouselGallery?: { src: string; alt: string }[]
   /** Shown in the prototype placeholder box (e.g. numbered resources matching on-screen labels). */
   prototypePlaceholderHint?: string
   /** When set with `figmaEmbedUrl`, render the iframe above the question instead of below. */
@@ -1087,7 +1114,20 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         type: 'prototype',
         question:
           'As you move between looking at documentation and managing your systems in the Console, is there one piece of data you find yourself constantly copying/pasting or switching tabs to check? What is it?',
-        prototypePlaceholderImageSlots: 3,
+        prototypeGalleryImages: [
+          {
+            src: mrhGallery1Image1,
+            alt: 'My Red Hat portable experience: moving between product documentation and the management console.'
+          },
+          {
+            src: mrhGallery1Image2,
+            alt: 'My Red Hat portable experience: second screen in the documentation and console flow.'
+          },
+          {
+            src: mrhGallery1Image3,
+            alt: 'My Red Hat portable experience: third screen in the documentation and console flow.'
+          }
+        ],
         prototypeOpenTextKey: 'portable-followup'
       },
       {
@@ -1095,7 +1135,20 @@ const getStudyPages = (focusId: string): StudyPage[] => {
         type: 'prototype',
         question:
           "If we gave you a 'persistent sidekick'—a small panel that stays on your screen everywhere you go on Red Hat sites—which 3 items (like active support cases, security CVEs, or specific product versions) would you pin to it?",
-        prototypePlaceholderImageSlots: 3,
+        prototypeGalleryImages: [
+          {
+            src: mrhGallery2Image1,
+            alt: 'My Red Hat persistent sidekick: first screen showing a panel that stays available across Red Hat sites.'
+          },
+          {
+            src: mrhGallery2Image2,
+            alt: 'My Red Hat persistent sidekick: second screen in the sidekick flow.'
+          },
+          {
+            src: mrhGallery2Image3,
+            alt: 'My Red Hat persistent sidekick: third screen in the sidekick flow.'
+          }
+        ],
         prototypeOpenTextKey: 'portable-sidekick'
       },
       {
@@ -1122,13 +1175,25 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: 'gen-ai-followup',
         type: 'text',
-        placeholderImage: true,
+        imageSrc: mrhDashboardBuildMode,
+        imageAlt:
+          'My Red Hat dashboard in build mode: space to prompt or configure the view you need.',
         question:
           "If you could 'prompt' this blank space to show you exactly what you need right now, what would you say? (e.g., 'Show me everything related to my OpenShift upgrade' or 'Build me a security health view'.)"
       },
       {
         id: 'gen-ai-layout',
         type: 'multiple-choice',
+        questionAboveCarouselGallery: [
+          {
+            src: mrhDashboardGallery1,
+            alt: 'My Red Hat dashboard: first reference view for layout during changing priorities.'
+          },
+          {
+            src: mrhDashboardGallery2,
+            alt: 'My Red Hat dashboard: second reference view for layout during changing priorities.'
+          }
+        ],
         question:
           'When your needs change—like during an active system breach—do you want:',
         options: [
@@ -1173,7 +1238,9 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: 'proof-renewal-metrics',
         type: 'text',
-        placeholderImage: true,
+        imageSrc: mrhSection3Image,
+        imageAlt:
+          'My Red Hat proof of value: reference view for subscription value and renewal metrics.',
         question:
           'If you had to prove the value of your Red Hat spend to your boss today to justify a renewal, what top 3 metrics (e.g., security patches applied, support cases resolved) would be critical?'
       },
@@ -1795,6 +1862,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   const [showCompletion, setShowCompletion] = useState(false)
   const [isLoadingCompletion, setIsLoadingCompletion] = useState(false)
   const [expandedStudyImage, setExpandedStudyImage] = useState<{ src: string; alt: string } | null>(null)
+  const [prototypeGallerySlideIndex, setPrototypeGallerySlideIndex] = useState(0)
   const allStudyPages = useMemo(() => getStudyPages(focusId), [focusId])
   const studyPages = useMemo(
     () => allStudyPages.filter((p) => pagePassesVisibilityFilter(p, answers)),
@@ -1807,6 +1875,19 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   const currentPage = studyPages[currentPageIndex]
   const displayedQuestion = currentPage ? resolveStudyQuestion(currentPage, allStudyPages, answers) : ''
 
+  const pageCarouselSlides =
+    currentPage?.questionAboveCarouselGallery &&
+    currentPage.questionAboveCarouselGallery.length > 0
+      ? currentPage.questionAboveCarouselGallery
+      : currentPage?.prototypeGalleryImages
+  const pageCarouselLen = pageCarouselSlides?.length ?? 0
+  const pageCarouselSafeIndex =
+    pageCarouselLen > 0
+      ? ((prototypeGallerySlideIndex % pageCarouselLen) + pageCarouselLen) % pageCarouselLen
+      : 0
+  const pageCarouselCurrentSlide =
+    pageCarouselLen > 0 ? pageCarouselSlides![pageCarouselSafeIndex] : undefined
+
   useEffect(() => {
     if (studyPages.length > 0 && currentPageIndex >= studyPages.length) {
       setCurrentPageIndex(Math.max(0, studyPages.length - 1))
@@ -1815,6 +1896,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
 
   useEffect(() => {
     setExpandedStudyImage(null)
+    setPrototypeGallerySlideIndex(0)
   }, [currentPageIndex])
 
   useEffect(() => {
@@ -2226,7 +2308,36 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
           key={`study-page-${currentPageIndex}-${currentPage.id}`}
         >
         <div className="page-content">
-          {questionHero && !deferHeroBelowQuestion ? (
+          {currentPage.questionAboveImageGallery &&
+          currentPage.questionAboveImageGallery.length > 0 &&
+          !(currentPage.questionAboveCarouselGallery && currentPage.questionAboveCarouselGallery.length > 0) ? (
+            <div
+              className="study-overview-after-gallery"
+              role="group"
+              aria-label="Dashboard reference screenshots"
+            >
+              {currentPage.questionAboveImageGallery.map((item, idx) => (
+                <figure key={idx} className="study-overview-after-gallery-item">
+                  <button
+                    type="button"
+                    className="study-expandable-image-btn study-expandable-image-btn--overview"
+                    onClick={() => setExpandedStudyImage({ src: item.src, alt: item.alt })}
+                    aria-haspopup="dialog"
+                    aria-label={
+                      item.alt?.trim()
+                        ? `View larger: ${item.alt}`
+                        : `View larger screenshot ${idx + 1}`
+                    }
+                  >
+                    <img src={item.src} alt="" className="study-overview-after-image" />
+                  </button>
+                  <figcaption className="study-expandable-image-hint study-expandable-image-hint--in-figure">
+                    Click image to enlarge
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          ) : questionHero && !deferHeroBelowQuestion ? (
             <div className="study-expandable-image-block study-expandable-image-block--hero">
               <button
                 type="button"
@@ -2280,6 +2391,50 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                 {currentPage.prototypePlaceholderHint ??
                   'topic page preview (selectable learning content)'}
               </span>
+            </div>
+          ) : !resolvedFigmaUrl &&
+            pageCarouselLen > 0 &&
+            pageCarouselCurrentSlide ? (
+            <div
+              className="study-prototype-gallery-carousel"
+              role="region"
+              aria-label="Reference screens"
+            >
+              <button
+                type="button"
+                className="study-expandable-image-btn study-prototype-gallery-carousel-btn"
+                onClick={() =>
+                  setPrototypeGallerySlideIndex((i) => (i + 1) % pageCarouselLen)
+                }
+                aria-label={
+                  pageCarouselCurrentSlide.alt.trim()
+                    ? `Show next screen (${pageCarouselSafeIndex + 1} of ${pageCarouselLen}). ${pageCarouselCurrentSlide.alt}`
+                    : `Show next screen, image ${pageCarouselSafeIndex + 1} of ${pageCarouselLen}`
+                }
+              >
+                <img
+                  src={pageCarouselCurrentSlide.src}
+                  alt=""
+                  className="study-prototype-gallery-carousel-img"
+                />
+              </button>
+              <div
+                className="study-prototype-gallery-dots"
+                aria-hidden="true"
+              >
+                {pageCarouselSlides!.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`study-prototype-gallery-dot${
+                      i === pageCarouselSafeIndex ? ' study-prototype-gallery-dot--active' : ''
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="study-expandable-image-hint">
+                Click the image to view the next screen ({pageCarouselSafeIndex + 1} of{' '}
+                {pageCarouselLen})
+              </p>
             </div>
           ) : currentPage.type === 'prototype' &&
             !resolvedFigmaUrl &&
@@ -2438,8 +2593,9 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                     title="Clickable prototype"
                   />
                 </div>
-              ) : currentPage.prototypePlaceholderImageSlots != null &&
-                currentPage.prototypePlaceholderImageSlots > 0 ? null : (
+              ) : pageCarouselLen > 0 ||
+                (currentPage.prototypePlaceholderImageSlots != null &&
+                  currentPage.prototypePlaceholderImageSlots > 0) ? null : (
                 <div
                   className="study-page-prototype-placeholder"
                   role="region"

@@ -386,6 +386,50 @@
   text-align: left;
 }
 
+.study-prototype-gallery-carousel {
+  width: 100%;
+  max-width: min(56rem, 100%);
+  margin: 0;
+  align-self: flex-start;
+}
+
+.study-prototype-gallery-carousel-btn {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.study-prototype-gallery-carousel-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+.study-prototype-gallery-dots {
+  display: flex;
+  gap: 0.45rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.65rem;
+}
+
+.study-prototype-gallery-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.study-prototype-gallery-dot--active {
+  background: rgba(255, 255, 255, 0.85);
+  transform: scale(1.15);
+}
+
 .study-prototype-placeholder-gallery {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
