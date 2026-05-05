@@ -1253,7 +1253,7 @@ const getStudyPages = (focusId: string): StudyPage[] => {
       {
         id: 'proof-report-cadence',
         type: 'multiple-choice',
-        question: 'What is the ideal cadence you would need this type of report?',
+        question: 'What is the ideal cadence you would need for this type of report?',
         options: ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annually', 'Other']
       },
       {
