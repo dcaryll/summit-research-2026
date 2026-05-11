@@ -1,8 +1,7 @@
 :root {
-  /* AAA-compliant blue (7:1+ on #0f0f0f, #1f1f1f): #6EB5F7 */
-  --accent-blue: #6EB5F7;
-  --accent-blue-rgb: 110, 181, 247;
-  --accent-blue-hover: #5BA3E8;
+  --accent-blue: #4781b7;
+  --accent-blue-rgb: 71, 129, 183;
+  --accent-blue-hover: #4075a5;
 }
 
 * {

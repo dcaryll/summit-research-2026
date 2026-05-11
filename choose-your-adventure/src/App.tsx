@@ -38,6 +38,7 @@ const saveResponseToBackend = async (data: {
   timestamp: string
   focusId: string
   answers: Record<string, string>
+  participantId?: string
 }): Promise<boolean> => {
   const endpoint = getBackendApiEndpoint()
   if (!endpoint) {
@@ -68,6 +69,7 @@ const saveResponse = async (data: {
   timestamp: string
   focusId: string
   answers: Record<string, string>
+  participantId?: string
 }) => {
   // Try to save to backend first (primary storage)
   const backendSuccess = await saveResponseToBackend(data)
@@ -120,6 +122,7 @@ type StoredStudyResponse = {
   timestamp: string
   focusId: string
   answers: Record<string, string>
+  participantId?: string
 }
 
 const getAllResponses = async (): Promise<StoredStudyResponse[]> => {
@@ -215,12 +218,13 @@ const exportResponsesToCsv = async () => {
     )
     const answerColumns = buildAnswerColumns(sorted)
     const answerHeaders = resolveAnswerColumnHeaders(answerColumns)
-    const headers = ['timestamp', 'focusId', ...answerHeaders]
+    const headers = ['timestamp', 'participantId', 'focusId', ...answerHeaders]
     const rows: string[][] = [headers]
     for (const r of sorted) {
       const fid = (r.focusId || '').trim()
       rows.push([
         r.timestamp || '',
+        r.participantId ?? '',
         r.focusId || '',
         ...answerColumns.map((col) =>
           col.focusId === fid ? (r.answers?.[col.answerKey] ?? '') : ''
@@ -247,6 +251,7 @@ const exportResponsesToCsv = async () => {
 
 function App() {
   const [selectedFocus, setSelectedFocus] = useState<string | null>(null)
+  const [sessionParticipantId, setSessionParticipantId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showStudy, setShowStudy] = useState(false)
 
@@ -306,8 +311,9 @@ function App() {
     setSelectedFocus(null)
   }
 
-  const handleTakeStudy = () => {
+  const handleTakeStudy = (participantId: string) => {
     if (!selectedFocus) return
+    setSessionParticipantId(participantId)
     setIsLoading(true)
     setTimeout(() => {
       setIsLoading(false)
@@ -318,13 +324,15 @@ function App() {
   const handleBackToSelection = () => {
     setShowStudy(false)
     setSelectedFocus(null)
+    setSessionParticipantId('')
   }
 
   const handleStudyComplete = async (focusId: string, answers: Record<string, string>) => {
     await saveResponse({
       timestamp: new Date().toISOString(),
       focusId,
-      answers
+      answers,
+      participantId: sessionParticipantId || undefined
     })
   }
 

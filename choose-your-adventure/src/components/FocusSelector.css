@@ -618,12 +618,85 @@
   flex: 1;
 }
 
+.study-detail-participant-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.study-detail-participant-label {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'Red Hat Display', sans-serif;
+}
+
+.study-detail-participant-input-row {
+  display: flex;
+  align-items: stretch;
+  max-width: 22rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.study-detail-participant-prefix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 0.65rem;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: 'Red Hat Text', monospace;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.study-detail-participant-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  font-size: 1rem;
+  font-family: 'Red Hat Text', sans-serif;
+  color: #ffffff;
+  background: transparent;
+}
+
+.study-detail-participant-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.study-detail-participant-input:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(var(--accent-blue-rgb), 0.45);
+}
+
+.study-detail-participant-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: 'Red Hat Text', sans-serif;
+}
+
 .study-detail-cta.take-study-button {
   margin-top: 0.5rem;
   align-self: flex-start;
   min-width: 0;
   padding: 0.85rem 1.75rem;
   font-size: 1.05rem;
+}
+
+.study-detail-cta.take-study-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
 }
 
 @media (max-width: 900px) {

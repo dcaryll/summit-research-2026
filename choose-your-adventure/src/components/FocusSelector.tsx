@@ -89,12 +89,15 @@ function DiceIcon({ className }: { className?: string }) {
   )
 }
 
+const PARTICIPANT_ID_PREFIX = 'CYUX'
+
 interface FocusSelectorProps {
   onFocusSelect: (focus: string) => void
   /** Called when the study detail modal is dismissed without starting the study. */
   onClearFocusSelection?: () => void
   selectedFocus: string | null
-  onTakeStudy: () => void
+  /** Full participant id is `${PARTICIPANT_ID_PREFIX}` plus numeric digits from the modal (empty for random pick). */
+  onTakeStudy: (participantId: string) => void
   onExportCsv?: () => void | Promise<void>
 }
 
@@ -206,13 +209,20 @@ function FocusSelector({
   const [isShowingRandomResult, setIsShowingRandomResult] = useState(false)
   const [randomChosenFocus, setRandomChosenFocus] = useState<string | null>(null)
   const [openDetailId, setOpenDetailId] = useState<string | null>(null)
+  /** Digits only; full id shown/submitted as CYUX + digits */
+  const [participantIdDigits, setParticipantIdDigits] = useState('')
 
   const detailOption = openDetailId ? focusOptions.find((o) => o.id === openDetailId) : undefined
 
   const closeStudyDetail = useCallback(() => {
     setOpenDetailId(null)
+    setParticipantIdDigits('')
     onClearFocusSelection?.()
   }, [onClearFocusSelection])
+
+  useEffect(() => {
+    if (openDetailId) setParticipantIdDigits('')
+  }, [openDetailId])
 
   useEffect(() => {
     if (!openDetailId) return
@@ -233,7 +243,7 @@ function FocusSelector({
     const t = setTimeout(() => {
       setIsShowingRandomResult(false)
       setRandomChosenFocus(null)
-      onTakeStudy()
+      onTakeStudy('')
     }, RANDOM_RESULT_DURATION_MS)
     return () => clearTimeout(t)
   }, [isShowingRandomResult, onTakeStudy])
@@ -371,11 +381,40 @@ function FocusSelector({
                   {detailOption.title}
                 </h2>
                 <p className="study-detail-long-description">{detailOption.detailDescription}</p>
+                <div className="study-detail-participant-field">
+                  <label htmlFor="study-detail-participant-id" className="study-detail-participant-label">
+                    Participant ID
+                  </label>
+                  <div className="study-detail-participant-input-row">
+                    <span className="study-detail-participant-prefix" aria-hidden>
+                      {PARTICIPANT_ID_PREFIX}
+                    </span>
+                    <input
+                      id="study-detail-participant-id"
+                      className="study-detail-participant-input"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="off"
+                      placeholder="numbers only"
+                      aria-describedby="study-detail-participant-hint"
+                      value={participantIdDigits}
+                      onChange={(e) => {
+                        const next = e.target.value.replace(/\D/g, '')
+                        setParticipantIdDigits(next)
+                      }}
+                    />
+                  </div>
+                  <p id="study-detail-participant-hint" className="study-detail-participant-hint">
+                    Full ID is {PARTICIPANT_ID_PREFIX} plus the digits you enter.
+                  </p>
+                </div>
                 <button
                   type="button"
                   className="study-detail-cta take-study-button"
+                  disabled={participantIdDigits.length === 0}
                   onClick={() => {
-                    onTakeStudy()
+                    onTakeStudy(`${PARTICIPANT_ID_PREFIX}${participantIdDigits}`)
                   }}
                 >
                   Moderator: start this activity
