@@ -214,6 +214,8 @@ function FocusSelector({
   const [participantIdPrefix, setParticipantIdPrefix] = useState<(typeof PARTICIPANT_ID_PREFIX_OPTIONS)[number]>(
     PARTICIPANT_ID_PREFIX_OPTIONS[0]
   )
+  /** After “Surprise me!” animation, open the detail modal for this focus so Participant ID can be entered. */
+  const surpriseRevealFocusRef = useRef<string | null>(null)
 
   const detailOption = openDetailId ? focusOptions.find((o) => o.id === openDetailId) : undefined
 
@@ -248,16 +250,19 @@ function FocusSelector({
   useEffect(() => {
     if (!isShowingRandomResult) return
     const t = setTimeout(() => {
+      const focusId = surpriseRevealFocusRef.current
+      surpriseRevealFocusRef.current = null
       setIsShowingRandomResult(false)
       setRandomChosenFocus(null)
-      onTakeStudy('')
+      if (focusId) setOpenDetailId(focusId)
     }, RANDOM_RESULT_DURATION_MS)
     return () => clearTimeout(t)
-  }, [isShowingRandomResult, onTakeStudy])
+  }, [isShowingRandomResult])
 
   const handleRandomize = () => {
     const randomIndex = Math.floor(Math.random() * orderedOptions.length)
     const focusId = orderedOptions[randomIndex].id
+    surpriseRevealFocusRef.current = focusId
     setRandomChosenFocus(focusId)
     onFocusSelect(focusId)
     setIsShowingRandomResult(true)
