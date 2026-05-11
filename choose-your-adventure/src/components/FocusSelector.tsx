@@ -116,7 +116,7 @@ interface FocusOption {
 const focusOptions: FocusOption[] = [
   {
     id: 'user-preferences',
-    title: 'Personalize your Red Hat',
+    title: 'Personalize your Red\u00A0Hat',
     description: 'Tell us how you expect your profile and settings to create a unique experience for you.',
     durationLabel: '10–15 mins',
     detailDescription:
@@ -134,7 +134,7 @@ const focusOptions: FocusOption[] = [
       'We want to understand how you evaluate software in real life—what builds trust, how you weigh trials versus installs, and what you need before recommending a product. The session includes a credit-budget activity and several follow-ups. Plan for roughly 5-8 minutes; there are no wrong answers.',
     detailVisualSrc: productEvaluationStudyDetailHero,
     detailVisualAlt:
-      'Red Hat Enterprise Linux trial page with AI assistance on, Get started, benefits list, and setup step asking what you want to achieve with RHEL (e.g. Developing applications selected).'
+      'Red\u00A0Hat Enterprise Linux trial page with AI assistance on, Get started, benefits list, and setup step asking what you want to achieve with RHEL (e.g. Developing applications selected).'
   },
   {
     id: 'developer-program',
@@ -142,7 +142,7 @@ const focusOptions: FocusOption[] = [
     description: 'Help us tailor our technical resources and tools to your daily workflow.',
     durationLabel: '8–12 mins',
     detailDescription:
-      'Share which developer tools and programs you use today, how they fit into your workflow, and what would make Red Hat’s developer offerings more useful. Expect a short prototype exploration plus multiple-choice and open-ended questions. Most participants finish in about 8–12 minutes.',
+      'Share which developer tools and programs you use today, how they fit into your workflow, and what would make Red\u00A0Hat’s developer offerings more useful. Expect a short prototype exploration plus multiple-choice and open-ended questions. Most participants finish in about 8–12 minutes.',
     detailVisualSrc: developerProgramStudyDetailHero,
     detailVisualAlt:
       'Illustration of a small robot in a white astronaut helmet and red hoodie typing on a laptop, in a dark purple space-themed scene with geometric shapes and stars.'
@@ -150,13 +150,13 @@ const focusOptions: FocusOption[] = [
   {
     id: 'my-red-hat',
     title: 'Refine your intelligent dashboard',
-    description: 'Explore AI-built views and portable tools to build the ultimate My Red Hat.',
+    description: 'Explore AI-built views and portable tools to build the ultimate My Red\u00A0Hat.',
     durationLabel: '10–15 mins',
     detailDescription:
-      'This track focuses on the My Red Hat portal and related experiences—navigation, dashboards, and tasks you perform as a customer. It has three sections with interactive previews and several written follow-ups per section. Set aside about 10–15 minutes to complete the study comfortably.',
+      'This track focuses on the My Red\u00A0Hat portal and related experiences—navigation, dashboards, and tasks you perform as a customer. It has three sections with interactive previews and several written follow-ups per section. Set aside about 10–15 minutes to complete the study comfortably.',
     detailVisualSrc: myRedHatStudyDetailHero,
     detailVisualAlt:
-      'Screenshot of the My dashboard page in the Red Hat customer portal, showing trials, subscriptions, support cases, and related widgets.'
+      'Screenshot of the My dashboard page in the Red\u00A0Hat customer portal, showing trials, subscriptions, support cases, and related widgets.'
   },
   {
     id: 'my-trials',
@@ -178,7 +178,7 @@ const focusOptions: FocusOption[] = [
       'Help us understand how you scan product menus and information architecture when researching or buying. This study includes a large sorting task, rankings, and several explain-your-answer prompts. Expect about 10–15 minutes depending on how much you think aloud while you work.',
     detailVisualSrc: productMarketingStudyDetailHero,
     detailVisualAlt:
-      'Red Hat product page excerpt highlighting the horizontal secondary navigation with menu items such as Explore, Overview, and related product links.'
+      'Red\u00A0Hat product page excerpt highlighting the horizontal secondary navigation with menu items such as Explore, Overview, and related product links.'
   },
   {
     id: 'content-discovery',

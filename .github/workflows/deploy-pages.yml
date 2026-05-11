@@ -26,13 +26,18 @@ jobs:
         with:
           node-version: '24'
 
+      # Vite inlines env at build time. Add repo Settings → Secrets → Actions: VITE_API_ENDPOINT
       - name: Build wizard-of-os
+        env:
+          VITE_API_ENDPOINT: ${{ secrets.VITE_API_ENDPOINT }}
         run: |
           cd wizard-of-os
           npm ci
           npm run build
 
       - name: Build choose-your-adventure
+        env:
+          VITE_API_ENDPOINT: ${{ secrets.VITE_API_ENDPOINT }}
         run: |
           cd choose-your-adventure
           npm ci
