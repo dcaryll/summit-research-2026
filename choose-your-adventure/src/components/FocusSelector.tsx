@@ -89,14 +89,14 @@ function DiceIcon({ className }: { className?: string }) {
   )
 }
 
-const PARTICIPANT_ID_PREFIX = 'CYUX'
+const PARTICIPANT_ID_PREFIX_OPTIONS = ['CYUX-1', 'CYUX-2'] as const
 
 interface FocusSelectorProps {
   onFocusSelect: (focus: string) => void
   /** Called when the study detail modal is dismissed without starting the study. */
   onClearFocusSelection?: () => void
   selectedFocus: string | null
-  /** Full participant id is `${PARTICIPANT_ID_PREFIX}` plus numeric digits from the modal (empty for random pick). */
+  /** Full participant id is CYUX-1|CYUX-2 plus numeric digits from the modal (empty for random pick). */
   onTakeStudy: (participantId: string) => void
   onExportCsv?: () => void | Promise<void>
 }
@@ -209,19 +209,26 @@ function FocusSelector({
   const [isShowingRandomResult, setIsShowingRandomResult] = useState(false)
   const [randomChosenFocus, setRandomChosenFocus] = useState<string | null>(null)
   const [openDetailId, setOpenDetailId] = useState<string | null>(null)
-  /** Digits only; full id shown/submitted as CYUX + digits */
+  /** Digits only; combined with cohort prefix as CYUX-1|2-{digits} */
   const [participantIdDigits, setParticipantIdDigits] = useState('')
+  const [participantIdPrefix, setParticipantIdPrefix] = useState<(typeof PARTICIPANT_ID_PREFIX_OPTIONS)[number]>(
+    PARTICIPANT_ID_PREFIX_OPTIONS[0]
+  )
 
   const detailOption = openDetailId ? focusOptions.find((o) => o.id === openDetailId) : undefined
 
   const closeStudyDetail = useCallback(() => {
     setOpenDetailId(null)
     setParticipantIdDigits('')
+    setParticipantIdPrefix(PARTICIPANT_ID_PREFIX_OPTIONS[0])
     onClearFocusSelection?.()
   }, [onClearFocusSelection])
 
   useEffect(() => {
-    if (openDetailId) setParticipantIdDigits('')
+    if (openDetailId) {
+      setParticipantIdDigits('')
+      setParticipantIdPrefix(PARTICIPANT_ID_PREFIX_OPTIONS[0])
+    }
   }, [openDetailId])
 
   useEffect(() => {
@@ -382,13 +389,29 @@ function FocusSelector({
                 </h2>
                 <p className="study-detail-long-description">{detailOption.detailDescription}</p>
                 <div className="study-detail-participant-field">
-                  <label htmlFor="study-detail-participant-id" className="study-detail-participant-label">
+                  <span id="study-detail-participant-label" className="study-detail-participant-label">
                     Participant ID
-                  </label>
-                  <div className="study-detail-participant-input-row">
-                    <span className="study-detail-participant-prefix" aria-hidden>
-                      {PARTICIPANT_ID_PREFIX}
-                    </span>
+                  </span>
+                  <div
+                    className="study-detail-participant-input-row"
+                    role="group"
+                    aria-labelledby="study-detail-participant-label"
+                  >
+                    <select
+                      id="study-detail-participant-prefix"
+                      className="study-detail-participant-prefix-select"
+                      aria-label="Participant cohort"
+                      value={participantIdPrefix}
+                      onChange={(e) =>
+                        setParticipantIdPrefix(e.target.value as (typeof PARTICIPANT_ID_PREFIX_OPTIONS)[number])
+                      }
+                    >
+                      {PARTICIPANT_ID_PREFIX_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
                     <input
                       id="study-detail-participant-id"
                       className="study-detail-participant-input"
@@ -397,7 +420,6 @@ function FocusSelector({
                       pattern="[0-9]*"
                       autoComplete="off"
                       placeholder="numbers only"
-                      aria-describedby="study-detail-participant-hint"
                       value={participantIdDigits}
                       onChange={(e) => {
                         const next = e.target.value.replace(/\D/g, '')
@@ -405,16 +427,13 @@ function FocusSelector({
                       }}
                     />
                   </div>
-                  <p id="study-detail-participant-hint" className="study-detail-participant-hint">
-                    Full ID is {PARTICIPANT_ID_PREFIX} plus the digits you enter.
-                  </p>
                 </div>
                 <button
                   type="button"
                   className="study-detail-cta take-study-button"
                   disabled={participantIdDigits.length === 0}
                   onClick={() => {
-                    onTakeStudy(`${PARTICIPANT_ID_PREFIX}${participantIdDigits}`)
+                    onTakeStudy(`${participantIdPrefix}-${participantIdDigits}`)
                   }}
                 >
                   Moderator: start this activity
