@@ -873,7 +873,7 @@ function TerminalScreen({
                     onClick={currentQuestion === 8 ? onSubmit : onNextQuestion}
                     className="go-button"
                   >
-                    {currentQuestion === 8 ? 'Submit' : 'Moderator: advance when ready'}
+                    {currentQuestion === 8 ? 'Submit' : 'Continue'}
                   </button>
                 )}
               </div>
