@@ -45,7 +45,7 @@ function drawRedHatMarkSprite(
   ctx.drawImage(img, 0, 0, nw, nh, dx, dy, dw, dh)
 }
 
-/** Obstacle: freestanding coat rack (weighted base, pole, staggered curved hooks). */
+/** Obstacle: coat rack — ring base, pole, three diagonal pegs + bulbs, top finial (minimal icon style). */
 function drawCoatRack(
   ctx: CanvasRenderingContext2D,
   hitLeft: number,
@@ -54,63 +54,68 @@ function drawCoatRack(
   groundY: number
 ) {
   const cx = hitLeft + hitW * 0.5
+  const top = groundY - hitH
+  const lineW = Math.max(2.2, Math.min(5.2, hitW * 0.08))
+  const bulbR = lineW * 0.78
 
   const woodDark = '#3d2818'
   const woodMid = '#6b4a32'
   const woodBar = '#5c3d28'
-  const woodLight = '#8b623f'
 
   ctx.save()
-
-  const baseH = Math.min(Math.max(hitH * 0.14, 5), 11)
-  const baseHalf = hitW * 0.44
-  ctx.fillStyle = woodDark
-  ctx.beginPath()
-  ctx.moveTo(cx - baseHalf, groundY)
-  ctx.lineTo(cx + baseHalf, groundY)
-  ctx.lineTo(cx + baseHalf * 0.62, groundY - baseH)
-  ctx.lineTo(cx - baseHalf * 0.62, groundY - baseH)
-  ctx.closePath()
-  ctx.fill()
-
-  const poleTop = groundY - hitH * 0.94
-  const poleBot = groundY - baseH + 1
-  const poleW = Math.max(3, Math.min(7, hitW * 0.12))
-  ctx.fillStyle = woodMid
-  ctx.fillRect(cx - poleW * 0.5, poleTop, poleW, poleBot - poleTop)
-
-  const finialR = Math.max(2.5, poleW * 0.55)
-  ctx.fillStyle = woodBar
-  ctx.beginPath()
-  ctx.arc(cx, poleTop, finialR, 0, Math.PI * 2)
-  ctx.fill()
-
-  const reach = Math.min(hitW * 0.4, 26, hitH * 0.22)
-  const hookLo = Math.max(2.5, poleW * 0.5)
-  const hookStartY = poleTop + finialR + 5
-  const poleSpan = poleBot - hookStartY - 6
-  const hookCount = Math.min(6, Math.max(3, Math.round(poleSpan / Math.max(hitH * 0.14, 9))))
-
-  const strokeHook = (hx: number, hy: number, side: number) => {
-    const tipX = hx + side * reach
-    ctx.beginPath()
-    ctx.moveTo(hx, hy)
-    ctx.lineTo(tipX - side * 3, hy)
-    ctx.quadraticCurveTo(tipX + side * 5, hy + 3, tipX - side * 2, hy + Math.min(reach * 0.5, 12))
-    ctx.stroke()
-  }
-
-  ctx.strokeStyle = woodLight
-  ctx.lineWidth = hookLo
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
 
-  for (let i = 0; i < hookCount; i++) {
-    const t = hookCount <= 1 ? 0.5 : (i + 0.5) / hookCount
-    const hy = hookStartY + t * poleSpan
-    const side = i % 2 === 0 ? -1 : 1
-    strokeHook(cx, hy, side)
+  const ringRy = Math.max(2.5, hitH * 0.045)
+  const ringRx = hitW * 0.36
+  const ringCy = groundY - ringRy - 1
+
+  ctx.strokeStyle = woodDark
+  ctx.lineWidth = lineW * 1.2
+  ctx.beginPath()
+  ctx.ellipse(cx, ringCy, ringRx, ringRy, 0, 0, Math.PI * 2)
+  ctx.stroke()
+
+  const poleBottom = Math.min(groundY - 4, top + hitH * 0.88)
+  const yLeftLow = top + hitH * 0.58
+  const yRightMid = top + hitH * 0.44
+  const yLeftHigh = top + hitH * 0.3
+  const topKnobCy = top + hitH * 0.12
+
+  const arm = Math.min(hitW * 0.38, hitH * 0.22)
+
+  ctx.strokeStyle = woodMid
+  ctx.lineWidth = lineW
+  ctx.beginPath()
+  ctx.moveTo(cx, poleBottom)
+  ctx.lineTo(cx, topKnobCy)
+  ctx.stroke()
+
+  const drawBranch = (yAttach: number, signX: number) => {
+    const dx = signX * arm * 0.78
+    const dy = -arm * 0.72
+    const x2 = cx + dx
+    const y2 = yAttach + dy
+    ctx.strokeStyle = woodMid
+    ctx.lineWidth = lineW
+    ctx.beginPath()
+    ctx.moveTo(cx, yAttach)
+    ctx.lineTo(x2, y2)
+    ctx.stroke()
+    ctx.fillStyle = woodBar
+    ctx.beginPath()
+    ctx.arc(x2, y2, bulbR, 0, Math.PI * 2)
+    ctx.fill()
   }
+
+  drawBranch(yLeftLow, -1)
+  drawBranch(yRightMid, 1)
+  drawBranch(yLeftHigh, -1)
+
+  ctx.fillStyle = woodBar
+  ctx.beginPath()
+  ctx.arc(cx, topKnobCy, bulbR, 0, Math.PI * 2)
+  ctx.fill()
 
   ctx.restore()
 }
