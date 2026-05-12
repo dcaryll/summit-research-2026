@@ -1,12 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  type DragEvent,
-  type ReactNode
-} from 'react'
+import { useState, useEffect, useMemo, useRef, type DragEvent, type ReactNode } from 'react'
 import './StudyPages.css'
 import { studyLogo } from '../studyBrand'
 import myTrialsReadyToBuyDialogSingle from '../images/my-trials-ready-to-buy-dialog-single-option.png'
@@ -1869,7 +1861,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     [allStudyPages, answers]
   )
   const pageNavigationRef = useRef<HTMLDivElement>(null)
-  const pageContentRef = useRef<HTMLDivElement>(null)
   const prevCanProceedRef = useRef<boolean | null>(null)
 
   const currentPage = studyPages[currentPageIndex]
@@ -2129,46 +2120,22 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     prevCanProceedRef.current = ok
   }, [answers, currentPageIndex, studyPages, allStudyPages])
 
-  const pageForModeratorFocus = studyPages[currentPageIndex]
-  const moderatorFocusPageId = pageForModeratorFocus?.id ?? ''
-  const moderatorFocusMcFollowUpActive = Boolean(
-    pageForModeratorFocus?.type === 'multiple-choice' &&
-      pageForModeratorFocus.followUpFreeText &&
-      pageForModeratorFocus.followUpWhen !== undefined &&
-      answers[pageForModeratorFocus.id] === pageForModeratorFocus.followUpWhen
-  )
   const moderatorFocusMsOtherActive = Boolean(
-    pageForModeratorFocus?.type === 'multi-select' &&
-      pageForModeratorFocus.multiSelectOtherOptionLabel &&
-      pageForModeratorFocus.multiSelectOtherFreeTextKey &&
+    currentPage?.type === 'multi-select' &&
+      currentPage.multiSelectOtherOptionLabel &&
+      currentPage.multiSelectOtherFreeTextKey &&
       (() => {
         try {
-          const sel = JSON.parse(answers[pageForModeratorFocus.id] || '[]') as string[]
+          const sel = JSON.parse(answers[currentPage.id] || '[]') as string[]
           return (
             Array.isArray(sel) &&
-            sel.includes(pageForModeratorFocus.multiSelectOtherOptionLabel!)
+            sel.includes(currentPage.multiSelectOtherOptionLabel!)
           )
         } catch {
           return false
         }
       })()
   )
-
-  useLayoutEffect(() => {
-    const root = pageContentRef.current
-    if (!root) return
-    const list = root.querySelectorAll<HTMLTextAreaElement>(
-      'textarea[data-moderator-notes-focus="true"]'
-    )
-    if (list.length === 0) return
-    list[list.length - 1]!.focus({ preventScroll: true })
-  }, [
-    currentPageIndex,
-    moderatorFocusPageId,
-    pageForModeratorFocus?.type,
-    moderatorFocusMcFollowUpActive,
-    moderatorFocusMsOtherActive
-  ])
 
   if (isLoadingCompletion) {
     return <LoadingScreen message="Preparing" />
@@ -2303,7 +2270,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
         </div>
 
         <div
-          ref={pageContentRef}
           className="study-page-main"
           key={`study-page-${currentPageIndex}-${currentPage.id}`}
         >

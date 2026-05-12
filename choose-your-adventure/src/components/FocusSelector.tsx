@@ -90,6 +90,8 @@ function DiceIcon({ className }: { className?: string }) {
 }
 
 const PARTICIPANT_ID_PREFIX_OPTIONS = ['CYUX-1', 'CYUX-2'] as const
+type ParticipantCohortPrefix = (typeof PARTICIPANT_ID_PREFIX_OPTIONS)[number]
+type ParticipantIdPrefixSelection = ParticipantCohortPrefix | ''
 
 interface FocusSelectorProps {
   onFocusSelect: (focus: string) => void
@@ -121,7 +123,7 @@ const focusOptions: FocusOption[] = [
     id: 'user-preferences',
     title: 'Personalize your Red\u00A0Hat',
     description: 'Tell us how you expect your profile and settings to create a unique experience for you.',
-    durationLabel: '10–15 mins',
+    durationLabel: '~10 mins',
     detailDescription:
       'This study explores where you expect to manage account-related information, which settings should carry across sites, and how you feel about sharing your preferences to enable a more personalized experience. You will work through drag-and-drop placement, multi-select, and sliders at your own pace—plan for about 10–15 minutes. Your feedback helps us design clearer, more consistent preference experiences.',
     detailVisualSrc: userPreferencesStudyDetailHero,
@@ -132,7 +134,7 @@ const focusOptions: FocusOption[] = [
     id: 'product-evaluation',
     title: 'Build your dream trial',
     description: 'Play the evaluation budget game and show us how you prefer to test software.',
-    durationLabel: '5-8 mins',
+    durationLabel: '~5 mins',
     detailDescription:
       'We want to understand how you evaluate software in real life—what builds trust, how you weigh trials versus installs, and what you need before recommending a product. The session includes a credit-budget activity and several follow-ups. Plan for roughly 5-8 minutes; there are no wrong answers.',
     detailVisualSrc: productEvaluationStudyDetailHero,
@@ -143,7 +145,7 @@ const focusOptions: FocusOption[] = [
     id: 'developer-program',
     title: 'Shape the Developer program',
     description: 'Help us tailor our technical resources and tools to your daily workflow.',
-    durationLabel: '8–12 mins',
+    durationLabel: '~8 mins',
     detailDescription:
       'Share which developer tools and programs you use today, how they fit into your workflow, and what would make Red\u00A0Hat’s developer offerings more useful. Expect a short prototype exploration plus multiple-choice and open-ended questions. Most participants finish in about 8–12 minutes.',
     detailVisualSrc: developerProgramStudyDetailHero,
@@ -154,7 +156,7 @@ const focusOptions: FocusOption[] = [
     id: 'my-red-hat',
     title: 'Refine your intelligent dashboard',
     description: 'Explore AI-built views and portable tools to build the ultimate My Red\u00A0Hat.',
-    durationLabel: '10–15 mins',
+    durationLabel: '~10 mins',
     detailDescription:
       'This track focuses on the My Red\u00A0Hat portal and related experiences—navigation, dashboards, and tasks you perform as a customer. It has three sections with interactive previews and several written follow-ups per section. Set aside about 10–15 minutes to complete the study comfortably.',
     detailVisualSrc: myRedHatStudyDetailHero,
@@ -165,7 +167,7 @@ const focusOptions: FocusOption[] = [
     id: 'my-trials',
     title: 'From testing to buying',
     description: 'Tell us your biggest roadblocks when upgrading from a product trial.',
-    durationLabel: '10–15 mins',
+    durationLabel: '~10 mins',
     detailDescription:
       'We are learning how people move from trial to purchase—including what you expect from “buy” flows, what feels unclear, and how we can make post-trial paths easier. You will answer questions about trials, buying options, and rank proposed improvements. Allow roughly 10–15 minutes.',
     detailVisualSrc: myTrialsStudyDetailHero,
@@ -176,7 +178,7 @@ const focusOptions: FocusOption[] = [
     id: 'product-marketing',
     title: 'Improve our product navigation',
     description: "Sort and rank menu terms so finding products doesn't feel like a guessing game.",
-    durationLabel: '10–15 mins',
+    durationLabel: '~10 mins',
     detailDescription:
       'Help us understand how you scan product menus and information architecture when researching or buying. This study includes a large sorting task, rankings, and several explain-your-answer prompts. Expect about 10–15 minutes depending on how much you think aloud while you work.',
     detailVisualSrc: productMarketingStudyDetailHero,
@@ -187,7 +189,7 @@ const focusOptions: FocusOption[] = [
     id: 'content-discovery',
     title: 'How do you learn best?',
     description: 'Videos, blogs, or podcasts? Tell us what content helps you master new tech.',
-    durationLabel: '5–8 mins',
+    durationLabel: '~5 mins',
     detailDescription:
       'We want to learn how you prefer to discover learning content by topic—what you notice first, how you rank formats, and what would help you go deeper. You will pick a topic, make choices, complete two ranking exercises, and answer a short follow-up. Most people finish in about 5–8 minutes.',
     detailVisualSrc: contentDiscoveryStudyDetailHero,
@@ -211,9 +213,7 @@ function FocusSelector({
   const [openDetailId, setOpenDetailId] = useState<string | null>(null)
   /** Digits only; combined with cohort prefix as CYUX-1|2-{digits} */
   const [participantIdDigits, setParticipantIdDigits] = useState('')
-  const [participantIdPrefix, setParticipantIdPrefix] = useState<(typeof PARTICIPANT_ID_PREFIX_OPTIONS)[number]>(
-    PARTICIPANT_ID_PREFIX_OPTIONS[0]
-  )
+  const [participantIdPrefix, setParticipantIdPrefix] = useState<ParticipantIdPrefixSelection>('')
   /** After “Surprise me!” animation, open the detail modal for this focus so Participant ID can be entered. */
   const surpriseRevealFocusRef = useRef<string | null>(null)
 
@@ -222,14 +222,14 @@ function FocusSelector({
   const closeStudyDetail = useCallback(() => {
     setOpenDetailId(null)
     setParticipantIdDigits('')
-    setParticipantIdPrefix(PARTICIPANT_ID_PREFIX_OPTIONS[0])
+    setParticipantIdPrefix('')
     onClearFocusSelection?.()
   }, [onClearFocusSelection])
 
   useEffect(() => {
     if (openDetailId) {
       setParticipantIdDigits('')
-      setParticipantIdPrefix(PARTICIPANT_ID_PREFIX_OPTIONS[0])
+      setParticipantIdPrefix('')
     }
   }, [openDetailId])
 
@@ -405,12 +405,18 @@ function FocusSelector({
                     <select
                       id="study-detail-participant-prefix"
                       className="study-detail-participant-prefix-select"
-                      aria-label="Participant cohort"
+                      aria-label="Participant cohort (required)"
                       value={participantIdPrefix}
-                      onChange={(e) =>
-                        setParticipantIdPrefix(e.target.value as (typeof PARTICIPANT_ID_PREFIX_OPTIONS)[number])
-                      }
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setParticipantIdPrefix(
+                          v === 'CYUX-1' || v === 'CYUX-2' ? v : ''
+                        )
+                      }}
                     >
+                      <option value="" disabled>
+                        Select a station
+                      </option>
                       {PARTICIPANT_ID_PREFIX_OPTIONS.map((opt) => (
                         <option key={opt} value={opt}>
                           {opt}
@@ -436,8 +442,9 @@ function FocusSelector({
                 <button
                   type="button"
                   className="study-detail-cta take-study-button"
-                  disabled={participantIdDigits.length === 0}
+                  disabled={!participantIdPrefix || participantIdDigits.length === 0}
                   onClick={() => {
+                    if (!participantIdPrefix) return
                     onTakeStudy(`${participantIdPrefix}-${participantIdDigits}`)
                   }}
                 >
