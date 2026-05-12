@@ -197,7 +197,7 @@ const focusOptions: FocusOption[] = [
     id: 'my-trials',
     title: 'From testing to buying',
     description: 'Tell us your biggest roadblocks when upgrading from a product trial.',
-    durationLabel: '~10 mins',
+    durationLabel: '~5 mins',
     detailDescription:
       'We are learning how people move from trial to purchase—including what you expect from “buy” flows, what feels unclear, and how we can make post-trial paths easier. You will answer questions about trials, buying options, and rank proposed improvements. Allow roughly 10–15 minutes.',
     detailVisualSrc: myTrialsStudyDetailHero,
