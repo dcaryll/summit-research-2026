@@ -445,8 +445,8 @@ function FocusSelector({
               Pass the time
             </h2>
             <p className="focus-selector-dino-sub">
-              Click or tap the game (or tab to it), then Space or ↑ to jump. Tap works anytime. After
-              game over, Space, ↑, or tap to restart.
+              Jump the fedora over the hat racks — click or tap the game (or tab to it), then Space or ↑.
+              Tap works anytime. After game over, Space, ↑, or tap to restart.
             </p>
             <ParticipantDinoGame className="focus-selector-dino-game" attachKeyboardToWindow={false} />
           </section>

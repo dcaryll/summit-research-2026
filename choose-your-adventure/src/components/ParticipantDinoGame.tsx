@@ -1,5 +1,20 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './ParticipantDinoGame.css'
+/* Hat-only mark: https://commons.wikimedia.org/wiki/File:Red_Hat_logo.svg */
+import redHatHatMarkUrl from '../images/Red_Hat_logo_hat_only_from_Wikimedia_Commons.svg?url'
+
+const HIGH_SCORE_STORAGE_KEY = 'summit-cya-dino-highscore'
+
+function readHighScoreFromStorage(): number {
+  if (typeof window === 'undefined') return 0
+  try {
+    const raw = localStorage.getItem(HIGH_SCORE_STORAGE_KEY)
+    const n = parseInt(raw ?? '0', 10)
+    return Number.isFinite(n) && n >= 0 ? n : 0
+  } catch {
+    return 0
+  }
+}
 
 type ParticipantDinoGameProps = {
   className?: string
@@ -8,6 +23,102 @@ type ParticipantDinoGameProps = {
    * When `false`, keys only apply while the canvas is focused — avoids clashing with study cards / modals.
    */
   attachKeyboardToWindow?: boolean
+}
+
+/** Draw Wikimedia Red Hat hat mark (192.3×146) into the runner hit box, feet aligned. */
+function drawRedHatMarkSprite(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  dino: { x: number; y: number; w: number; h: number }
+) {
+  const nw = img.naturalWidth
+  const nh = img.naturalHeight
+  if (!(nw > 0 && nh > 0)) return
+  const pad = 3
+  const maxW = dino.w - pad * 2
+  const maxH = dino.h - pad * 2
+  const scale = Math.min(maxW / nw, maxH / nh)
+  const dw = nw * scale
+  const dh = nh * scale
+  const dx = dino.x + (dino.w - dw) * 0.5
+  const dy = dino.y + dino.h - dh - 3
+  ctx.drawImage(img, 0, 0, nw, nh, dx, dy, dw, dh)
+}
+
+/** Obstacle: freestanding hat rack (base, pole, crossbar, pegs) on the ground line. */
+function drawHatRack(
+  ctx: CanvasRenderingContext2D,
+  hitLeft: number,
+  hitW: number,
+  hitH: number,
+  groundY: number
+) {
+  const cx = hitLeft + hitW * 0.5
+  const topY = groundY - hitH
+
+  ctx.save()
+
+  const baseH = Math.min(Math.max(hitH * 0.14, 5), 11)
+  const baseHalf = hitW * 0.44
+  ctx.fillStyle = '#3d2818'
+  ctx.beginPath()
+  ctx.moveTo(cx - baseHalf, groundY)
+  ctx.lineTo(cx + baseHalf, groundY)
+  ctx.lineTo(cx + baseHalf * 0.62, groundY - baseH)
+  ctx.lineTo(cx - baseHalf * 0.62, groundY - baseH)
+  ctx.closePath()
+  ctx.fill()
+
+  const poleTop = topY + hitH * 0.1
+  const poleBot = groundY - baseH + 1
+  const poleW = Math.max(3, Math.min(7, hitW * 0.12))
+  ctx.fillStyle = '#6b4a32'
+  ctx.fillRect(cx - poleW * 0.5, poleTop, poleW, poleBot - poleTop)
+
+  const barH = Math.max(3, hitH * 0.042)
+  const barY = poleTop + hitH * 0.05
+  const barHalf = hitW * 0.4
+  ctx.fillStyle = '#5c3d28'
+  ctx.fillRect(cx - barHalf, barY, barHalf * 2, barH)
+
+  const pegN = Math.min(6, Math.max(2, Math.round(hitW / 8)))
+  const pegInset = poleW + 2
+  const span = barHalf * 2 - pegInset * 2
+  const pegDrop = Math.min(hitH * 0.2, barY - topY + hitH * 0.12)
+  const hookOut = Math.max(2.5, hitW * 0.045)
+
+  ctx.strokeStyle = '#8b623f'
+  ctx.lineWidth = Math.max(2, poleW * 0.45)
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  for (let i = 0; i < pegN; i++) {
+    const u = pegN <= 1 ? 0.5 : i / (pegN - 1)
+    const px = cx - barHalf + pegInset + u * span
+    ctx.beginPath()
+    ctx.moveTo(px, barY + barH)
+    ctx.lineTo(px, barY + barH + pegDrop * 0.5)
+    ctx.lineTo(px + hookOut, barY + barH + pegDrop * 0.82)
+    ctx.stroke()
+  }
+
+  if (hitH > 46) {
+    const bar2Y = barY + hitH * 0.26
+    if (bar2Y + barH < poleBot - 6) {
+      ctx.fillStyle = '#5c3d28'
+      ctx.fillRect(cx - barHalf * 0.88, bar2Y, barHalf * 1.76, barH)
+      const n2 = Math.max(2, pegN - 1)
+      for (let i = 0; i < n2; i++) {
+        const u = i / (n2 - 1)
+        const px = cx - barHalf * 0.88 + 4 + u * (barHalf * 1.76 - 8)
+        ctx.beginPath()
+        ctx.moveTo(px, bar2Y + barH)
+        ctx.lineTo(px + hookOut * 0.85, bar2Y + barH + pegDrop * 0.45)
+        ctx.stroke()
+      }
+    }
+  }
+
+  ctx.restore()
 }
 
 /**
@@ -20,6 +131,7 @@ export default function ParticipantDinoGame({
 }: ParticipantDinoGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef(0)
+  const [highScore, setHighScore] = useState(readHighScoreFromStorage)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -31,7 +143,7 @@ export default function ParticipantDinoGame({
     const H = canvas.height
     const groundY = H - 22
 
-    const dino = { x: 56, y: groundY - 46, w: 40, h: 46, vy: 0, grounded: true }
+    const dino = { x: 48, y: groundY - 64, w: 58, h: 64, vy: 0, grounded: true }
     const gravity = 0.82
     const jumpV = -13.5
 
@@ -44,6 +156,13 @@ export default function ParticipantDinoGame({
     let gameOver = false
     let nextSpawn = 75
     let running = true
+
+    const hatImage = new Image()
+    let hatMarkReady = false
+    hatImage.onload = () => {
+      hatMarkReady = true
+    }
+    hatImage.src = redHatHatMarkUrl
 
     const resetRun = () => {
       obstacles.length = 0
@@ -149,20 +268,37 @@ export default function ParticipantDinoGame({
           obstacles.shift()
         }
 
-        if (collides()) gameOver = true
+        if (collides()) {
+          gameOver = true
+          const runScore = score
+          setHighScore((prev) => {
+            if (runScore <= prev) return prev
+            try {
+              localStorage.setItem(HIGH_SCORE_STORAGE_KEY, String(runScore))
+            } catch {
+              /* quota / private mode */
+            }
+            return runScore
+          })
+        }
       }
 
       for (const o of obstacles) {
-        ctx.fillStyle = 'rgba(90, 170, 110, 0.9)'
-        ctx.fillRect(o.x, groundY - o.h, o.w, o.h)
-        ctx.fillStyle = 'rgba(70, 140, 90, 0.95)'
-        ctx.fillRect(o.x + 3, groundY - o.h + 4, 4, Math.min(o.h - 8, 22))
+        drawHatRack(ctx, o.x, o.w, o.h, groundY)
+        // light ground contact shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.2)'
+        ctx.beginPath()
+        ctx.ellipse(o.x + o.w * 0.5, groundY + 2, o.w * 0.35, 3, 0, 0, Math.PI * 2)
+        ctx.fill()
       }
 
-      ctx.fillStyle = 'rgba(238, 238, 248, 0.96)'
-      ctx.fillRect(dino.x, dino.y, dino.w, dino.h)
-      ctx.fillStyle = '#14141a'
-      ctx.fillRect(dino.x + dino.w - 16, dino.y + 10, 9, 7)
+      if (hatMarkReady && hatImage.naturalWidth > 0) {
+        drawRedHatMarkSprite(ctx, hatImage, dino)
+      }
+      ctx.fillStyle = 'rgba(0,0,0,0.18)'
+      ctx.beginPath()
+      ctx.ellipse(dino.x + dino.w * 0.5, groundY + 2, dino.w * 0.38, 3.5, 0, 0, Math.PI * 2)
+      ctx.fill()
 
       ctx.fillStyle = 'rgba(255,255,255,0.65)'
       ctx.font = '13px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'
@@ -223,10 +359,13 @@ export default function ParticipantDinoGame({
         role="img"
         aria-label={
           attachKeyboardToWindow
-            ? 'Mini endless runner: press Space or tap to jump over blocks'
-            : 'Mini endless runner: tap to jump, or focus this area and press Space'
+            ? 'Mini runner: jump your fedora over hat racks — Space or tap'
+            : 'Mini runner: jump your fedora over hat racks — tap or focus and press Space'
         }
       />
+      <p className="participant-dino-game__highscore" aria-live="polite">
+        Top score: <strong>{highScore}</strong>
+      </p>
     </div>
   )
 }

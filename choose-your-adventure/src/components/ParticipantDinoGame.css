@@ -19,3 +19,15 @@
   outline: 2px solid rgba(var(--accent-blue-rgb), 0.9);
   outline-offset: 3px;
 }
+
+.participant-dino-game__highscore {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.participant-dino-game__highscore strong {
+  color: rgba(255, 255, 255, 0.95);
+  font-variant-numeric: tabular-nums;
+}
