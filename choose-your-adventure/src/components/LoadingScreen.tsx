@@ -14,7 +14,7 @@ function LoadingScreen({ message = 'Loading...', showRunnerGame = false }: Loadi
       <p className="loading-text">{message}</p>
       {showRunnerGame ? (
         <div className="loading-screen-runner">
-          <p className="loading-dino-hint">While you wait — jump the fedora over hat racks (Space, ↑, or tap)</p>
+          <p className="loading-dino-hint">While you wait — jump the fedora over coat racks (Space, ↑, or tap)</p>
           <ParticipantDinoGame />
         </div>
       ) : null}

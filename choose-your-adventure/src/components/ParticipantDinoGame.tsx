@@ -45,8 +45,8 @@ function drawRedHatMarkSprite(
   ctx.drawImage(img, 0, 0, nw, nh, dx, dy, dw, dh)
 }
 
-/** Obstacle: freestanding hat rack (base, pole, crossbar, pegs) on the ground line. */
-function drawHatRack(
+/** Obstacle: freestanding coat rack (weighted base, pole, staggered curved hooks). */
+function drawCoatRack(
   ctx: CanvasRenderingContext2D,
   hitLeft: number,
   hitW: number,
@@ -54,13 +54,17 @@ function drawHatRack(
   groundY: number
 ) {
   const cx = hitLeft + hitW * 0.5
-  const topY = groundY - hitH
+
+  const woodDark = '#3d2818'
+  const woodMid = '#6b4a32'
+  const woodBar = '#5c3d28'
+  const woodLight = '#8b623f'
 
   ctx.save()
 
   const baseH = Math.min(Math.max(hitH * 0.14, 5), 11)
   const baseHalf = hitW * 0.44
-  ctx.fillStyle = '#3d2818'
+  ctx.fillStyle = woodDark
   ctx.beginPath()
   ctx.moveTo(cx - baseHalf, groundY)
   ctx.lineTo(cx + baseHalf, groundY)
@@ -69,53 +73,43 @@ function drawHatRack(
   ctx.closePath()
   ctx.fill()
 
-  const poleTop = topY + hitH * 0.1
+  const poleTop = groundY - hitH * 0.94
   const poleBot = groundY - baseH + 1
   const poleW = Math.max(3, Math.min(7, hitW * 0.12))
-  ctx.fillStyle = '#6b4a32'
+  ctx.fillStyle = woodMid
   ctx.fillRect(cx - poleW * 0.5, poleTop, poleW, poleBot - poleTop)
 
-  const barH = Math.max(3, hitH * 0.042)
-  const barY = poleTop + hitH * 0.05
-  const barHalf = hitW * 0.4
-  ctx.fillStyle = '#5c3d28'
-  ctx.fillRect(cx - barHalf, barY, barHalf * 2, barH)
+  const finialR = Math.max(2.5, poleW * 0.55)
+  ctx.fillStyle = woodBar
+  ctx.beginPath()
+  ctx.arc(cx, poleTop, finialR, 0, Math.PI * 2)
+  ctx.fill()
 
-  const pegN = Math.min(6, Math.max(2, Math.round(hitW / 8)))
-  const pegInset = poleW + 2
-  const span = barHalf * 2 - pegInset * 2
-  const pegDrop = Math.min(hitH * 0.2, barY - topY + hitH * 0.12)
-  const hookOut = Math.max(2.5, hitW * 0.045)
+  const reach = Math.min(hitW * 0.4, 26, hitH * 0.22)
+  const hookLo = Math.max(2.5, poleW * 0.5)
+  const hookStartY = poleTop + finialR + 5
+  const poleSpan = poleBot - hookStartY - 6
+  const hookCount = Math.min(6, Math.max(3, Math.round(poleSpan / Math.max(hitH * 0.14, 9))))
 
-  ctx.strokeStyle = '#8b623f'
-  ctx.lineWidth = Math.max(2, poleW * 0.45)
-  ctx.lineCap = 'round'
-  ctx.lineJoin = 'round'
-  for (let i = 0; i < pegN; i++) {
-    const u = pegN <= 1 ? 0.5 : i / (pegN - 1)
-    const px = cx - barHalf + pegInset + u * span
+  const strokeHook = (hx: number, hy: number, side: number) => {
+    const tipX = hx + side * reach
     ctx.beginPath()
-    ctx.moveTo(px, barY + barH)
-    ctx.lineTo(px, barY + barH + pegDrop * 0.5)
-    ctx.lineTo(px + hookOut, barY + barH + pegDrop * 0.82)
+    ctx.moveTo(hx, hy)
+    ctx.lineTo(tipX - side * 3, hy)
+    ctx.quadraticCurveTo(tipX + side * 5, hy + 3, tipX - side * 2, hy + Math.min(reach * 0.5, 12))
     ctx.stroke()
   }
 
-  if (hitH > 46) {
-    const bar2Y = barY + hitH * 0.26
-    if (bar2Y + barH < poleBot - 6) {
-      ctx.fillStyle = '#5c3d28'
-      ctx.fillRect(cx - barHalf * 0.88, bar2Y, barHalf * 1.76, barH)
-      const n2 = Math.max(2, pegN - 1)
-      for (let i = 0; i < n2; i++) {
-        const u = i / (n2 - 1)
-        const px = cx - barHalf * 0.88 + 4 + u * (barHalf * 1.76 - 8)
-        ctx.beginPath()
-        ctx.moveTo(px, bar2Y + barH)
-        ctx.lineTo(px + hookOut * 0.85, bar2Y + barH + pegDrop * 0.45)
-        ctx.stroke()
-      }
-    }
+  ctx.strokeStyle = woodLight
+  ctx.lineWidth = hookLo
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+
+  for (let i = 0; i < hookCount; i++) {
+    const t = hookCount <= 1 ? 0.5 : (i + 0.5) / hookCount
+    const hy = hookStartY + t * poleSpan
+    const side = i % 2 === 0 ? -1 : 1
+    strokeHook(cx, hy, side)
   }
 
   ctx.restore()
@@ -284,7 +278,7 @@ export default function ParticipantDinoGame({
       }
 
       for (const o of obstacles) {
-        drawHatRack(ctx, o.x, o.w, o.h, groundY)
+        drawCoatRack(ctx, o.x, o.w, o.h, groundY)
         // light ground contact shadow
         ctx.fillStyle = 'rgba(0,0,0,0.2)'
         ctx.beginPath()
@@ -359,8 +353,8 @@ export default function ParticipantDinoGame({
         role="img"
         aria-label={
           attachKeyboardToWindow
-            ? 'Mini runner: jump your fedora over hat racks — Space or tap'
-            : 'Mini runner: jump your fedora over hat racks — tap or focus and press Space'
+            ? 'Mini runner: jump your fedora over coat racks — Space or tap'
+            : 'Mini runner: jump your fedora over coat racks — tap or focus and press Space'
         }
       />
       <p className="participant-dino-game__highscore" aria-live="polite">
