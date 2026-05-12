@@ -17,6 +17,7 @@ import developerProgramStudyDetailHero from '../images/developer-program-overvie
 import productMarketingStudyDetailHero from '../images/product-secondary-nav.webp'
 import contentDiscoveryStudyDetailHero from '../images/learn-study-overview-image.png'
 import type { AppViewMode } from '../appViewMode'
+import ParticipantDinoGame from './ParticipantDinoGame'
 
 /**
  * Official RHDS SVG assets (same as https://ux.redhat.com/foundations/iconography/).
@@ -244,6 +245,7 @@ function FocusSelector({
   onSyncedModeratorParticipantIdDraftChange
 }: FocusSelectorProps) {
   const isModeratorView = viewMode === 'moderator'
+  const isParticipantView = viewMode === 'participant'
   const syncStudyDetailModal = onSyncedStudyDetailModalChange
   const isModalSessionSynced = syncStudyDetailModal !== undefined
   const orderedOptions = useMemo(() => shuffleArray(focusOptions), [])
@@ -434,6 +436,21 @@ function FocusSelector({
             </div>
           </div>
         </div>
+        {isParticipantView ? (
+          <section
+            className="focus-selector-dino-section"
+            aria-labelledby="focus-selector-dino-heading"
+          >
+            <h2 id="focus-selector-dino-heading" className="focus-selector-dino-heading">
+              Pass the time
+            </h2>
+            <p className="focus-selector-dino-sub">
+              Click or tap the game (or tab to it), then Space or ↑ to jump. Tap works anytime. After
+              game over, Space, ↑, or tap to restart.
+            </p>
+            <ParticipantDinoGame className="focus-selector-dino-game" attachKeyboardToWindow={false} />
+          </section>
+        ) : null}
       </div>
       {onExportCsv && (
         <div className="focus-selector-facilitator">

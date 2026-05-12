@@ -736,3 +736,40 @@
     padding-right: 2rem;
   }
 }
+
+/* Participant-only: mini runner below study cards (scroll to play) */
+.focus-selector-dino-section {
+  width: 100%;
+  max-width: min(640px, 100%);
+  margin-top: 0.25rem;
+  padding: 1.75rem 0 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.focus-selector-dino-heading {
+  margin: 0;
+  font-family: 'Red Hat Display', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+}
+
+.focus-selector-dino-sub {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.62);
+  text-align: center;
+  max-width: 36rem;
+}
+
+.focus-selector-dino-game {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}

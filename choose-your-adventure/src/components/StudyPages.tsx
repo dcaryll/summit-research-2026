@@ -100,7 +100,11 @@ export type StudySessionSyncState = {
 
 interface StudyPagesProps {
   focusId: string
-  /** When false, hide moderator notes dock and CSV export. With `studySessionSync` (v2), participant Next/Submit still waits on moderator-captured fields when required. */
+  /**
+   * Facilitator shell when true. When false, participant study experience: hide moderator notes dock
+   * and CSV export; with `studySessionSync` (v2), Next/Submit still waits on moderator-captured fields
+   * when required; pass-time runner on completion loading when appropriate.
+   */
   moderatorMode?: boolean
   onBack: () => void
   onComplete: (focusId: string, answers: Record<string, string>) => void
@@ -1907,6 +1911,8 @@ function StudyPages({
     studySessionSync?.setIsLoadingCompletion ?? setLocalIsLoadingCompletion
   /** Participant without `studySessionSync` (classic v1) cannot receive synced moderator notes. */
   const relaxModeratorCapturedNotes = !moderatorMode && studySessionSync == null
+  /** This window is the participant-facing study UI (not the facilitator shell). */
+  const isParticipantStudyUi = !moderatorMode
   const [expandedStudyImage, setExpandedStudyImage] = useState<{ src: string; alt: string } | null>(null)
   const [prototypeGallerySlideIndex, setPrototypeGallerySlideIndex] = useState(0)
   const allStudyPages = useMemo(() => getStudyPages(focusId), [focusId])
@@ -2198,7 +2204,7 @@ function StudyPages({
   )
 
   if (isLoadingCompletion) {
-    return <LoadingScreen message="Preparing" />
+    return <LoadingScreen message="Preparing" showRunnerGame={isParticipantStudyUi} />
   }
 
   if (showCompletion) {

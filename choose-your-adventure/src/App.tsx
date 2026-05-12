@@ -9,6 +9,7 @@ import './App.css'
 function App() {
   const viewMode = useMemo<AppViewMode>(() => getAppViewModeFromLocation(), [])
   const isModeratorView = viewMode === 'moderator'
+  const isParticipantView = viewMode === 'participant'
 
   const [selectedFocus, setSelectedFocus] = useState<string | null>(null)
   const [sessionParticipantId, setSessionParticipantId] = useState('')
@@ -61,7 +62,7 @@ function App() {
   }
 
   if (isLoading) {
-    return <LoadingScreen message="Preparing" />
+    return <LoadingScreen message="Preparing" showRunnerGame={isParticipantView} />
   }
 
   if (showStudy && selectedFocus) {

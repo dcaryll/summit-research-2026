@@ -1,0 +1,21 @@
+.participant-dino-game {
+  width: 100%;
+  max-width: min(560px, 100%);
+  margin: 0 auto;
+}
+
+.participant-dino-game__canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #14141a;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+.participant-dino-game__canvas:focus-visible {
+  outline: 2px solid rgba(var(--accent-blue-rgb), 0.9);
+  outline-offset: 3px;
+}

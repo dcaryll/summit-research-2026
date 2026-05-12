@@ -31,3 +31,21 @@
   margin: 0;
   text-align: center;
 }
+
+.loading-screen-runner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: min(560px, 100%);
+  padding: 0 0.5rem;
+}
+
+.loading-dino-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  font-family: 'Red Hat Text', sans-serif;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+}

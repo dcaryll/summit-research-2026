@@ -20,6 +20,7 @@ const LOADING_MS = 1500
 export default function AppV2() {
   const viewMode = useMemo<AppViewMode>(() => getAppViewModeFromLocation(), [])
   const isModeratorView = viewMode === 'moderator'
+  const isParticipantView = viewMode === 'participant'
   const soloParticipantMayStart = useMemo(
     () => new URLSearchParams(window.location.search).get('solo') === '1',
     []
@@ -143,7 +144,7 @@ export default function AppV2() {
   )
 
   if (snap.phase === 'loading') {
-    return <LoadingScreen message="Preparing" />
+    return <LoadingScreen message="Preparing" showRunnerGame={isParticipantView} />
   }
 
   if (snap.phase === 'study' && snap.focusId) {
