@@ -40,9 +40,38 @@ interface TerminalScreenProps {
   isLoading: boolean
   isLoadingDashboard: boolean
   onAdjustInput: () => void
+  /** When true (URL `?gamified`), dashboard shows alternate left sidebar instead of SWAG / QR / keep-going. */
+  gamifiedEnding?: boolean
 }
 
-function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, currentQuestion, answers, onAnswerChange, onNextQuestion, onPreviousQuestion, showDashboard, onStartOver, onExportCSV, dashboardData, isLoading, isLoadingDashboard, onAdjustInput }: TerminalScreenProps) {
+/** Alternate dashboard sidebar for `?gamified` — single box with badge redemption copy. */
+const GAMIFIED_PERSONA_CODES: ReadonlyArray<{ persona: string; code: string }> = [
+  { persona: 'Amplifier', code: 'experiencedamplifier' },
+  { persona: 'Maker', code: 'experiencedmaker' },
+  { persona: 'Catalyst', code: 'experiencedcatalyst' },
+  { persona: 'Multiplier', code: 'experiencedmultiplier' },
+  { persona: 'Connector', code: 'experiencedconnector' }
+]
+
+function TerminalScreen({
+  inputValue,
+  onInputChange,
+  onSubmit,
+  showQuestions,
+  currentQuestion,
+  answers,
+  onAnswerChange,
+  onNextQuestion,
+  onPreviousQuestion,
+  showDashboard,
+  onStartOver,
+  onExportCSV,
+  dashboardData,
+  isLoading,
+  isLoadingDashboard,
+  onAdjustInput,
+  gamifiedEnding = false
+}: TerminalScreenProps) {
   const [otherInputValue, setOtherInputValue] = useState('')
   const [otherInputValue2, setOtherInputValue2] = useState('')
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
@@ -328,15 +357,47 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
             </button>
           </div>
           <div className="dashboard-headline-row">
+            {gamifiedEnding ? (
+              <div
+                className="dashboard-headline-spacer dashboard-headline-spacer--gamified"
+                aria-hidden="true"
+              />
+            ) : null}
             <div className="dashboard-headline-section">
               <h1 className="dashboard-headline">You aren't alone!</h1>
-              <p className="dashboard-subheadline">Your questions are unique, but others have asked similar ones. <br />This will help us build new features and improve our websites.</p>
+              <p className="dashboard-subheadline">
+                Your questions are unique, but others have asked similar ones. <br />
+                This will help us build new features and improve our websites.
+              </p>
             </div>
-            <div className="dashboard-headline-spacer" aria-hidden="true" />
+            {!gamifiedEnding ? <div className="dashboard-headline-spacer" aria-hidden="true" /> : null}
           </div>
-          
-          <div className="dashboard-main-layout">
-            {/* Left Side - Main Content */}
+
+          <div
+            className={
+              gamifiedEnding
+                ? 'dashboard-main-layout dashboard-main-layout--gamified'
+                : 'dashboard-main-layout'
+            }
+          >
+            {gamifiedEnding ? (
+              <aside className="dashboard-sidebar dashboard-sidebar--gamified" aria-label="Badge redemption">
+                <div className="step-box step-box--gamified-single">
+                  <h2 className="gamified-sidebar-heading">Gamified night instructions</h2>
+                  <p className="step-text">
+                    Thank you for visiting the Experience Zone and completing the survey. From the Play page within the Red Hat Events Guide app, press the &quot;+&quot; button and manually enter the unique code located corresponding to your persona below to earn your &quot;Product Pioneer&quot; badge.
+                  </p>
+                  <ul className="gamified-persona-code-list" aria-label="Persona codes">
+                    {GAMIFIED_PERSONA_CODES.map(({ persona, code }) => (
+                      <li key={code}>
+                        <span className="gamified-persona-name">{persona}</span>
+                        <code className="gamified-persona-code">{code}</code>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </aside>
+            ) : null}
             <div className="dashboard-content">
               {/* Word Cloud */}
               <div className="word-cloud-section">
@@ -415,23 +476,24 @@ function TerminalScreen({ inputValue, onInputChange, onSubmit, showQuestions, cu
               </div>
             </div>
 
-            {/* Right Side - Steps Sidebar */}
-            <div className="dashboard-sidebar">
-              <div className="step-box">
-                <h3 className="step-title">SWAG</h3>
-                <p className="step-text">Don't forget to retrieve your swag from the front desk!</p>
-              </div>
-              <div className="step-box">
-                <h3 className="step-title">Join our research community</h3>
-                <div className="qr-code-container">
-                  <img src={qrCodeImage} alt="QR Code" className="qr-code-image" />
+            {!gamifiedEnding ? (
+              <aside className="dashboard-sidebar" aria-label="Next steps">
+                <div className="step-box">
+                  <h3 className="step-title">SWAG</h3>
+                  <p className="step-text">Don't forget to retrieve your swag from the front desk!</p>
                 </div>
-              </div>
-              <div className="step-box">
-                <h3 className="step-title">Keep going</h3>
-                <p className="step-text">Join another usability study!</p>
-              </div>
-            </div>
+                <div className="step-box">
+                  <h3 className="step-title">Join our research community</h3>
+                  <div className="qr-code-container">
+                    <img src={qrCodeImage} alt="QR Code" className="qr-code-image" />
+                  </div>
+                </div>
+                <div className="step-box">
+                  <h3 className="step-title">Keep going</h3>
+                  <p className="step-text">Join another usability study!</p>
+                </div>
+              </aside>
+            ) : null}
           </div>
         </div>
       ) : (

@@ -179,7 +179,16 @@ const getAllResponses = async (): Promise<any[]> => {
   return []
 }
 
+function readGamifiedQuery(): boolean {
+  try {
+    return new URLSearchParams(window.location.search).has('gamified')
+  } catch {
+    return false
+  }
+}
+
 function App() {
+  const [gamifiedEnding, setGamifiedEnding] = useState(readGamifiedQuery)
   const [inputValue, setInputValue] = useState('')
   const [showQuestions, setShowQuestions] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState(1)
@@ -269,6 +278,13 @@ function App() {
     if (savedInput) {
       setInputValue(savedInput)
     }
+  }, [])
+
+  useEffect(() => {
+    const syncGamified = () => setGamifiedEnding(readGamifiedQuery())
+    syncGamified()
+    window.addEventListener('popstate', syncGamified)
+    return () => window.removeEventListener('popstate', syncGamified)
   }, [])
 
   useEffect(() => {
@@ -565,6 +581,7 @@ function App() {
         isLoading={isLoading}
         isLoadingDashboard={isLoadingDashboard}
         onAdjustInput={handleAdjustInput}
+        gamifiedEnding={gamifiedEnding}
       />
     </div>
   )

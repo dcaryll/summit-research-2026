@@ -65,13 +65,15 @@ cd wizard-of-os
 npm run dev
 ```
 
+Opens at **`http://localhost:5173/`** (root). Use **`http://localhost:5173/?gamified`** for the gamified ending. The `/summit-research-2026/wizard-of-os/` path applies only to **GitHub Pages** production builds, not local dev.
+
 **Choose your adventure:**
 ```bash
 cd choose-your-adventure
 npm run dev
 ```
 
-Each app will start on its own development server (typically `http://localhost:5173`).
+Each app uses its own dev port (Wizard of OS: **5173** by default; Choose your adventure: **5181** per its Vite config—check the terminal if a port is busy).
 
 ## Backend API Configuration
 
