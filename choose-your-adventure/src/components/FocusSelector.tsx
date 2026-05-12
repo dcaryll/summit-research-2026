@@ -16,6 +16,7 @@ import productEvaluationStudyDetailHero from '../images/product-evaluation-study
 import developerProgramStudyDetailHero from '../images/developer-program-overview-hero.png'
 import productMarketingStudyDetailHero from '../images/product-secondary-nav.webp'
 import contentDiscoveryStudyDetailHero from '../images/learn-study-overview-image.png'
+import type { AppViewMode } from '../appViewMode'
 
 /**
  * Official RHDS SVG assets (same as https://ux.redhat.com/foundations/iconography/).
@@ -51,9 +52,13 @@ function StudyTrackIcon({ focusId }: { focusId: string }) {
     const host = ref.current
     const src = RHDS_STUDY_ICON_SOURCES[focusId]
     if (!host || !src) return
-    const svg = cloneRhdsStudySvg(src)
-    svg.setAttribute('aria-hidden', 'true')
-    host.replaceChildren(svg)
+    try {
+      const svg = cloneRhdsStudySvg(src)
+      svg.setAttribute('aria-hidden', 'true')
+      host.replaceChildren(svg)
+    } catch (e) {
+      console.error('StudyTrackIcon: could not render icon for', focusId, e)
+    }
   }, [focusId])
   return <span ref={ref} className="focus-card-rh-icon" />
 }
@@ -93,14 +98,39 @@ const PARTICIPANT_ID_PREFIX_OPTIONS = ['CYUX-1', 'CYUX-2'] as const
 type ParticipantCohortPrefix = (typeof PARTICIPANT_ID_PREFIX_OPTIONS)[number]
 type ParticipantIdPrefixSelection = ParticipantCohortPrefix | ''
 
+/** Same rule as moderator “Start”: station + at least one digit, synced draft `CYUX-n-digits`. */
+function syncedParticipantIdDraftIsReadyForContinue(draft: string): boolean {
+  return /^(CYUX-1|CYUX-2)-\d+$/.test(draft.trim())
+}
+
 interface FocusSelectorProps {
+  viewMode: AppViewMode
   onFocusSelect: (focus: string) => void
   /** Called when the study detail modal is dismissed without starting the study. */
   onClearFocusSelection?: () => void
   selectedFocus: string | null
-  /** Full participant id is CYUX-1|CYUX-2 plus numeric digits from the modal (empty for random pick). */
-  onTakeStudy: (participantId: string) => void
+  /**
+   * `focusId` is passed when starting from participant view (card tap / surprise) so the parent
+   * does not rely on async `selectedFocus` state. Moderator modal omits it.
+   */
+  onTakeStudy: (participantId: string, focusId?: string | null) => void
   onExportCsv?: () => void | Promise<void>
+  /**
+   * v2 dual-window: participant display should mirror track selection but must not start the study
+   * (that would close the moderator’s detail modal before they can enter the participant ID).
+   * Use `?solo=1` on the participant URL if you need self-serve start without a moderator window.
+   */
+  mirrorParticipantSelectionOnly?: boolean
+  /**
+   * v2: which study’s detail modal is open — shared across windows (`null` = closed).
+   * Use with `onSyncedStudyDetailModalChange`.
+   */
+  syncedStudyDetailModalFocusId?: string | null
+  /** v2: open or close the synced detail modal (pass `null` to close). */
+  onSyncedStudyDetailModalChange?: (focusId: string | null) => void
+  /** v2: live moderator participant ID draft for mirror participant “Continue” gating. */
+  syncedModeratorParticipantIdDraft?: string
+  onSyncedModeratorParticipantIdDraftChange?: (draft: string) => void
 }
 
 interface FocusOption {
@@ -201,30 +231,62 @@ const focusOptions: FocusOption[] = [
 const RANDOM_RESULT_DURATION_MS = 2500
 
 function FocusSelector({
+  viewMode,
   onFocusSelect,
   onClearFocusSelection,
   selectedFocus,
   onTakeStudy,
-  onExportCsv
+  onExportCsv,
+  mirrorParticipantSelectionOnly = false,
+  syncedStudyDetailModalFocusId,
+  onSyncedStudyDetailModalChange,
+  syncedModeratorParticipantIdDraft,
+  onSyncedModeratorParticipantIdDraftChange
 }: FocusSelectorProps) {
+  const isModeratorView = viewMode === 'moderator'
+  const syncStudyDetailModal = onSyncedStudyDetailModalChange
+  const isModalSessionSynced = syncStudyDetailModal !== undefined
   const orderedOptions = useMemo(() => shuffleArray(focusOptions), [])
   const [isShowingRandomResult, setIsShowingRandomResult] = useState(false)
   const [randomChosenFocus, setRandomChosenFocus] = useState<string | null>(null)
-  const [openDetailId, setOpenDetailId] = useState<string | null>(null)
+  const [localOpenDetailId, setLocalOpenDetailId] = useState<string | null>(null)
   /** Digits only; combined with cohort prefix as CYUX-1|2-{digits} */
   const [participantIdDigits, setParticipantIdDigits] = useState('')
   const [participantIdPrefix, setParticipantIdPrefix] = useState<ParticipantIdPrefixSelection>('')
-  /** After “Surprise me!” animation, open the detail modal for this focus so Participant ID can be entered. */
+  /** After “Surprise me!” animation: open detail modal (moderator enters ID there). */
   const surpriseRevealFocusRef = useRef<string | null>(null)
+
+  const openDetailId = isModalSessionSynced
+    ? (syncedStudyDetailModalFocusId ?? null)
+    : localOpenDetailId
 
   const detailOption = openDetailId ? focusOptions.find((o) => o.id === openDetailId) : undefined
 
+  const pushSyncedModeratorDraftIfNeeded = useCallback(
+    (nextPrefix: ParticipantIdPrefixSelection, nextDigits: string) => {
+      if (!isModalSessionSynced || !isModeratorView || !openDetailId) return
+      const draft =
+        nextPrefix && nextDigits.length > 0 ? `${nextPrefix}-${nextDigits}` : ''
+      onSyncedModeratorParticipantIdDraftChange?.(draft)
+    },
+    [
+      isModalSessionSynced,
+      isModeratorView,
+      openDetailId,
+      onSyncedModeratorParticipantIdDraftChange
+    ]
+  )
+
   const closeStudyDetail = useCallback(() => {
-    setOpenDetailId(null)
     setParticipantIdDigits('')
     setParticipantIdPrefix('')
-    onClearFocusSelection?.()
-  }, [onClearFocusSelection])
+    if (isModalSessionSynced) {
+      syncStudyDetailModal(null)
+    } else {
+      setLocalOpenDetailId(null)
+      onClearFocusSelection?.()
+    }
+  }, [isModalSessionSynced, syncStudyDetailModal, onClearFocusSelection])
 
   useEffect(() => {
     if (openDetailId) {
@@ -254,10 +316,24 @@ function FocusSelector({
       surpriseRevealFocusRef.current = null
       setIsShowingRandomResult(false)
       setRandomChosenFocus(null)
-      if (focusId) setOpenDetailId(focusId)
+      if (!focusId) return
+      if (isModalSessionSynced) {
+        syncStudyDetailModal(focusId)
+      } else if (isModeratorView) {
+        setLocalOpenDetailId(focusId)
+      } else {
+        onFocusSelect(focusId)
+        setLocalOpenDetailId(focusId)
+      }
     }, RANDOM_RESULT_DURATION_MS)
     return () => clearTimeout(t)
-  }, [isShowingRandomResult])
+  }, [
+    isShowingRandomResult,
+    isModalSessionSynced,
+    isModeratorView,
+    onFocusSelect,
+    syncStudyDetailModal
+  ])
 
   const handleRandomize = () => {
     const randomIndex = Math.floor(Math.random() * orderedOptions.length)
@@ -279,7 +355,13 @@ function FocusSelector({
       <div className="selector-content">
         <div className="selector-headline-block">
           <h1 className="selector-title">Choose your study track</h1>
-          <p className="selector-subtitle">Pick a research topic that interests you and a moderator will guide you through the activity.</p>
+          <p className="selector-subtitle">
+            {mirrorParticipantSelectionOnly
+              ? 'Pick a research topic that interests you and a moderator will guide you through the activity.'
+              : isModeratorView
+                ? 'Open a study card for details, then enter the participant ID and start the activity.'
+                : 'Open a study card to read the full description, then start the activity when you are ready.'}
+          </p>
         </div>
 
         <div className={`focus-cards-grid ${isShowingRandomResult ? 'focus-cards-grid--animating' : ''}`}>
@@ -295,15 +377,23 @@ function FocusSelector({
                 className={`focus-card ${isSelected ? 'selected' : ''} ${isChosen ? 'focus-card--random-selected' : ''} ${isDismissed ? 'focus-card--random-dismiss' : ''}`}
                 onClick={() => {
                   if (isShowingRandomResult) return
-                  onFocusSelect(option.id)
-                  setOpenDetailId(option.id)
+                  if (isModalSessionSynced) {
+                    syncStudyDetailModal(option.id)
+                  } else {
+                    onFocusSelect(option.id)
+                    setLocalOpenDetailId(option.id)
+                  }
                 }}
                 onKeyDown={(e) => {
                   if (isShowingRandomResult) return
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    onFocusSelect(option.id)
-                    setOpenDetailId(option.id)
+                    if (isModalSessionSynced) {
+                      syncStudyDetailModal(option.id)
+                    } else {
+                      onFocusSelect(option.id)
+                      setLocalOpenDetailId(option.id)
+                    }
                   }
                 }}
               >
@@ -393,63 +483,98 @@ function FocusSelector({
                   {detailOption.title}
                 </h2>
                 <p className="study-detail-long-description">{detailOption.detailDescription}</p>
-                <div className="study-detail-participant-field">
-                  <span id="study-detail-participant-label" className="study-detail-participant-label">
-                    Participant ID
-                  </span>
-                  <div
-                    className="study-detail-participant-input-row"
-                    role="group"
-                    aria-labelledby="study-detail-participant-label"
-                  >
-                    <select
-                      id="study-detail-participant-prefix"
-                      className="study-detail-participant-prefix-select"
-                      aria-label="Participant cohort (required)"
-                      value={participantIdPrefix}
-                      onChange={(e) => {
-                        const v = e.target.value
-                        setParticipantIdPrefix(
-                          v === 'CYUX-1' || v === 'CYUX-2' ? v : ''
-                        )
-                      }}
+                {isModeratorView && (
+                  <div className="study-detail-participant-field">
+                    <span id="study-detail-participant-label" className="study-detail-participant-label">
+                      Participant ID
+                    </span>
+                    <div
+                      className="study-detail-participant-input-row"
+                      role="group"
+                      aria-labelledby="study-detail-participant-label"
                     >
-                      <option value="" disabled>
-                        Select a station
-                      </option>
-                      {PARTICIPANT_ID_PREFIX_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
+                      <select
+                        id="study-detail-participant-prefix"
+                        className="study-detail-participant-prefix-select"
+                        aria-label="Participant cohort (required)"
+                        value={participantIdPrefix}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          const nextPrefix = v === 'CYUX-1' || v === 'CYUX-2' ? v : ''
+                          setParticipantIdPrefix(nextPrefix)
+                          pushSyncedModeratorDraftIfNeeded(nextPrefix, participantIdDigits)
+                        }}
+                      >
+                        <option value="" disabled>
+                          Select a station
                         </option>
-                      ))}
-                    </select>
-                    <input
-                      id="study-detail-participant-id"
-                      className="study-detail-participant-input"
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      autoComplete="off"
-                      placeholder="numbers only"
-                      value={participantIdDigits}
-                      onChange={(e) => {
-                        const next = e.target.value.replace(/\D/g, '')
-                        setParticipantIdDigits(next)
-                      }}
-                    />
+                        {PARTICIPANT_ID_PREFIX_OPTIONS.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        id="study-detail-participant-id"
+                        className="study-detail-participant-input"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        autoComplete="off"
+                        placeholder="numbers only"
+                        value={participantIdDigits}
+                        onChange={(e) => {
+                          const next = e.target.value.replace(/\D/g, '')
+                          setParticipantIdDigits(next)
+                          pushSyncedModeratorDraftIfNeeded(participantIdPrefix, next)
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-                <button
-                  type="button"
-                  className="study-detail-cta take-study-button"
-                  disabled={!participantIdPrefix || participantIdDigits.length === 0}
-                  onClick={() => {
-                    if (!participantIdPrefix) return
-                    onTakeStudy(`${participantIdPrefix}-${participantIdDigits}`)
-                  }}
-                >
-                  Moderator: start this activity
-                </button>
+                )}
+                {mirrorParticipantSelectionOnly ? (
+                  <button
+                    type="button"
+                    className="study-detail-cta take-study-button"
+                    disabled={
+                      !syncedParticipantIdDraftIsReadyForContinue(
+                        syncedModeratorParticipantIdDraft ?? ''
+                      )
+                    }
+                    onClick={() => {
+                      const draft = (syncedModeratorParticipantIdDraft ?? '').trim()
+                      if (
+                        !syncedParticipantIdDraftIsReadyForContinue(draft) ||
+                        !detailOption
+                      ) {
+                        return
+                      }
+                      onTakeStudy(draft, detailOption.id)
+                    }}
+                  >
+                    Continue to session
+                  </button>
+                ) : isModeratorView ? (
+                  <button
+                    type="button"
+                    className="study-detail-cta take-study-button"
+                    disabled={!participantIdPrefix || participantIdDigits.length === 0}
+                    onClick={() => {
+                      if (!participantIdPrefix) return
+                      onTakeStudy(`${participantIdPrefix}-${participantIdDigits}`)
+                    }}
+                  >
+                    Moderator: start this activity
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="study-detail-cta take-study-button"
+                    onClick={() => onTakeStudy('', detailOption.id)}
+                  >
+                    Start this study
+                  </button>
+                )}
               </div>
             </div>
           </div>

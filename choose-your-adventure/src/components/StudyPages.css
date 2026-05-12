@@ -212,6 +212,10 @@
   max-width: 100%;
 }
 
+.page-question-heading-group + .study-expandable-image-block {
+  margin-top: 0.75rem;
+}
+
 .page-question-subtext {
   margin: 0;
   max-width: min(44rem, 100%);
@@ -235,7 +239,7 @@
   margin-bottom: 0.25rem;
 }
 
-/* Long hero (e.g. registration form) in “deferred” stacked layout — image then question */
+/* Long hero (e.g. registration form) in stacked layout — question heading is above this block */
 .study-expandable-image-block--hero-after-question {
   max-height: min(70vh, 36rem);
   overflow-y: auto;

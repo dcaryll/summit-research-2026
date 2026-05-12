@@ -1,4 +1,13 @@
-import { useState, useEffect, useMemo, useRef, type DragEvent, type ReactNode } from 'react'
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  type Dispatch,
+  type DragEvent,
+  type ReactNode,
+  type SetStateAction
+} from 'react'
 import './StudyPages.css'
 import { studyLogo } from '../studyBrand'
 import myTrialsReadyToBuyDialogSingle from '../images/my-trials-ready-to-buy-dialog-single-option.png'
@@ -77,11 +86,26 @@ const CONTENT_DISCOVERY_Q2_HERO_ALT_BY_TOPIC: Record<string, string> = {
     'Linux standardization topic page: Resources section with five numbered learning content cards (podcast, blog, e-book, event, use case).'
 }
 
+/** Optional shared session (v2): same answers/page/completion state across windows/tabs. */
+export type StudySessionSyncState = {
+  answers: Record<string, string>
+  setAnswers: Dispatch<SetStateAction<Record<string, string>>>
+  currentPageIndex: number
+  setCurrentPageIndex: Dispatch<SetStateAction<number>>
+  showCompletion: boolean
+  setShowCompletion: Dispatch<SetStateAction<boolean>>
+  isLoadingCompletion: boolean
+  setIsLoadingCompletion: Dispatch<SetStateAction<boolean>>
+}
+
 interface StudyPagesProps {
   focusId: string
+  /** When false, hide moderator notes dock and CSV export. With `studySessionSync` (v2), participant Next/Submit still waits on moderator-captured fields when required. */
+  moderatorMode?: boolean
   onBack: () => void
   onComplete: (focusId: string, answers: Record<string, string>) => void
   onExportCsv?: () => void | Promise<void>
+  studySessionSync?: StudySessionSyncState
 }
 
 type CreditCard = { id: string; label: string; cost: number; description?: string }
@@ -128,7 +152,8 @@ type StudyPage = {
   questionHeroImageAltsByPriorOption?: Record<string, string>
   /**
    * When a question hero is shown (direct, sourced, or branched): use a stacked layout with the
-   * hero image first, then the question and optional `questionSubtext` (not the default image-above-question flow). Ignored for `overview` pages.
+   * question and optional `questionSubtext` first, then the hero image (default flow is the same
+   * question-then-image order as other pages). Ignored for `overview` pages.
    */
   questionAboveHeroImage?: boolean
   /** Extra line under the question when `questionAboveHeroImage` is true (e.g. scroll instructions). */
@@ -163,14 +188,16 @@ type StudyPage = {
   /** After `overview` paragraphs: multiple images in a row; each opens the same lightbox as `overviewAfterImageSrc`. When non-empty, takes precedence over `overviewAfterImageSrc` for that page. */
   overviewAfterImageGallery?: { src: string; alt: string }[]
   /**
-   * Non-overview pages: row gallery above the question (same layout/lightbox as `overviewAfterImageGallery`).
-   * When non-empty, takes precedence over a single `imageSrc` hero in the top slot.
+   * Non-overview pages: row gallery of reference screenshots (same layout/lightbox as `overviewAfterImageGallery`).
+   * When non-empty, takes precedence over a single `imageSrc` hero in the top slot. The page question heading
+   * is rendered above this gallery in reading order.
    */
   questionAboveImageGallery?: { src: string; alt: string }[]
   /**
-   * Non-overview pages: single-image carousel above the question (click to advance, same behavior as
-   * `prototypeGalleryImages`). When non-empty, takes precedence over `questionAboveImageGallery` and
-   * the single `imageSrc` hero in the top slot.
+   * Non-overview pages: single-image carousel before answer controls (click to advance). When non-empty,
+   * takes precedence over `questionAboveImageGallery` and the single `imageSrc` hero in the top slot.
+   * Same carousel UI as `prototypeGalleryImages` on other page types. The page question heading is
+   * rendered above this block in reading order.
    */
   questionAboveCarouselGallery?: { src: string; alt: string }[]
   /** Shown in the prototype placeholder box (e.g. numbered resources matching on-screen labels). */
@@ -191,8 +218,8 @@ type StudyPage = {
   /** Label above the free-text field; use `{{SELECTED_OPTION}}` to insert the participant’s chosen option. */
   multiChoiceRequiredFreeTextLabel?: string
   /**
-   * With `multiChoiceRequiredFreeTextKey`: show the explanation field, but only the radio choice is
-   * required to advance (moderator notes optional).
+   * With `multiChoiceRequiredFreeTextKey`: when true, only the radio choice is required to advance;
+   * the explanation field is optional for moderator and participant.
    */
   multiChoiceFreeTextOptional?: boolean
   /** Replace each `{{TOPIC}}` in `question` with the participant's answer from this page id. */
@@ -839,12 +866,15 @@ function getSliderLikertOptions(
 function computeCanProceed(
   page: StudyPage | undefined,
   ans: Record<string, string>,
-  allPages: StudyPage[]
+  allPages: StudyPage[],
+  /** v1 participant only: no shared session, so moderator-only docks cannot be filled — skip those requirements. */
+  relaxModeratorCapturedNotes: boolean
 ): boolean {
   if (!page) return false
   if (page.type === 'overview') return true
   if (page.type === 'prototype') {
     if (page.prototypeOpenTextKey) {
+      if (relaxModeratorCapturedNotes) return true
       return !!ans[page.prototypeOpenTextKey]?.trim()
     }
     return true
@@ -882,6 +912,7 @@ function computeCanProceed(
           page.multiSelectOtherOptionLabel &&
           page.multiSelectOtherFreeTextKey &&
           selected.includes(page.multiSelectOtherOptionLabel) &&
+          !relaxModeratorCapturedNotes &&
           !ans[page.multiSelectOtherFreeTextKey]?.trim()
         ) {
           return false
@@ -896,6 +927,7 @@ function computeCanProceed(
         page.multiSelectOtherOptionLabel &&
         page.multiSelectOtherFreeTextKey &&
         selected.includes(page.multiSelectOtherOptionLabel) &&
+        !relaxModeratorCapturedNotes &&
         !ans[page.multiSelectOtherFreeTextKey]?.trim()
       ) {
         return false
@@ -924,6 +956,7 @@ function computeCanProceed(
     const main = ans[page.id]
     if (!main?.trim()) return false
     if (
+      !relaxModeratorCapturedNotes &&
       page.multiChoiceRequiredFreeTextKey &&
       !page.multiChoiceFreeTextOptional &&
       !ans[page.multiChoiceRequiredFreeTextKey]?.trim()
@@ -932,11 +965,13 @@ function computeCanProceed(
     }
     if (page.followUpWhen !== undefined && page.followUpAnswerKey) {
       if (main === page.followUpWhen) {
+        if (page.followUpFreeText && relaxModeratorCapturedNotes) return true
         return !!ans[page.followUpAnswerKey]?.trim()
       }
     }
     return true
   }
+  if (page.type === 'text' && relaxModeratorCapturedNotes) return true
   return !!(ans[page.id] && ans[page.id].trim() !== '')
 }
 
@@ -1848,11 +1883,30 @@ function StudyImageLightbox({
   )
 }
 
-function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProps) {
-  const [currentPageIndex, setCurrentPageIndex] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [showCompletion, setShowCompletion] = useState(false)
-  const [isLoadingCompletion, setIsLoadingCompletion] = useState(false)
+function StudyPages({
+  focusId,
+  moderatorMode = true,
+  onBack,
+  onComplete,
+  onExportCsv,
+  studySessionSync
+}: StudyPagesProps) {
+  const [localCurrentPageIndex, setLocalCurrentPageIndex] = useState(0)
+  const [localAnswers, setLocalAnswers] = useState<Record<string, string>>({})
+  const [localShowCompletion, setLocalShowCompletion] = useState(false)
+  const [localIsLoadingCompletion, setLocalIsLoadingCompletion] = useState(false)
+
+  const currentPageIndex = studySessionSync?.currentPageIndex ?? localCurrentPageIndex
+  const setCurrentPageIndex = studySessionSync?.setCurrentPageIndex ?? setLocalCurrentPageIndex
+  const answers = studySessionSync?.answers ?? localAnswers
+  const setAnswers = studySessionSync?.setAnswers ?? setLocalAnswers
+  const showCompletion = studySessionSync?.showCompletion ?? localShowCompletion
+  const setShowCompletion = studySessionSync?.setShowCompletion ?? setLocalShowCompletion
+  const isLoadingCompletion = studySessionSync?.isLoadingCompletion ?? localIsLoadingCompletion
+  const setIsLoadingCompletion =
+    studySessionSync?.setIsLoadingCompletion ?? setLocalIsLoadingCompletion
+  /** Participant without `studySessionSync` (classic v1) cannot receive synced moderator notes. */
+  const relaxModeratorCapturedNotes = !moderatorMode && studySessionSync == null
   const [expandedStudyImage, setExpandedStudyImage] = useState<{ src: string; alt: string } | null>(null)
   const [prototypeGallerySlideIndex, setPrototypeGallerySlideIndex] = useState(0)
   const allStudyPages = useMemo(() => getStudyPages(focusId), [focusId])
@@ -1916,11 +1970,16 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     if (!rows?.length) return
     const pid = currentPage.id
     const ids = rows.map((r) => r.id)
+    // Avoid setAnswers when already valid (v2 store always clones `answers` in normalize — a no-op
+    // setAnswers still emits and, with unstable deps like `studyPages`, caused an infinite loop).
+    if (isValidRankingAnswer(answers[pid], ids)) return
     setAnswers((prev) => {
       if (isValidRankingAnswer(prev[pid], ids)) return prev
       return { ...prev, [pid]: JSON.stringify(ids) }
     })
-  }, [currentPage?.id, currentPage?.type, rankingBranchSourceAnswer, studyPages])
+    // Intentionally omit `studyPages` / `setAnswers`: new `studyPages` array refs on every answer
+    // sync would retrigger this effect forever; v2 `setAnswers` is a new closure whenever the store updates.
+  }, [currentPage?.id, currentPage?.type, rankingBranchSourceAnswer, answers])
 
   // Optional multi-select: default to empty selection so Next works with zero picks
   useEffect(() => {
@@ -2099,7 +2158,8 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     if (currentPageIndex > 0) setCurrentPageIndex((i) => i - 1)
   }
 
-  const canProceed = () => computeCanProceed(currentPage, answers, allStudyPages)
+  const canProceed = () =>
+    computeCanProceed(currentPage, answers, allStudyPages, relaxModeratorCapturedNotes)
 
   useEffect(() => {
     prevCanProceedRef.current = null
@@ -2108,7 +2168,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
   useEffect(() => {
     const page = studyPages[currentPageIndex]
     if (!page) return
-    const ok = computeCanProceed(page, answers, allStudyPages)
+    const ok = computeCanProceed(page, answers, allStudyPages, relaxModeratorCapturedNotes)
     const prev = prevCanProceedRef.current
     if (prev === false && ok) {
       pageNavigationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
@@ -2118,7 +2178,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
       return
     }
     prevCanProceedRef.current = ok
-  }, [answers, currentPageIndex, studyPages, allStudyPages])
+  }, [answers, currentPageIndex, studyPages, allStudyPages, relaxModeratorCapturedNotes])
 
   const moderatorFocusMsOtherActive = Boolean(
     currentPage?.type === 'multi-select' &&
@@ -2229,22 +2289,23 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
     Boolean(currentPage.rankingOtherAnswerKey)
 
   const showModeratorNotesDock =
-    (currentPage.type === 'prototype' && Boolean(currentPage.prototypeOpenTextKey)) ||
-    currentPage.type === 'text' ||
-    (currentPage.type === 'multiple-choice' &&
-      Boolean(currentPage.options && currentPage.multiChoiceRequiredFreeTextKey)) ||
-    (currentPage.type === 'multiple-choice' &&
-      currentPage.followUpWhen !== undefined &&
-      answers[currentPage.id] === currentPage.followUpWhen &&
-      Boolean(currentPage.followUpAnswerKey && currentPage.followUpFreeText)) ||
-    (currentPage.type === 'multi-select' &&
-      moderatorFocusMsOtherActive &&
-      Boolean(currentPage.multiSelectOtherFreeTextKey)) ||
-    showRankingModeratorDock
+    moderatorMode &&
+    ((currentPage.type === 'prototype' && Boolean(currentPage.prototypeOpenTextKey)) ||
+      currentPage.type === 'text' ||
+      (currentPage.type === 'multiple-choice' &&
+        Boolean(currentPage.options && currentPage.multiChoiceRequiredFreeTextKey)) ||
+      (currentPage.type === 'multiple-choice' &&
+        currentPage.followUpWhen !== undefined &&
+        answers[currentPage.id] === currentPage.followUpWhen &&
+        Boolean(currentPage.followUpAnswerKey && currentPage.followUpFreeText)) ||
+      (currentPage.type === 'multi-select' &&
+        moderatorFocusMsOtherActive &&
+        Boolean(currentPage.multiSelectOtherFreeTextKey)) ||
+      showRankingModeratorDock)
 
   return (
     <div className="study-pages-screen">
-      {import.meta.env.DEV ? (
+      {import.meta.env.DEV && moderatorMode ? (
         <button
           type="button"
           className="study-dev-skip-fab nav-button skip"
@@ -2274,6 +2335,18 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
           key={`study-page-${currentPageIndex}-${currentPage.id}`}
         >
         <div className="page-content">
+          {currentPage.type !== 'overview' && !deferHeroBelowQuestion ? (
+            <div className="page-question-heading-group">
+              {resolvedQuestionTag ? (
+                <p className="page-question-tag" data-tag={resolvedQuestionTag}>
+                  {questionTagDisplayLabel(resolvedQuestionTag)}
+                </p>
+              ) : null}
+              {displayedQuestion.trim() ? (
+                <h2 className="page-question">{displayedQuestion}</h2>
+              ) : null}
+            </div>
+          ) : null}
           {currentPage.questionAboveImageGallery &&
           currentPage.questionAboveImageGallery.length > 0 &&
           !(currentPage.questionAboveCarouselGallery && currentPage.questionAboveCarouselGallery.length > 0) ? (
@@ -2502,21 +2575,23 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                 </figure>
               ) : null}
             </>
-          ) : deferHeroBelowQuestion ? null : (
-            <>
-              {resolvedQuestionTag ? (
-                <p className="page-question-tag" data-tag={resolvedQuestionTag}>
-                  {questionTagDisplayLabel(resolvedQuestionTag)}
-                </p>
-              ) : null}
-              {displayedQuestion.trim() ? (
-                <h2 className="page-question">{displayedQuestion}</h2>
-              ) : null}
-            </>
-          )}
+          ) : null}
 
           {deferHeroBelowQuestion && questionHero ? (
             <>
+              <div className="page-question-heading-group">
+                {resolvedQuestionTag ? (
+                  <p className="page-question-tag" data-tag={resolvedQuestionTag}>
+                    {questionTagDisplayLabel(resolvedQuestionTag)}
+                  </p>
+                ) : null}
+                {displayedQuestion.trim() ? (
+                  <h2 className="page-question">{displayedQuestion}</h2>
+                ) : null}
+                {currentPage.questionSubtext?.trim() ? (
+                  <p className="page-question-subtext">{currentPage.questionSubtext}</p>
+                ) : null}
+              </div>
               <div className="study-expandable-image-block study-expandable-image-block--hero study-expandable-image-block--hero-after-question">
                 <button
                   type="button"
@@ -2530,19 +2605,6 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
                   <img src={questionHero.src} alt="" className="study-page-hero-image" />
                 </button>
                 <p className="study-expandable-image-hint">Click image to enlarge</p>
-              </div>
-              <div className="page-question-heading-group">
-                {resolvedQuestionTag ? (
-                  <p className="page-question-tag" data-tag={resolvedQuestionTag}>
-                    {questionTagDisplayLabel(resolvedQuestionTag)}
-                  </p>
-                ) : null}
-                {displayedQuestion.trim() ? (
-                  <h2 className="page-question">{displayedQuestion}</h2>
-                ) : null}
-                {currentPage.questionSubtext?.trim() ? (
-                  <p className="page-question-subtext">{currentPage.questionSubtext}</p>
-                ) : null}
               </div>
               {showLikertAboveDeferredHero ? likertScaleEl : null}
             </>
@@ -2984,7 +3046,7 @@ function StudyPages({ focusId, onBack, onComplete, onExportCsv }: StudyPagesProp
               onClick={() => handleNext()}
               disabled={!canProceed()}
             >
-              {isLastPage ? 'Submit' : 'Moderator: advance when ready'}
+              {isLastPage ? 'Submit' : moderatorMode ? 'Moderator: advance when ready' : 'Next'}
             </button>
           </div>
         </div>
