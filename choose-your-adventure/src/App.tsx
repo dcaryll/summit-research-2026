@@ -52,12 +52,17 @@ function App() {
     setSessionParticipantId('')
   }
 
-  const handleStudyComplete = async (focusId: string, answers: Record<string, string>) => {
+  const handleStudyComplete = async (
+    focusId: string,
+    answers: Record<string, string>,
+    durationMs?: number
+  ) => {
     await saveResponse({
       timestamp: new Date().toISOString(),
       focusId,
       answers,
-      participantId: sessionParticipantId || undefined
+      participantId: sessionParticipantId || undefined,
+      durationMs
     })
   }
 

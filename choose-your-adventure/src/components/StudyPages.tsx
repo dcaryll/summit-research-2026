@@ -107,7 +107,11 @@ interface StudyPagesProps {
    */
   moderatorMode?: boolean
   onBack: () => void
-  onComplete: (focusId: string, answers: Record<string, string>) => void
+  onComplete: (
+    focusId: string,
+    answers: Record<string, string>,
+    durationMs?: number
+  ) => void | Promise<void>
   onExportCsv?: () => void | Promise<void>
   studySessionSync?: StudySessionSyncState
 }
@@ -1922,6 +1926,8 @@ function StudyPages({
   )
   const pageNavigationRef = useRef<HTMLDivElement>(null)
   const prevCanProceedRef = useRef<boolean | null>(null)
+  /** Wall-clock start when this study session mounted (used for completion `durationMs`). */
+  const studySessionStartedAtRef = useRef<number>(Date.now())
 
   const currentPage = studyPages[currentPageIndex]
   const displayedQuestion = currentPage ? resolveStudyQuestion(currentPage, allStudyPages, answers) : ''
@@ -1938,6 +1944,10 @@ function StudyPages({
       : 0
   const pageCarouselCurrentSlide =
     pageCarouselLen > 0 ? pageCarouselSlides![pageCarouselSafeIndex] : undefined
+
+  useEffect(() => {
+    studySessionStartedAtRef.current = Date.now()
+  }, [focusId])
 
   useEffect(() => {
     if (studyPages.length > 0 && currentPageIndex >= studyPages.length) {
@@ -2151,7 +2161,8 @@ function StudyPages({
       setCurrentPageIndex((i) => i + 1)
     } else {
       if (answerOverrides) setAnswers(prev => ({ ...prev, ...answerOverrides }))
-      await onComplete(focusId, mergedAnswers)
+      const durationMs = Math.max(0, Date.now() - studySessionStartedAtRef.current)
+      await onComplete(focusId, mergedAnswers, durationMs)
       setIsLoadingCompletion(true)
       setTimeout(() => {
         setIsLoadingCompletion(false)
@@ -2208,7 +2219,7 @@ function StudyPages({
   }
 
   if (showCompletion) {
-    return <CompletionScreen onBack={onBack} onExportCsv={onExportCsv} />
+    return <CompletionScreen moderatorMode={moderatorMode} onBack={onBack} onExportCsv={onExportCsv} />
   }
 
   if (studyPages.length === 0) {

@@ -31,6 +31,7 @@ export const saveResponseToBackend = async (data: {
   focusId: string
   answers: Record<string, string>
   participantId?: string
+  durationMs?: number
 }): Promise<boolean> => {
   const endpoint = getBackendApiEndpoint()
   if (!endpoint) {
@@ -62,6 +63,8 @@ export const saveResponse = async (data: {
   focusId: string
   answers: Record<string, string>
   participantId?: string
+  /** Wall time from study load to submit, when recorded by the client. */
+  durationMs?: number
 }) => {
   const backendSuccess = await saveResponseToBackend(data)
 
@@ -109,6 +112,7 @@ export type StoredStudyResponse = {
   focusId: string
   answers: Record<string, string>
   participantId?: string
+  durationMs?: number
 }
 
 export const getAllResponses = async (): Promise<StoredStudyResponse[]> => {
@@ -142,6 +146,51 @@ export const getAllResponses = async (): Promise<StoredStudyResponse[]> => {
     console.error('Error reading study backup from localStorage:', e)
   }
   return []
+}
+
+/** One row per `focusId` for moderator dashboard: completion counts and optional average duration. */
+export type StudyAggregateRow = {
+  focusId: string
+  label: string
+  completions: number
+  avgDurationMs: number | null
+}
+
+export function aggregateStudyCompletions(responses: StoredStudyResponse[]): StudyAggregateRow[] {
+  const byFocus = new Map<string, { count: number; durations: number[] }>()
+  for (const r of responses) {
+    const fid = (r.focusId || '').trim()
+    if (!fid) continue
+    let agg = byFocus.get(fid)
+    if (!agg) {
+      agg = { count: 0, durations: [] }
+      byFocus.set(fid, agg)
+    }
+    agg.count += 1
+    const d = r.durationMs
+    if (typeof d === 'number' && Number.isFinite(d) && d > 0) {
+      agg.durations.push(d)
+    }
+  }
+  return [...byFocus.entries()]
+    .map(([focusId, { count, durations }]) => ({
+      focusId,
+      label: studyDisplayName(focusId),
+      completions: count,
+      avgDurationMs:
+        durations.length === 0 ? null : durations.reduce((a, b) => a + b, 0) / durations.length
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }))
+}
+
+/** Human-readable duration from milliseconds (for averages). */
+export function formatDurationMs(ms: number): string {
+  const sec = Math.round(ms / 1000)
+  if (sec < 60) return `${sec}s`
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  if (s === 0) return `${m} min`
+  return `${m}m ${s}s`
 }
 
 function escapeCsvCell(value: string): string {
@@ -203,7 +252,7 @@ export const exportResponsesToCsv = async () => {
     )
     const answerColumns = buildAnswerColumns(sorted)
     const answerHeaders = resolveAnswerColumnHeaders(answerColumns)
-    const headers = ['timestamp', 'participantId', 'focusId', ...answerHeaders]
+    const headers = ['timestamp', 'participantId', 'focusId', 'durationMs', ...answerHeaders]
     const rows: string[][] = [headers]
     for (const r of sorted) {
       const fid = (r.focusId || '').trim()
@@ -211,6 +260,7 @@ export const exportResponsesToCsv = async () => {
         r.timestamp || '',
         r.participantId ?? '',
         r.focusId || '',
+        r.durationMs != null && Number.isFinite(r.durationMs) ? String(Math.round(r.durationMs)) : '',
         ...answerColumns.map((col) =>
           col.focusId === fid ? (r.answers?.[col.answerKey] ?? '') : ''
         )

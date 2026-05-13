@@ -104,12 +104,13 @@ export default function AppV2() {
   }, [])
 
   const handleStudyComplete = useCallback(
-    async (focusId: string, answers: Record<string, string>) => {
+    async (focusId: string, answers: Record<string, string>, durationMs?: number) => {
       await saveResponse({
         timestamp: new Date().toISOString(),
         focusId,
         answers,
-        participantId: snap.participantId || undefined
+        participantId: snap.participantId || undefined,
+        durationMs
       })
     },
     [snap.participantId]
