@@ -46,6 +46,8 @@ const initDB = (): Promise<IDBDatabase> => {
   })
 }
 
+const BACKEND_SAVE_TIMEOUT_MS = 12_000
+
 const saveResponseToBackend = async (data: {
   timestamp: string
   question: string
@@ -58,6 +60,8 @@ const saveResponseToBackend = async (data: {
   whereNext: string
   additionalFeedback: string
 }): Promise<boolean> => {
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), BACKEND_SAVE_TIMEOUT_MS)
   try {
     const response = await fetch(API_ENDPOINT, {
       method: 'POST',
@@ -65,6 +69,7 @@ const saveResponseToBackend = async (data: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
+      signal: controller.signal,
     })
 
     if (!response.ok) {
@@ -74,8 +79,14 @@ const saveResponseToBackend = async (data: {
     console.log('Response saved to backend successfully')
     return true
   } catch (error) {
-    console.error('Error saving to backend:', error)
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error('Backend save timed out after', BACKEND_SAVE_TIMEOUT_MS, 'ms')
+    } else {
+      console.error('Error saving to backend:', error)
+    }
     return false
+  } finally {
+    window.clearTimeout(timeoutId)
   }
 }
 
@@ -503,9 +514,12 @@ function App() {
       // Move to next question
       setCurrentQuestion(prev => prev + 1)
     } else {
-      // Final submission - show loading state for 2 seconds before dashboard
+      // Final submission: never block the "Analyzing" screen on network or IndexedDB.
+      // Save runs in the background; dashboard opens after the same short delay as before.
       setIsLoadingDashboard(true)
-      await saveResponseToDB()
+      void saveResponseToDB().catch((err) => {
+        console.error('Error during final save:', err)
+      })
       setTimeout(() => {
         setIsLoadingDashboard(false)
         setShowDashboard(true)

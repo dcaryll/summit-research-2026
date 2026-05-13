@@ -857,6 +857,22 @@ function TerminalScreen({
                 </p>
               )}
 
+              {currentQuestion === 8 && (
+                <div className="wizard-open-response">
+                  <label htmlFor="wizard-additional-feedback" className="wizard-open-response-label">
+                    Moderator notes
+                  </label>
+                  <textarea
+                    id="wizard-additional-feedback"
+                    className="wizard-open-textarea"
+                    rows={6}
+                    value={answers.additionalFeedback ?? ''}
+                    onChange={(e) => onAnswerChange('additionalFeedback', e.target.value)}
+                    placeholder="Notes"
+                  />
+                </div>
+              )}
+
               <div className="question-navigation">
                 {currentQuestion > 1 && (
                   <button
@@ -877,22 +893,6 @@ function TerminalScreen({
                   </button>
                 )}
               </div>
-
-              {currentQuestion === 8 && (
-                <div className="wizard-open-response">
-                  <label htmlFor="wizard-additional-feedback" className="wizard-open-response-label">
-                    Moderator notes
-                  </label>
-                  <textarea
-                    id="wizard-additional-feedback"
-                    className="wizard-open-textarea"
-                    rows={6}
-                    value={answers.additionalFeedback ?? ''}
-                    onChange={(e) => onAnswerChange('additionalFeedback', e.target.value)}
-                    placeholder="Notes"
-                  />
-                </div>
-              )}
             </div>
           )}
         </div>
